@@ -4,6 +4,9 @@ Replaces the standalone ``scripts/cleanup_text_extractable.py`` with a
 built-in, pluggable step pipeline.  Runs automatically after fast-path
 (PyMuPDF) text extraction.
 
+Post-processing preserves text integrity. Citation validation and
+formatting is ScholiaCite's responsibility.
+
 Usage::
 
     post = PostProcessor()
@@ -15,11 +18,23 @@ Usage::
 
 from __future__ import annotations
 
-import logging
 import re
 import unicodedata
 
-logger = logging.getLogger(__name__)
+
+# Characters that post-processing must NEVER damage
+PRESERVED_CHARACTERS: dict[str, str] = {
+    "\u00a7": "section symbol",
+    "\u2013": "en dash",
+    "\u2014": "em dash",
+    "\u2019": "right single quote",
+    "\u00b6": "pilcrow",
+}
+
+
+def preserved_chars_present(text: str) -> dict[str, bool]:
+    """Return which preserved characters are in *text* (for debugging only)."""
+    return {ch: ch in text for ch in PRESERVED_CHARACTERS}
 
 
 class PostProcessor:
@@ -36,7 +51,6 @@ class PostProcessor:
             "whitespace_normalize": self._normalize_whitespace,
             "ligature_expand": self._expand_ligatures,
             "stray_control_chars": self._strip_control_chars,
-            "validate_citations": self._validate_citations,
         }
         self._enabled_steps = list(steps) if steps is not None else list(self._step_registry)
 
@@ -129,126 +143,4 @@ class PostProcessor:
             ch for ch in text if ch == "\n" or ch == "\t" or (ord(ch) >= 32 and ord(ch) != 127)
         )
 
-    # ------------------------------------------------------------------
-    # citation validation (read-only — does not modify text)
-    # ------------------------------------------------------------------
 
-    def _validate_citations(self, text: str) -> str:
-        """Check for common OCR damage to citation patterns and log warnings.
-
-        This is a lightweight, read-only validation step.  It does NOT
-        modify the text — it only surfaces problems so downstream
-        processes (or human reviewers) can address them.
-
-        Checks performed:
-        - Roman-numeral Pope names that may have been lowercased
-        - Section symbols (§) that were corrupted
-        - Denzinger abbreviations that lost their period
-        - Page-range en dashes replaced by hyphens
-        - AAS reference patterns that broke
-        """
-        _warn_roman_numeral_damage(text)
-        _warn_section_symbol_absence(text)
-        _warn_denzinger_damage(text)
-        _warn_en_dash_damage(text)
-        _warn_aas_damage(text)
-        return text
-
-
-# ── Citation validation helpers (module-level) ───────────────────────────
-
-
-def _warn_roman_numeral_damage(text: str) -> None:
-    """Log a warning if lowercased Pope numerals appear (OCR corruption sign).
-
-    e.g. ``"Paul Vi"`` or ``"Pius Xii"`` instead of ``"PAUL VI"`` / ``"PIUS XII"``.
-    """
-    _DAMAGED = [
-        (r"\bPaul\s+Vi\b", "PAUL VI"),
-        (r"\bPius\s+Xii\b", "PIUS XII"),
-        (r"\bLeo\s+Xiii\b", "LEO XIII"),
-        (r"\bPius\s+Xi\b(?!II)", "PIUS XI"),  # avoid matching XI within XII
-        (r"\bJohn\s+Xxiii\b", "JOHN XXIII"),
-        (r"\bJohn\s+Paul\s+Ii\b", "JOHN PAUL II"),
-        (r"\bBenedict\s+Xvi\b", "BENEDICT XVI"),
-        (r"\bPius\s+X\b(?!III)", "PIUS X"),
-    ]
-    for pattern, correct in _DAMAGED:
-        for match in re.finditer(pattern, text):
-            logger.warning(
-                "Possible OCR damage: Pope name roman numeral lowered %r "
-                "(expected %r) at position %d",
-                match.group(),
-                correct,
-                match.start(),
-            )
-
-
-def _warn_section_symbol_absence(text: str) -> None:
-    """Log a warning if text contains canonical § patterns but no § character.
-
-    Heuristic: if the text has ``can. N`` or ``c. N`` references and the
-    § character (U+00A7) is entirely absent, the section symbol may have
-    been corrupted during OCR.
-    """
-    if "§" in text:
-        return
-    # Only warn if there are canon-law-style citations that likely
-    # should have § symbols.
-    if re.search(r"\bcan\.\s+\d+\s+\d+", text) or re.search(r"\bc\.\s+\d+\s+\d+", text):
-        logger.warning(
-            "Section symbol (§) absent from text that contains canon-law "
-            "style citations (e.g. 'can. 123 2').  The § may have been "
-            "corrupted during OCR."
-        )
-
-
-def _warn_denzinger_damage(text: str) -> None:
-    """Log a warning if Denzinger abbreviations are corrupted.
-
-    e.g. ``"Denz ."`` (space before period) or lowercased ``"ds"`` / ``"dh"``.
-    """
-    if re.search(r"\bDenz\s+\.", text):
-        logger.warning("Denzinger abbreviation appears corrupted: 'Denz .' (space before period)")
-    if re.search(r"\bds\s+\d+", text):
-        logger.warning("Denzinger-Schönmetzer prefix lowered: 'ds' should be 'DS'")
-    if re.search(r"\bdh\s+\d+", text):
-        logger.warning("Denzinger-Hünermann prefix lowered: 'dh' should be 'DH'")
-
-
-def _warn_en_dash_damage(text: str) -> None:
-    """Log a warning if number ranges use hyphens but no en dashes appear.
-
-    In academic theological texts, page ranges should use en dash (U+2013).
-    If the text contains many digit-digit hyphen patterns but zero en dashes,
-    the en dashes may have been OCR'd as hyphens.
-    """
-    if "\u2013" in text:
-        return
-    hyphen_ranges = re.findall(r"\d+-\d+", text)
-    if len(hyphen_ranges) >= 3:
-        logger.warning(
-            "No en dashes (–) found but %d hyphenated number ranges "
-            "present (e.g. %r).  En dashes may have been OCR'd as hyphens.",
-            len(hyphen_ranges),
-            hyphen_ranges[:3],
-        )
-
-
-def _warn_aas_damage(text: str) -> None:
-    """Log a warning if AAS reference patterns are broken.
-
-    Valid: ``AAS 58 (1966) 123-145``.  Broken forms include missing parens,
-    double spaces, or missing volume/year.
-    """
-    # Check for partial AAS patterns that don't match the canonical form
-    aas_canonical = re.findall(r"AAS\s+\d+\s*\(\d{4}\)\s*\d+[-–—]\d+", text)
-    aas_loose = re.findall(r"AAS\s+\d+", text)
-    if aas_loose and not aas_canonical:
-        logger.warning(
-            "AAS references found (%d matches) but none match canonical "
-            "form 'AAS VOL (YEAR) PAGE-PAGE'.  Possible OCR damage.  "
-            "Examples: %r",
-            len(aas_loose),
-            aas_loose[:3],
-        )

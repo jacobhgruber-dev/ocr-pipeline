@@ -36,6 +36,7 @@ from .models import (
     EngineName,
     EngineOutput,
     FileIdentity,
+    MetadataResult,
     PageResult,
     PageStatus,
     PdfProgress,
@@ -290,11 +291,94 @@ class Pipeline:
                     with self._checkpoint_lock:
                         self.checkpoint.update_page(rel_path, page)
 
+        # Produce document-level concatenated output with GROBID metadata
+        try:
+            self._produce_document_output(pdf_path, output_dir, short_sha, page_count)
+        except Exception:
+            logger.debug(
+                "Skipping document-level output for %s", short_sha, exc_info=True
+            )
+
         return {
             "pages_processed": pages_processed,
             "pages_complete": pages_complete,
             "pages_failed": pages_failed,
         }
+
+    def _produce_document_output(
+        self,
+        pdf_path: Path,
+        output_dir: Path,
+        short_sha: str,
+        page_count: int,
+    ) -> None:
+        """Collect all per-page markdown and produce a concatenated document .md.
+
+        Gathers ``page_NNNN_final.md`` files that already exist on disk (from
+        this run or a previous checkpointed run), extracts GROBID metadata, and
+        writes ``{short_sha}.md`` with YAML frontmatter in the output directory.
+        """
+        # Collect existing per-page markdown
+        md_pages: list[tuple[int, str]] = []
+        for i in range(page_count):
+            md_path = output_dir / f"page_{i+1:04d}_final.md"
+            if md_path.is_file():
+                md_text = md_path.read_text(encoding="utf-8")
+                if md_text.strip():
+                    md_pages.append((i, md_text))
+
+        if not md_pages:
+            return
+
+        grobid_metadata = self._extract_grobid_metadata(pdf_path)
+        if grobid_metadata or md_pages:
+            self._save_document_output(output_dir, short_sha, md_pages, grobid_metadata)
+
+    def _extract_grobid_metadata(self, pdf_path: Path) -> MetadataResult | None:
+        """Extract structured metadata from the PDF via GROBID, if available.
+
+        Returns ``None`` when GROBID is unreachable, not installed, or the
+        extraction fails for any reason — the document-level output is still
+        produced without frontmatter in that case.
+        """
+        try:
+            from .engines.grobid import GrobidEngine
+
+            engine = GrobidEngine(grobid_url=self.config.grobid_url)
+            if engine.health_check():
+                return engine.extract_metadata(pdf_path, timeout_sec=60.0)
+        except Exception:
+            logger.debug("GROBID metadata extraction unavailable", exc_info=True)
+        return None
+
+    def _save_document_output(
+        self,
+        output_dir: Path,
+        short_sha: str,
+        md_pages: list[tuple[int, str]],
+        metadata: MetadataResult | None,
+    ) -> None:
+        """Write a per-PDF concatenated markdown file with YAML frontmatter.
+
+        *md_pages* is a list of ``(page_index, markdown_text)`` tuples, which
+        are sorted by page index before being passed to the formatter.
+        """
+        from .formatter import YamlFrontmatterFormatter
+
+        pages = [
+            PageResult(
+                sha256="",
+                page_index=i,
+                page_label=f"page_{i+1:04d}",
+                merged_markdown=text,
+            )
+            for i, text in sorted(md_pages)
+        ]
+        formatter = YamlFrontmatterFormatter()
+        content = formatter.format(metadata, pages)
+        out_path = output_dir / f"{short_sha}.md"
+        out_path.write_text(content, encoding="utf-8")
+        logger.info("Saved document-level markdown for %s: %s", short_sha, out_path)
 
     @property
     def stats(self) -> dict[str, Any]:

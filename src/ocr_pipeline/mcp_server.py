@@ -262,6 +262,70 @@ async def ocr_status() -> dict[str, Any]:
     return {"engines": statuses}
 
 
+@mcp.tool()
+async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
+    """Extract structured metadata from a PDF using GROBID.
+
+    Runs GROBID independently of the OCR pipeline — useful for standalone
+    metadata extraction or pre-processing before OCR.
+
+    Requires a running GROBID server (default: ``http://localhost:8070``).
+    Start with: ``docker run -p 8070:8070 lfoppiano/grobid:0.8.1``
+
+    Args:
+        pdf_path: Absolute path to the PDF file.
+
+    Returns:
+        Dict with ``status`` ("ok" or "error"), ``title``, ``authors``,
+        ``doi``, ``journal``, ``volume``, ``issue``, ``year``, ``keywords``,
+        ``abstract``, and ``pages``.
+    """
+    from .engines.grobid import GrobidEngine
+
+    pdf = Path(pdf_path).resolve()
+    if not pdf.is_file():
+        return {"status": "error", "message": f"PDF not found: {pdf_path}"}
+
+    # Load grobid_url from config or fall back to default
+    try:
+        cfg = ConfigLoader.from_env()
+        grobid_url: str = cfg.grobid_url
+    except Exception:
+        grobid_url = "http://localhost:8070"
+
+    try:
+        engine = GrobidEngine(grobid_url=grobid_url)
+        if not engine.health_check():
+            return {
+                "status": "error",
+                "message": (
+                    f"GROBID server not reachable at {grobid_url}. "
+                    "Start with: docker run -p 8070:8070 lfoppiano/grobid:0.8.1"
+                ),
+            }
+
+        metadata = await asyncio.to_thread(
+            engine.extract_metadata, pdf, timeout_sec=120.0
+        )
+
+        return {
+            "status": "ok",
+            "title": metadata.title,
+            "authors": metadata.authors,
+            "doi": metadata.doi,
+            "journal": metadata.journal,
+            "volume": metadata.volume,
+            "issue": metadata.issue,
+            "year": metadata.year,
+            "keywords": metadata.keywords,
+            "abstract": metadata.abstract[:500] if metadata.abstract else "",
+            "pages": metadata.pages,
+        }
+    except Exception as exc:
+        logger.exception("ocr_metadata failed for %s", pdf_path)
+        return {"status": "error", "message": str(exc)}
+
+
 # ---------------------------------------------------------------------------
 # entry point
 # ---------------------------------------------------------------------------

@@ -9,9 +9,10 @@ import pytest
 from ocr_pipeline.formatter import (
     JsonFormatter,
     MarkdownFormatter,
+    YamlFrontmatterFormatter,
     get_formatter,
 )
-from ocr_pipeline.models import Block, EngineOutput, PageResult, PageStatus
+from ocr_pipeline.models import Block, EngineOutput, MetadataResult, PageResult, PageStatus
 
 
 class TestMarkdownFormatter:
@@ -125,3 +126,120 @@ class TestGetFormatter:
     def test_unknown_raises_value_error(self):
         with pytest.raises(ValueError, match="Unknown output format"):
             get_formatter("xml")
+
+
+# ---------------------------------------------------------------------------
+# YamlFrontmatterFormatter
+# ---------------------------------------------------------------------------
+
+
+class TestYamlFrontmatterFormatter:
+    """Tests for per-PDF concatenated markdown with YAML frontmatter."""
+
+    def test_format_with_full_metadata(self) -> None:
+        fmt = YamlFrontmatterFormatter()
+        metadata = MetadataResult(
+            title="Test Paper",
+            authors=["Author One", "Author Two"],
+            doi="10.1234/test",
+            journal="Test Journal",
+            volume="42",
+            issue="3",
+            year="2025",
+            abstract="This is a test abstract.",
+            keywords=["test", "paper"],
+        )
+        pages = [
+            PageResult(
+                sha256="abc",
+                page_index=0,
+                page_label="page_0001",
+                merged_markdown="# Page 1\nContent",
+            ),
+            PageResult(
+                sha256="abc",
+                page_index=1,
+                page_label="page_0002",
+                merged_markdown="# Page 2\nMore",
+            ),
+        ]
+
+        output = fmt.format(metadata, pages)
+
+        # Frontmatter delimiters
+        assert output.startswith("---\n")
+        assert "\n---\n\n" in output
+
+        # Metadata fields
+        assert "title: Test Paper" in output
+        assert "doi: 10.1234/test" in output
+        assert "journal: Test Journal" in output
+        assert "authors:" in output
+        assert "- Author One" in output
+        assert "- Author Two" in output
+        assert "abstract: This is a test abstract." in output
+        assert "keywords:" in output
+
+        # Page content after frontmatter
+        assert "# Page 1\nContent" in output
+        assert "# Page 2\nMore" in output
+
+    def test_format_with_none_metadata_produces_empty_frontmatter(self) -> None:
+        fmt = YamlFrontmatterFormatter()
+        pages = [
+            PageResult(
+                sha256="abc",
+                page_index=0,
+                page_label="page_0001",
+                merged_markdown="# Only page",
+            ),
+        ]
+        output = fmt.format(None, pages)
+        # Empty frontmatter block is still valid YAML
+        assert output.startswith("---\n")
+        assert "{}\n" in output or output.startswith("---\n{}")
+        assert "# Only page" in output
+
+    def test_format_skips_whitespace_only_pages(self) -> None:
+        fmt = YamlFrontmatterFormatter()
+        pages = [
+            PageResult(
+                sha256="abc",
+                page_index=0,
+                page_label="page_0001",
+                merged_markdown="  ",  # whitespace only
+            ),
+            PageResult(
+                sha256="abc",
+                page_index=1,
+                page_label="page_0002",
+                merged_markdown="# Real content",
+            ),
+        ]
+        output = fmt.format(None, pages)
+        # Whitespace-only page should not appear
+        assert "# Real content" in output
+        # The output should not have an empty paragraph from the blank page
+        lines = output.split("\n")
+        assert "  " not in lines
+
+    def test_format_empty_frontmatter_with_none_metadata(self) -> None:
+        """When metadata is None and no fields set, frontmatter is '{}'."""
+        fmt = YamlFrontmatterFormatter()
+        pages = [
+            PageResult(
+                sha256="abc",
+                page_index=0,
+                page_label="page_0001",
+                merged_markdown="Some text",
+            ),
+        ]
+        output = fmt.format(None, pages)
+        # Should contain valid YAML frontmatter with empty mapping
+        frontmatter_end = output.index("---\n", 4)  # skip first ---
+        frontmatter_block = output[4:frontmatter_end]
+        assert frontmatter_block.strip() == "{}"
+
+    def test_extension(self) -> None:
+        fmt = YamlFrontmatterFormatter()
+        assert fmt.extension() == ".md"

@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from typing import Any
 
-from .models import PageResult
+from .models import MetadataResult, PageResult
 
 
 class MarkdownFormatter:
@@ -38,6 +39,65 @@ class JsonFormatter:
 
     def extension(self) -> str:
         return ".json"
+
+
+@dataclass
+class YamlFrontmatterFormatter:
+    """Produces per-PDF markdown with YAML frontmatter from GROBID metadata.
+
+    Unlike :class:`MarkdownFormatter` (per-page), this formatter operates at
+    the document level — it concatenates all pages of a PDF into one markdown
+    file with a YAML frontmatter block containing structured metadata (title,
+    authors, DOI, journal, etc.).
+
+    Usage::
+
+        fmt = YamlFrontmatterFormatter()
+        md = fmt.format(metadata=grobid_result, pages=page_results)
+        path.write_text(md)
+    """
+
+    def format(self, metadata: MetadataResult | None, pages: list[PageResult]) -> str:
+        """Concatenate all *pages* with YAML frontmatter from *metadata*.
+
+        Args:
+            metadata: Structured metadata (may be ``None`` for an empty frontmatter).
+            pages: Processed pages (only ``merged_markdown`` is used).
+
+        Returns:
+            A complete markdown string: ``---\\n<yaml>\\n---\\n\\n<body>``.
+        """
+        frontmatter: dict[str, Any] = {}
+        if metadata:
+            if metadata.title:
+                frontmatter["title"] = metadata.title
+            if metadata.authors:
+                frontmatter["authors"] = metadata.authors
+            if metadata.doi:
+                frontmatter["doi"] = metadata.doi
+            if metadata.journal:
+                frontmatter["journal"] = metadata.journal
+            if metadata.volume:
+                frontmatter["volume"] = metadata.volume
+            if metadata.issue:
+                frontmatter["issue"] = metadata.issue
+            if metadata.year:
+                frontmatter["year"] = metadata.year
+            if metadata.abstract:
+                frontmatter["abstract"] = metadata.abstract[:500]
+            if metadata.keywords:
+                frontmatter["keywords"] = metadata.keywords
+
+        import yaml as yaml_lib
+
+        yaml_str = yaml_lib.dump(
+            frontmatter, default_flow_style=False, allow_unicode=True, sort_keys=False
+        )
+        body = "\n\n".join(p.merged_markdown for p in pages if p.merged_markdown.strip())
+        return f"---\n{yaml_str}---\n\n{body}"
+
+    def extension(self) -> str:
+        return ".md"
 
 
 _FORMATTERS: dict[str, Any] = {

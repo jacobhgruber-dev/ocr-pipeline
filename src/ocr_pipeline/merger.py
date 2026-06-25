@@ -274,71 +274,85 @@ def _build_system_prompt(
 
     base = _SYSTEM_PROMPT_TEMPLATES.get(content_type, _SYSTEM_PROMPT_TEMPLATES["general"])
 
+    # ── Document context hint ─────────────────────────────────────────
+    context_hint = _DOCUMENT_CONTEXT_HINTS.get(content_type, _DOCUMENT_CONTEXT_HINTS["general"])
+    base += f"\n\n{context_hint}"
+
+    # ── Formatting preservation rules (always appended) ───────────────
+    base += f"\n\n{_FORMATTING_PRESERVATION_RULES}"
+
+    # ── Column layout hint ────────────────────────────────────────────
     if column_layout == "dual":
         base += (
-            "\nIf the page contains dual-column layout, linearize left column first, then right.\n"
+            "\n\nLAYOUT: The page uses dual-column layout. "
+            "Linearize left column first, then right."
         )
     elif column_layout == "single":
-        base += "\nThe page is single-column. Do not attempt column detection.\n"
+        base += "\n\nLAYOUT: The page is single-column. Do not attempt column detection."
 
+    # ── Language hint ─────────────────────────────────────────────────
     if languages and len(languages) > 1:
         lang_list = ", ".join(languages)
         base += (
-            f"\nThe document may contain text in: {lang_list}. "
-            "Preserve the original language of each passage.\n"
+            f"\n\nLANGUAGES: The document may contain text in: {lang_list}. "
+            "Preserve the original language of each passage."
         )
-
-    # Citation-specific instructions for academic, theological, and
-    # citation-focused documents
-    if content_type in ("academic", "theological", "citation_focused"):
-        base += (
-            "\nCitation rules:\n"
-            "- Preserve footnote markers ([^N]) and their corresponding text.\n"
-            "- For references with DOIs, preserve the full DOI string.\n"
-            "- Mark any uncertain citations with [?].\n"
-        )
-
-    # Detailed citation preservation rules (always appended when applicable)
-    if content_type in ("theological", "academic", "citation_focused"):
-        base += _CITATION_PRESERVATION_RULES
 
     return base
 
 
-# ── Citation preservation block (shared across prompts) ────────────────────
+# ── Document context hints (injected per content_type) ─────────────────────
 
-_CITATION_PRESERVATION_RULES = (
-    "\n"
-    "CITATION PRESERVATION RULES:\n"
-    "- Preserve ALL Roman numerals in Pope names exactly: PAUL VI, PIUS XII"
-    ' (never "Paul Vi" or "Pius Xii")\n'
-    "- Preserve section symbols (\u00a7) and paragraph markers exactly\n"
-    "- Preserve Denzinger numbers: DS 150, Denz. 150, DH 150\n"
-    "- Preserve AAS references: AAS 58 (1966) 123-145\n"
-    "- Preserve canon law citations: can. 123 \u00a72, CIC/1983 c. 1055\n"
-    "- Preserve patristic abbreviations: Conf., De Civ. Dei, ST, SCG, Ant.\n"
-    "- Preserve ancient source abbreviations: 1QS, 1 En., Ign. Eph., "
-    "Gos. Thom., m. Ber., b. Ber.\n"
-    "- Preserve DOIs character-perfect: 10.1017/S0028688515000209\n"
-    "- Preserve en dashes (\u2013) in page ranges (do NOT replace with hyphens)\n"
-    "- Preserve parenthetical series references: (NPNF1 1:180), "
-    "(Thackeray, LCL)\n"
-    "- Preserve liturgical text names: Roman Missal, GIRM, "
-    "Lectionary for Mass\n"
-    "- Preserve Aquinas abbreviations: ST, SCG, De ente, Cat. aur., "
-    "In Meta., Comp. theol.\n"
-    "- Preserve Bible citations exactly: Gen 1:1, Gen 1:1 NRSV\n"
-    "- Preserve Church Father citations: Augustine, *Conf.* 8.12.29 "
-    "(NPNF1 1:180)\n"
-    "- Preserve Josephus/Philo citations: Josephus, Ant. 2.233-235 "
-    "(Thackeray, LCL)\n"
-    "- Preserve Dead Sea Scroll references: 1QS (Rule of the Community) "
-    "3:13-4:26\n"
-    "- Preserve Nag Hammadi references: Gos. Thom. (NHC II, 2; saying 32)\n"
-    "- Preserve Qur'an citations: Qur'an 2:255 (trans. Yusuf Ali)\n"
-    "- Preserve rabbinic citations: m. Ber. 1:1, b. Ber. 2a\n"
-    "- Preserve papal document type identifiers (encyclical, apostolic "
-    "exhortation, etc.)\n"
+_DOCUMENT_CONTEXT_HINTS: dict[str, str] = {
+    "theological": (
+        "This is an ecclesiastical or theological document. "
+        "It may contain ecclesiastical Latin, dual-column layout, "
+        "and extensive footnotes with academic citations."
+    ),
+    "academic": (
+        "This is an academic publication. "
+        "Preserve all footnotes, DOIs, and bibliographic references verbatim. "
+        "If the page contains tables, preserve them as markdown tables."
+    ),
+    "mathematical": (
+        "This is a scientific or mathematical document. "
+        "Preserve all equations, formulas, and LaTeX-style notation verbatim."
+    ),
+    "legal": (
+        "This is a legal document. "
+        "Preserve all section symbols (§), statute references, and citation formats exactly."
+    ),
+    "citation_focused": (
+        "This document contains extensive citations. "
+        "Preserve every footnote, reference, and bibliographic entry verbatim. "
+        "Do not normalize or alter any citation format."
+    ),
+    "general": (
+        "This is a general document. "
+        "Preserve the original formatting, footnotes, and any tables verbatim."
+    ),
+}
+
+# ── Formatting preservation rules (appended to every prompt) ────────
+
+_FORMATTING_PRESERVATION_RULES = (
+    "FORMATTING RULES:\n"
+    "1. Preserve ALL text verbatim — do not summarize, omit, or alter anything.\n"
+    "2. Mark any text you cannot read with [illegible].\n"
+    "3. Format as clean markdown: **bold** for headlines, *italic* for "
+    "Latin phrases, book titles, and journal names.\n"
+    "4. Use blockquotes (>) for extended quotations.\n"
+    "5. If the page contains dual-column layout, linearize left column "
+    "first, then right.\n"
+    "6. If the page contains footnotes, preserve EVERY footnote marker "
+    "(numbers, asterisks, daggers, etc.) and include the footnote text "
+    "at the bottom prefixed with [^N]: where N matches the marker.\n"
+    "7. If the page contains tables, preserve them as markdown tables "
+    "(pipe-delimited columns, header row separated by dashes).\n"
+    "8. Preserve special characters exactly: en dashes (–), em dashes (—), "
+    "section symbols (§), pilcrows (¶), and all Unicode characters.\n"
+    "9. Do NOT add interpretive notes, commentary, or translation.\n"
+    "10. Return ONLY the merged markdown — no preamble, no explanation."
 )
 
 

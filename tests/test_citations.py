@@ -142,13 +142,16 @@ class TestCitationPreservation:
 class TestCitationSystemPrompts:
     """Verify VLM system prompts include citation preservation rules."""
 
-    def test_theological_prompt_includes_citation_rules(self):
+    def test_theological_prompt_includes_formatting_rules(self):
         from ocr_pipeline.merger import _build_system_prompt
 
         prompt = _build_system_prompt(
             content_type="theological", column_layout="auto", languages=["en", "la"]
         )
-        assert "PAUL VI" in prompt or "Pope" in prompt or "citation" in prompt.lower()
+        # Should include the document context hint and formatting rules
+        assert "ecclesiastical" in prompt.lower()
+        assert "FORMATTING RULES" in prompt
+        assert "[illegible]" in prompt or "footnote" in prompt.lower()
 
     def test_academic_prompt_includes_citation_rules(self):
         from ocr_pipeline.merger import _build_system_prompt
@@ -175,5 +178,7 @@ class TestCitationSystemPrompts:
         prompt = _build_system_prompt(
             content_type="general", column_layout="auto", languages=["en"]
         )
-        # General prompt shouldn't mention Denzinger or AAS
-        assert "Denzinger" not in prompt or "AAS" not in prompt
+        # General prompt shouldn't mention Denzinger or PAUL VI or AAS
+        assert "Denzinger" not in prompt
+        assert "PAUL VI" not in prompt
+        assert "canon law" not in prompt.lower()
