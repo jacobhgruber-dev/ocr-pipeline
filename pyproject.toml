@@ -49,9 +49,9 @@ ocr-pipeline = "ocr_pipeline.cli:main"
 ocr-pipeline-mcp = "ocr_pipeline.mcp_server:main"
 
 [project.urls]
-Homepage = "https://github.com/jacobhgruber-dev/academic-research-mcp"
-Repository = "https://github.com/jacobhgruber-dev/academic-research-mcp"
-Issues = "https://github.com/jacobhgruber-dev/academic-research-mcp/issues"
+Homepage = "https://github.com/jacobhgruber-dev/ocr-pipeline"
+Repository = "https://github.com/jacobhgruber-dev/ocr-pipeline"
+Issues = "https://github.com/jacobhgruber-dev/ocr-pipeline/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ocr_pipeline"]
