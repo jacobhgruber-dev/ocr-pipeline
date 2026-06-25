@@ -1,0 +1,209 @@
+# OCR Pipeline Configuration
+# Copy this file to config.yaml and fill in your API keys.
+#
+# Every field can also be set via environment variable (OVERRIDES this file):
+#   MATHPIX_APP_ID
+#   MATHPIX_APP_KEY
+#   ANTHROPIC_API_KEY
+#   GEMINI_API_KEY
+#   GOOGLE_CLOUD_PROJECT
+
+# ---------------------------------------------------------------------------
+# Input / Output
+# ---------------------------------------------------------------------------
+
+# Directory containing PDF files to process (can contain subdirectories).
+input_dir: "./pdfs/"
+
+# Directory where processed output is written (one subdir per PDF, one
+# `.md` file per page).
+output_dir: "./output/"
+
+# Checkpoint directory for resumable runs. Defaults to output_dir/.checkpoint/
+# if not set. Set to "" to disable checkpointing.
+checkpoint_dir: ""  # defaults to output_dir/.checkpoint/
+
+# ---------------------------------------------------------------------------
+# Engine Selection
+# ---------------------------------------------------------------------------
+# Which OCR engines to run. Engines run in parallel on each page.
+# Available:
+#   marker        — local, free, general-purpose (recommended default)
+#   mathpix       — API, best for math-heavy PDFs. Get key at https://mathpix.com
+#   google_doc_ai — API, Google Cloud Document AI. See https://cloud.google.com/document-ai
+#   surya2        — future (not yet implemented)
+engines:
+  - marker
+  # - mathpix
+  # - google_doc_ai
+
+# ---------------------------------------------------------------------------
+# VLM Merge
+# ---------------------------------------------------------------------------
+# A Vision Language Model reads the page image + all engine outputs and
+# produces a single clean markdown transcription. Disable to use raw engine
+# output directly.
+
+vlm:
+  enabled: true
+
+  # Model to use for merging. Cheapest option shown first.
+  model: "gemini-2.0-flash-001"
+  # Get your Gemini API key at https://aistudio.google.com (free tier: 1500 req/day).
+
+  # Alternative models (pick one):
+  # model: "claude-haiku-4-5"       # Get key at https://console.anthropic.com
+  # model: "claude-sonnet-4-6"      # Higher quality, higher cost
+
+  # Fallback model if the primary model fails.
+  fallback_model: "claude-sonnet-4-6"
+
+  # Skip VLM when all engines produce near-identical output (0.0–1.0).
+  # 0.97 = 97% similarity threshold. Set to 1.0 to always use VLM.
+  agreement_threshold: 0.97
+
+  # Maximum tokens for the VLM response.
+  max_tokens: 8192
+
+  # Conservative cost estimate per VLM call (default $0.005; actual ~$0.00013).
+  # Used for budget tracking.
+  vlm_cost_per_call: 0.005
+
+  # Custom system prompt (path to a .md file, or inline text).
+  # When empty, a built-in prompt is used based on content_type (see below).
+  system_prompt: ""
+
+# ---------------------------------------------------------------------------
+# API Keys
+# ---------------------------------------------------------------------------
+# All keys can also be set via the environment variables listed above.
+# Leave blank to use environment variables.
+
+# Mathpix — https://mathpix.com → sign up. Free tier: 1000 pages/month.
+mathpix_app_id: ""
+mathpix_app_key: ""
+
+# Anthropic (Claude) — https://console.anthropic.com → get API key. Pay-as-you-go.
+anthropic_api_key: ""
+
+# Google Gemini — https://aistudio.google.com → get API key. Free tier: 1500 req/day.
+gemini_api_key: ""
+
+# Google Cloud Document AI — https://cloud.google.com/document-ai → set up processor.
+# Free tier: 500 pages/month.
+google_cloud_project: ""
+
+# ---------------------------------------------------------------------------
+# Rendering
+# ---------------------------------------------------------------------------
+# DPI for PDF-to-PNG rendering (used by OCR engines that need images).
+render_dpi: 300
+
+# PyMuPDF text extraction flags. None (default) = use PyMuPDF defaults
+# (PRESERVE_WHITESPACE | PRESERVE_LIGATURES). Set to 0 for the same behavior
+# explicitly, or use any combination of the TEXT_PRESERVE_* flags.
+# See PyMuPDF docs for flags: https://pymupdf.readthedocs.io/en/latest/page.html#Page.get_text
+# text_extraction_flags:
+
+# ---------------------------------------------------------------------------
+# Post-Processing (Self-Healing)
+# ---------------------------------------------------------------------------
+# Automatic cleanup applied to text-extractable pages.
+postprocess:
+  enabled: true
+
+  # Cleanup steps to apply. Available:
+  #   soft_hyphens         — remove "of\u00adfice" → "office"
+  #   em_dash_breaks       — fix line breaks at em-dashes
+  #   whitespace_normalize — collapse multiple spaces/newlines
+  #   ligature_expand      — ﬁ → fi, ﬂ → fl, etc.
+  #   stray_control_chars  — strip non-printable control characters
+  steps:
+    - soft_hyphens
+    - em_dash_breaks
+    - whitespace_normalize
+    - ligature_expand
+    - stray_control_chars
+
+# ---------------------------------------------------------------------------
+# Cost Control
+# ---------------------------------------------------------------------------
+# Budget enforcement. When cumulative cost exceeds the cap, the pipeline
+# refuses new API work (VLM merge is skipped; engine output is used directly).
+# Set to null for no budget limit.
+
+budget_cap_usd: null  # e.g., 10.0
+
+# Per-page cost estimates for each engine (used for budget tracking).
+# You can override these if your actual costs differ.
+engine_cost_per_page:
+  google_doc_ai: 0.0015
+  mathpix: 0.005
+  marker: 0.0
+
+# ---------------------------------------------------------------------------
+# Output Formats
+# ---------------------------------------------------------------------------
+# Which output formats to produce. "markdown" is always written; add "json"
+# for structured JSON with bounding boxes, blocks, and engine metadata.
+output_formats:
+  - markdown
+  # - json  # uncomment for structured JSON with bounding boxes
+
+# ---------------------------------------------------------------------------
+# Concurrency
+# ---------------------------------------------------------------------------
+# Maximum parallel workers for concurrent engine calls.
+max_workers: 4
+
+# Marker engine concurrency limit (Marker is memory-intensive).
+marker_concurrency: 1
+
+# -- Test Mode ----------------------------------------------------------------
+# Limit processing to the first 3 pages per PDF for quick testing.
+test_mode: false
+
+# ---------------------------------------------------------------------------
+# Retry
+# ---------------------------------------------------------------------------
+# Exponential backoff retry for ALL API calls (engines + VLM).
+max_retries: 3
+retry_base_delay_sec: 1.0   # initial delay before first retry
+retry_max_delay_sec: 60.0   # maximum delay between retries
+api_timeout_sec: 120.0      # per-call timeout
+
+# ---------------------------------------------------------------------------
+# Content Hints
+# ---------------------------------------------------------------------------
+# These drive the built-in VLM system prompt to improve accuracy for
+# specific document types. Set to "general" if unsure.
+
+content_type: "general"
+# Options: "general", "theological", "mathematical", "legal"
+
+column_layout: "auto"
+# Options: "auto" (detect), "single", "dual"
+
+# Languages present in the document (ISO 639-1 codes).
+languages:
+  - en
+  # - la
+  # - de
+  # - fr
+
+# ---------------------------------------------------------------------------
+# Marker Engine (advanced)
+# ---------------------------------------------------------------------------
+# Path to a dedicated Python virtual environment for Marker.
+# Marker is installed in isolation to avoid PyTorch/CUDA version conflicts.
+# When relative, resolved against the config file's directory.
+# Set to "" to disable Marker.
+marker_venv: ""
+
+# Google Document AI processor ID. Required when using the google_doc_ai engine
+# (no default — you must provide your own).
+# Create your own at https://console.cloud.google.com/ai/document-ai
+google_processor_id: ""
+
+# GROBID metadata extraction (requires Docker: docker run -p 8070:8070 lfoppiano/grobid:0.8.1)
+grobid_url: "http://localhost:8070"
