@@ -11,16 +11,16 @@ Built-in checkpoint/resume means you can stop and restart without losing progres
 ## Quickstart
 
 ```bash
-# 1. Clone and enter the package directory
+# 1. Clone the package
 git clone https://github.com/jacobhgruber-dev/academic-research-mcp.git
 cd academic-research-mcp/ocr_pipeline
 
-# 2. Install the package and dependencies
+# 2. Install
 uv sync
 
-# 3. Copy and edit the config file
+# 3. Configure
 cp config.example.yaml config.yaml
-# Edit config.yaml: set input_dir, output_dir, and add your API keys
+# Edit config.yaml: set input_dir, output_dir, and add API keys
 
 # 4. Run
 uv run ocr-pipeline --config config.yaml
@@ -32,14 +32,17 @@ That's it. The pipeline discovers all PDFs under `input_dir`, processes them, an
 
 ## Features
 
-- **Multi-engine ensemble** — Marker (local, free), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.
-- **VLM merge** — Gemini or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves structure.
+- **Multi-engine ensemble** — Marker (local, free), Surya 2 (91 languages, layout + tables), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.
+- **VLM merge** — Gemini 3.5 Flash (default, ~$0.0002/page) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves formatting.
+- **Formatting preservation** — Footnotes (numbers, asterisks, daggers), italics, bold, tables (as markdown), and all special characters are preserved verbatim.
+- **Table extraction** — VLM instructed to output pipe-delimited markdown tables for all tabular content.
+- **GROBID metadata** — Extract title, authors, DOI, journal, volume, year. Injected as YAML frontmatter in per-document output.
 - **Checkpoint & resume** — Stop and restart at any time. Progress is saved per-page. Checkpoints are keyed by file path + size + modification time (not SHA256), so re-downloaded files are matched correctly.
 - **Budget tracking** — Set a cap in dollars. The pipeline refuses new API work when cumulative cost exceeds the limit.
-- **Self-healing** — Built-in post-processing cleans soft hyphens, em-dash line breaks, whitespace, ligatures, and stray control characters on text-extractable pages.
+- **Self-healing** — Built-in post-processing cleans soft hyphens, em-dash line breaks, whitespace, and ligatures.
+- **MCP server** — 4 tools (`ocr_pdf`, `ocr_page`, `ocr_status`, `ocr_metadata`) for opencode agents.
 - **CLI + library API** — Use as a `uvx` command or `from ocr_pipeline import Pipeline` in Python.
-- **Resumable** — V1 checkpoint migration included. Progress survives reorganized file trees.
-- **Configurable** — YAML config with environment variable overrides. Custom VLM prompts, engine selection, DPI, concurrency, retry policy, content type hints.
+- **Configurable** — YAML config with environment variable and opencode provider overrides.
 
 ---
 
@@ -67,13 +70,13 @@ uv sync --extra marker
 
 Marker provides free, high-quality OCR that runs entirely on your machine. It requires PyTorch.
 
-### Installing Surya 2 (future)
+### Installing Surya 2 (optional)
 
 ```bash
 uv sync --extra surya2
 ```
 
-Surya 2 will be a future alternative to Marker. Not yet implemented in the pipeline.
+Surya 2 is a 650M-param VLM that does OCR, layout analysis, table detection, and reading order in one pass. 91 languages, 83.3% on olmOCR-bench.
 
 ### System Dependencies
 
