@@ -238,21 +238,23 @@ class CredentialStore:
             for k, v in creds.items():
                 if v is not None and v != "" and k not in self._data:
                     self._data[str(k)] = str(v)
-        # 2. provider.*.options.apiKey → map to standard key names
+        # 2. provider.*.options → map to standard key names
         providers = data.get("provider", {})
         if isinstance(providers, dict):
             provider_map = {
-                "google": "GEMINI_API_KEY",
-                "anthropic": "ANTHROPIC_API_KEY",
+                "google": {"apiKey": "GEMINI_API_KEY"},
+                "anthropic": {"apiKey": "ANTHROPIC_API_KEY"},
+                "mathpix": {"appId": "MATHPIX_APP_ID", "appKey": "MATHPIX_APP_KEY"},
             }
-            for name, target_key in provider_map.items():
+            for name, field_map in provider_map.items():
                 prov = providers.get(name, {})
                 if isinstance(prov, dict):
                     opts = prov.get("options", {})
                     if isinstance(opts, dict):
-                        val = opts.get("apiKey", "") or opts.get("api_key", "")
-                        if val and target_key not in self._data:
-                            self._data[target_key] = str(val)
+                        for src_field, target_key in field_map.items():
+                            val = opts.get(src_field, "")
+                            if val and target_key not in self._data:
+                                self._data[target_key] = str(val)
         # 3. MCP server env sections
         mcp = data.get("mcp", {})
         if isinstance(mcp, dict):
