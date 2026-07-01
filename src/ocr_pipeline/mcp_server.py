@@ -58,11 +58,14 @@ def _build_config(
     engine_list = [e.strip() for e in engines.split(",") if e.strip()]
     lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
 
-    # Try env-based config first (picks up marker_venv, credentials, etc.)
+    # Try env-based config first, then project config.yaml, then bare fallback.
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
+        try:
+            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
+        except Exception:
+            cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
         ConfigLoader.apply_env_credentials(cfg)
 
     # Override with tool-supplied values
@@ -195,9 +198,12 @@ async def ocr_page(
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        cfg = PipelineConfig(
-            input_dir=img.parent, output_dir=Path("./ocr_output")
-        )
+        try:
+            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
+        except Exception:
+            cfg = PipelineConfig(
+                input_dir=img.parent, output_dir=Path("./ocr_output")
+            )
         ConfigLoader.apply_env_credentials(cfg)
 
     try:
@@ -249,9 +255,12 @@ async def ocr_status() -> dict[str, Any]:
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        cfg = PipelineConfig(
-            input_dir=Path("."), output_dir=Path("./ocr_output")
-        )
+        try:
+            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
+        except Exception:
+            cfg = PipelineConfig(
+                input_dir=Path("."), output_dir=Path("./ocr_output")
+            )
         ConfigLoader.apply_env_credentials(cfg)
 
     for name in engine_names:
@@ -293,9 +302,12 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        cfg = PipelineConfig(
-            input_dir=pdf.parent, output_dir=Path("./ocr_output")
-        )
+        try:
+            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
+        except Exception:
+            cfg = PipelineConfig(
+                input_dir=pdf.parent, output_dir=Path("./ocr_output")
+            )
         ConfigLoader.apply_env_credentials(cfg)
     grobid_url: str = cfg.grobid_url
 
