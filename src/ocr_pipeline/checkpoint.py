@@ -320,9 +320,9 @@ class CheckpointManager:
             stat_info = path_to_stat.get(old_path)
             if stat_info is None:
                 # Try case-insensitive match as a fallback.
-                for candidate, st in path_to_stat.items():
+                for candidate, stat_tuple in path_to_stat.items():
                     if candidate.lower() == old_path.lower():
-                        stat_info = (st.st_size, st.st_mtime)
+                        stat_info = stat_tuple
                         old_path = candidate  # use canonical casing
                         break
 

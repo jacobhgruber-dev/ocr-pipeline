@@ -516,7 +516,7 @@ def _call_gemini(
         try:
             response = client.models.generate_content(
                 model=model,
-                contents=[image_part, user_message],
+                contents=[image_part, genai.types.Part.from_text(text=user_message)],  # type: ignore[arg-type]
                 config=genai.types.GenerateContentConfig(
                     system_instruction=system_prompt,
                     max_output_tokens=max_tokens,

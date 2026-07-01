@@ -123,6 +123,14 @@ class PageProcessor:
         try:
             # Phase 1: try text extraction (fast path)
             if self._try_text_extraction(ctx):
+                if not self.config.vlm_enabled:
+                    return ctx
+                # VLM enabled: render + merge even with embedded text
+                self._render_page(ctx)
+                self._vlm_merge_extracted(ctx)
+                self._save_outputs(ctx)
+                ctx.page.status = PageStatus.COMPLETE
+                ctx.page.completed_at = _now_iso()
                 return ctx
 
             # Phase 2: render to PNG
@@ -262,6 +270,7 @@ class PageProcessor:
                 languages=self.config.languages,
                 custom_prompt=self.config.vlm_system_prompt,
             )
+            assert ctx.png_path is not None, "png_path must be set before VLM merge"
             merged_md, vlm_raw, vlm_model, merge_cost = self.vlm_merger.merge(
                 image_path=ctx.png_path,
                 engine_outputs=ctx.engine_outputs,
@@ -367,6 +376,48 @@ class PageProcessor:
             if eo.error is None and eo.text.strip():
                 return eo.text
         return ""
+
+    def _vlm_merge_extracted(self, ctx: PageContext) -> None:
+        """Send extracted text + page image through VLM for formatting."""
+        from .merger import _build_system_prompt
+        from .models import EngineName, EngineOutput
+
+        if not self.budget.can_spend(self.config.vlm_cost_per_call):
+            return
+
+        # Create a pseudo engine output from the extracted text
+        eo = EngineOutput(
+            engine=EngineName.MARKER,
+            text=ctx.page.merged_markdown,
+            error=None,
+        )
+
+        try:
+            system_prompt = _build_system_prompt(
+                content_type=self.config.content_type,
+                column_layout=self.config.column_layout,
+                languages=self.config.languages,
+                custom_prompt=self.config.vlm_system_prompt,
+            )
+            assert ctx.png_path is not None, "png_path must be set before VLM merge"
+            merged_md, vlm_raw, vlm_model, merge_cost = self.vlm_merger.merge(
+                image_path=ctx.png_path,
+                engine_outputs=[eo],
+                page_index=ctx.page.page_index,
+                pdf_identifier=ctx.page.page_label,
+                system_prompt=system_prompt,
+                model=self.config.vlm_model,
+                fallback_model=self.config.vlm_fallback_model,
+                max_tokens=self.config.vlm_max_tokens,
+                timeout_sec=self.config.api_timeout_sec,
+            )
+            ctx.page.merged_markdown = merged_md
+            ctx.page.vlm_raw_response = vlm_raw
+            ctx.page.metadata["vlm_model"] = vlm_model
+            self.budget.record_spend(merge_cost)
+            ctx.cost += merge_cost
+        except Exception:
+            pass  # Keep extracted text as-is
 
     def _can_skip_vlm(
         self,
