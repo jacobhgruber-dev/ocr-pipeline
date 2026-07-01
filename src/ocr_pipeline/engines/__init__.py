@@ -9,8 +9,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from ocr_pipeline.errors import ConfigError
-
 from ..models import EngineName, EngineOutput
 
 from .base import (
@@ -88,13 +86,15 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
             getattr(config, "google_cloud_project", None) if config is not None else None
         ) or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 
-        processor_id = getattr(config, "google_processor_id", None) if config is not None else None
+        processor_id = (
+            getattr(config, "google_processor_id", None) if config is not None else None
+        )
         if not processor_id:
-            raise ConfigError(
-                "Google Doc AI requires a processor_id. "
-                "Set google_processor_id in your config or create a processor at "
-                "https://console.cloud.google.com/ai/document-ai"
-            )
+            # Fall back to the engine class default (Google-provided OCR processor)
+            import inspect
+            sig = inspect.signature(GoogleDocAiEngine.__init__)
+            processor_id = sig.parameters["processor_id"].default
+
         location = getattr(config, "google_location", "us") if config is not None else "us"
         return GoogleDocAiEngine(
             project_id=project_id,

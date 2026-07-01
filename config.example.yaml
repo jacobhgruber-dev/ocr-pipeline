@@ -92,6 +92,7 @@ gemini_api_key: ""
 # Google Cloud Document AI — https://cloud.google.com/document-ai → set up processor.
 # Free tier: 500 pages/month.
 google_cloud_project: ""
+google_processor_id: "8081d1d423002a96"  # Google-provided OCR processor (default)
 
 # ---------------------------------------------------------------------------
 # Rendering
@@ -200,10 +201,9 @@ languages:
 # Set to "" to disable Marker.
 marker_venv: ""
 
-# Google Document AI processor ID. Required when using the google_doc_ai engine
-# (no default — you must provide your own).
+# Google Document AI processor ID. Defaults to Google's pre-built OCR processor.
 # Create your own at https://console.cloud.google.com/ai/document-ai
-google_processor_id: ""
+google_processor_id: "8081d1d423002a96"
 
-# GROBID metadata extraction (requires Docker: docker run -p 8070:8070 lfoppiano/grobid:0.8.1)
+# GROBID metadata extraction (requires Docker: docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.8.1)
 grobid_url: "http://localhost:8070"
