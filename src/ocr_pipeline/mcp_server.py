@@ -63,6 +63,7 @@ def _build_config(
         cfg = ConfigLoader.from_env()
     except Exception:
         cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
+        ConfigLoader.apply_env_credentials(cfg)
 
     # Override with tool-supplied values
     cfg.input_dir = pdf.parent
@@ -104,7 +105,7 @@ async def ocr_pdf(
     pdf_path: str,
     output_dir: str | None = None,
     engines: str = "marker",
-    vlm_model: str = "gemini-3.5-flash",
+    vlm_model: str = "gemini-2.5-flash",
     vlm_enabled: bool = True,
     content_type: str = "general",
     languages: str = "en",
@@ -119,7 +120,7 @@ async def ocr_pdf(
         pdf_path: Absolute path to the PDF file.
         output_dir: Directory for output files (default: ./ocr_output/).
         engines: Comma-separated engine names (marker, mathpix, surya2, google_doc_ai).
-        vlm_model: VLM model for merge (gemini-3.5-flash, claude-sonnet-4-6, etc.).
+        vlm_model: VLM model for merge (gemini-2.5-flash, claude-sonnet-4-6, etc.).
         vlm_enabled: Whether to use VLM to merge engine outputs.
         content_type: Document type hint (general, theological, academic, mathematical).
         languages: Comma-separated language codes (en, de, fr, la, grc, he, etc.).
@@ -197,6 +198,7 @@ async def ocr_page(
         cfg = PipelineConfig(
             input_dir=img.parent, output_dir=Path("./ocr_output")
         )
+        ConfigLoader.apply_env_credentials(cfg)
 
     try:
         engine_instance = create_engine(engine, cfg)
@@ -250,6 +252,7 @@ async def ocr_status() -> dict[str, Any]:
         cfg = PipelineConfig(
             input_dir=Path("."), output_dir=Path("./ocr_output")
         )
+        ConfigLoader.apply_env_credentials(cfg)
 
     for name in engine_names:
         try:
@@ -289,9 +292,12 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
     # Load grobid_url from config or fall back to default
     try:
         cfg = ConfigLoader.from_env()
-        grobid_url: str = cfg.grobid_url
     except Exception:
-        grobid_url = "http://localhost:8070"
+        cfg = PipelineConfig(
+            input_dir=pdf.parent, output_dir=Path("./ocr_output")
+        )
+        ConfigLoader.apply_env_credentials(cfg)
+    grobid_url: str = cfg.grobid_url
 
     try:
         engine = GrobidEngine(grobid_url=grobid_url)

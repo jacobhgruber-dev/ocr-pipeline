@@ -362,6 +362,35 @@ class ConfigLoader:
             return None
         return Path(value)
 
+    # ------------------------------------------------------------------
+    # Credential injection (for MCP-server fallback paths)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def apply_env_credentials(cfg: PipelineConfig) -> None:
+        """Read credential / connection env vars and apply them to *cfg*.
+
+        Designed for the MCP-server fallback path, where
+        ``from_env()`` fails (required dirs not set) but we still
+        want to pick up API keys from the environment.
+
+        Only sets fields when the corresponding env var is present
+        and non-empty.
+        """
+        _CREDENTIAL_ENV_MAP: list[tuple[str, str]] = [
+            ("mathpix_app_id", "MATHPIX_APP_ID"),
+            ("mathpix_app_key", "MATHPIX_APP_KEY"),
+            ("anthropic_api_key", "ANTHROPIC_API_KEY"),
+            ("gemini_api_key", "GEMINI_API_KEY"),
+            ("google_cloud_project", "GOOGLE_CLOUD_PROJECT"),
+            ("google_application_credentials", "GOOGLE_APPLICATION_CREDENTIALS"),
+            ("grobid_url", "GROBID_URL"),
+        ]
+        for field_name, env_var in _CREDENTIAL_ENV_MAP:
+            value = os.environ.get(env_var, "")
+            if value:
+                setattr(cfg, field_name, value)
+
     @staticmethod
     def _coerce_str_list(value: object) -> list[str]:
         if isinstance(value, list):
