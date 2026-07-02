@@ -615,10 +615,11 @@ PROFILES: dict[str, DocumentProfile] = {
         name="legal",
         system_prompt=_LEGAL_PROMPT,
         description=(
-            "Legal document with section symbols, statute references, case citations, "
-            "paragraph hierarchy, signature blocks, and defined terms."
+            "Legal document. Preserves section symbols, case citations, "
+            "paragraph hierarchy, signature blocks, and marginalia."
         ),
-        suggested_engines=["marker", "google_doc_ai"],
+        suggested_engines=["marker"],
+        # google_doc_ai optional for structured legal forms
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="claude-sonnet-5",
@@ -631,7 +632,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "tables, tolerances, part numbers, code blocks with syntax hints, "
             "diagrams, and procedure steps."
         ),
-        suggested_engines=["marker", "google_doc_ai"],
+        suggested_engines=["marker"],
+        # google_doc_ai optional for structured datasheets and forms
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
