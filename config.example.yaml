@@ -54,13 +54,13 @@ vlm:
   #   gemini-2.5-pro               - higher quality, higher cost
   #   gemini-1.5-pro               - larger context window
   #   claude-haiku-4-5              - fast, cheap Claude
-  #   claude-sonnet-4-6             - higher quality Claude
+  #   claude-sonnet-5             - higher quality Claude
   #   claude-3.5-haiku              - older fast Claude
   #   claude-3.5-sonnet             - older quality Claude
   # Get your Gemini API key at https://aistudio.google.com (free tier: 1500 req/day).
 
   # Fallback model if the primary model fails.
-  fallback_model: "claude-sonnet-4-6"
+  fallback_model: "claude-sonnet-5"
 
   # Skip VLM when all engines produce near-identical output (0.0–1.0).
   # 0.97 = 97% similarity threshold. Set to 1.0 to always use VLM.

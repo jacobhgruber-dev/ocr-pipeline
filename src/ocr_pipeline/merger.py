@@ -474,7 +474,7 @@ def merge_with_vlm(
     pdf_identifier: str,
     system_prompt: str = "",
     model: str = "gemini-3.5-flash",
-    fallback_model: str = "claude-sonnet-4-6",
+    fallback_model: str = "claude-sonnet-5",
     max_tokens: int = 4096,
     timeout_sec: float = 120.0,
 ) -> tuple[str, str, str, float]:
@@ -494,7 +494,7 @@ def merge_with_vlm(
                        :data:`DEFAULT_SYSTEM_PROMPT`.
         model: VLM model ID. Default: ``"gemini-3.5-flash"``.
         fallback_model: Model to use if primary model output is low quality.
-                        Default: ``"claude-sonnet-4-6"``.
+                        Default: ``"claude-sonnet-5"``.
         max_tokens: Max output tokens.
         timeout_sec: Timeout for the API call.
 
@@ -607,7 +607,7 @@ def compute_engine_agreement(outputs: list[EngineOutput]) -> float:
 # Per-million token rates in USD
 _ANTHROPIC_RATES: dict[str, tuple[float, float]] = {
     # Specific model IDs (checked first)
-    "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-sonnet-5": (3.0, 15.0),
     "claude-haiku-4-5": (1.0, 5.0),
     # Fallback prefix matches
     "claude-4-opus": (15.0, 75.0),

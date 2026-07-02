@@ -375,11 +375,11 @@ def suggested_model(profile_name: str) -> str:
     _MODEL_SUGGESTIONS: dict[str, str] = {
         "general": "gemini-2.5-flash",
         "academic": "gemini-2.5-flash",
-        "theological_journal": "claude-sonnet-4-6",
-        "irish_hagiography": "claude-sonnet-4-6",
+        "theological_journal": "claude-sonnet-5",
+        "irish_hagiography": "claude-sonnet-5",
         "mathematical": "gemini-2.5-flash",
         "legal": "gemini-2.5-flash",
-        "citation_focused": "claude-sonnet-4-6",
+        "citation_focused": "claude-sonnet-5",
     }
     return _MODEL_SUGGESTIONS.get(profile_name, "gemini-2.5-flash")
 

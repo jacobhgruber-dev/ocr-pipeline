@@ -25,7 +25,7 @@ class TestPipelineConfigDefaults:
         cfg = PipelineConfig(input_dir=Path("/in"), output_dir=Path("/out"))
         assert cfg.vlm_enabled is True
         assert cfg.vlm_model == "gemini-3.5-flash"
-        assert cfg.vlm_fallback_model == "claude-sonnet-4-6"
+        assert cfg.vlm_fallback_model == "claude-sonnet-5"
 
     def test_default_postprocess(self):
         cfg = PipelineConfig(input_dir=Path("/in"), output_dir=Path("/out"))

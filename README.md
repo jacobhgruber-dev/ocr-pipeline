@@ -23,7 +23,7 @@ uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type general
 
 # Or use Claude instead of Gemini (better for diacritics and citations):
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --content-type general --vlm-model claude-sonnet-4-6
+  --content-type general --vlm-model claude-sonnet-5
 
 # For more options, see what's available:
 uv run ocr-pipeline --list-profiles
@@ -167,7 +167,7 @@ uv run ocr-pipeline --config config.yaml
 # Choose engines and VLM model
 uv run ocr-pipeline --input ./my_pdfs/ --output ./out/ \
   --engines marker,mathpix \
-  --vlm-model claude-sonnet-4-6
+  --vlm-model claude-sonnet-5
 
 # Set a budget cap (stops API work when exceeded)
 uv run ocr-pipeline --input ./pdfs/ --budget 50.0
@@ -201,7 +201,7 @@ Usage: ocr-pipeline [OPTIONS]
   --input PATH           PDF input directory
   --output PATH          Output directory
   --engines LIST         Comma-separated: marker,mathpix,surya2,google_doc_ai
-  --vlm-model MODEL      VLM model for merge (gemini-2.5-flash, claude-sonnet-4-6, etc.)
+  --vlm-model MODEL      VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.)
   --no-vlm               Disable VLM merge
   --vlm-agreement FLOAT  Agreement threshold to skip VLM (default: 0.97)
   --budget FLOAT         Budget cap in USD
@@ -239,7 +239,7 @@ config = PipelineConfig(
     input_dir=Path("./my_pdfs/"),
     output_dir=Path("./output/"),
     engines=["marker", "mathpix"],
-    vlm_model="claude-sonnet-4-6",
+    vlm_model="claude-sonnet-5",
     budget_cap_usd=50.0,
     postprocess_enabled=True,
 )
@@ -269,7 +269,7 @@ print(pipeline.stats)
 | `engines` | list[str] | `["marker"]` | OCR engines to run |
 | `vlm.enabled` | bool | `true` | Enable VLM merge step |
 | `vlm.model` | str | `gemini-2.0-flash-001` | VLM model ID |
-| `vlm.fallback_model` | str | `claude-sonnet-4-6` | Fallback if primary fails |
+| `vlm.fallback_model` | str | `claude-sonnet-5` | Fallback if primary fails |
 | `vlm.agreement_threshold` | float | `0.97` | Skip VLM when engines agree |
 | `vlm.max_tokens` | int | `8192` | Max tokens for VLM response |
 | `vlm.system_prompt` | str | `""` | Custom prompt (empty = built-in) |
@@ -308,7 +308,7 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 | `gemini-2.0-flash` | Google | $0.10 / $0.40 | Cheapest option |
 | `gemini-2.5-pro` | Google | $1.25 / $10.00 | Higher quality, larger context |
 | `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | Fast Claude option |
-| `claude-sonnet-4-6` | Anthropic | $3.00 / $15.00 | Best for diacritics, citations, nuanced text |
+| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | Best for diacritics, citations, nuanced text |
 | `claude-3.5-haiku` | Anthropic | $1.00 / $5.00 | Older fast Claude |
 | `claude-3.5-sonnet` | Anthropic | $3.00 / $15.00 | Older quality Claude |
 
@@ -349,7 +349,7 @@ improve accuracy for non-English text.
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
   --engines marker,surya2 \
   --content-type irish_hagiography --langs en,gle,la \
-  --vlm-model claude-sonnet-4-6
+  --vlm-model claude-sonnet-5
 ```
 
 **What it does:** Marker + Surya2 (both support Irish language configuration).
@@ -378,7 +378,7 @@ LaTeX math mode ($...$ inline, $$...$$ display) for all equations.
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
   --engines marker,mathpix --content-type citation_focused \
-  --langs en,la --vlm-model claude-sonnet-4-6
+  --langs en,la --vlm-model claude-sonnet-5
 ```
 
 **What it does:** The citation_focused profile instructs the VLM to preserve every
@@ -388,13 +388,19 @@ for its superior precision on structured citation text.
 ### Free-only pipeline (no API keys needed)
 
 ```bash
+# Single engine (fastest):
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
   --engines marker --no-vlm --langs en
+
+# Two engines (more accurate, uses more RAM):
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker,surya2 --no-vlm --langs en
 ```
 
-**What it does:** Uses only Marker (local, free). VLM merge is disabled so no
-Gemini/Claude API key is needed. Output is raw Marker text after post-processing
-cleanup.
+**What it does:** Uses Marker and/or Surya2 (both local, free). VLM merge is
+disabled so no Gemini/Claude API key is needed. Marker is faster and lighter;
+add Surya2 for 91-language support and better layout analysis (but it uses
+more memory). Output is raw engine text after post-processing cleanup.
 
 **Estimated cost:** $0.00
 
@@ -454,8 +460,8 @@ Use Marker as your default. Add Mathpix for math-heavy documents. Use Google Doc
 
 ## Obtaining API Keys
 
-**You don't need any API keys to start.** The pipeline works with just Marker
-(a free, local OCR engine) and --no-vlm. You only need keys if you want:
+**You don't need any API keys to start.** The pipeline works with Marker and/or
+Surya2 (free, local OCR engines) and --no-vlm. You only need keys if you want:
 
 - VLM merge (Gemini key — free tier available at aistudio.google.com)
 - Mathpix (for math-heavy documents)

@@ -155,7 +155,7 @@ async def ocr_pdf(
         pdf_path: Absolute path to the PDF file.
         output_dir: Directory for output files (default: ./ocr_output/).
         engines: Comma-separated engine names (marker, mathpix, surya2, google_doc_ai).
-        vlm_model: VLM model for merge (gemini-2.5-flash, claude-sonnet-4-6, etc.).
+        vlm_model: VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.).
         vlm_enabled: Whether to use VLM to merge engine outputs.
         content_type: Document type hint (general, theological, academic, mathematical).
         languages: Comma-separated language codes (en, de, fr, la, grc, he, etc.).
@@ -335,7 +335,7 @@ async def ocr_status() -> dict[str, Any]:
             "gemini-2.0-flash",
             "gemini-1.5-pro",
             "claude-haiku-4-5",
-            "claude-sonnet-4-6",
+            "claude-sonnet-5",
             "claude-3.5-haiku",
             "claude-3.5-sonnet",
         ],

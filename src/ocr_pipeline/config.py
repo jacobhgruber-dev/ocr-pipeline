@@ -26,7 +26,7 @@ class PipelineConfig:
     # -- VLM merge -----------------------------------------------------------
     vlm_enabled: bool = True
     vlm_model: str = "gemini-3.5-flash"
-    vlm_fallback_model: str = "claude-sonnet-4-6"
+    vlm_fallback_model: str = "claude-sonnet-5"
     vlm_system_prompt: str = ""  # empty = use built-in default
     vlm_agreement_threshold: float = 0.97  # skip VLM when engines agree >= this
     vlm_max_tokens: int = 8192
@@ -277,7 +277,7 @@ class ConfigLoader:
             # VLM
             vlm_enabled=bool(raw.get("vlm_enabled", True)),
             vlm_model=str(raw.get("vlm_model", "gemini-3.5-flash")),
-            vlm_fallback_model=str(raw.get("vlm_fallback_model", "claude-sonnet-4-6")),
+            vlm_fallback_model=str(raw.get("vlm_fallback_model", "claude-sonnet-5")),
             vlm_system_prompt=str(raw.get("vlm_system_prompt", "")),
             vlm_agreement_threshold=float(raw.get("vlm_agreement_threshold", 0.97)),
             vlm_max_tokens=int(raw.get("vlm_max_tokens", 8192)),
