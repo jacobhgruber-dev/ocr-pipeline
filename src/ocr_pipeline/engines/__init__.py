@@ -86,12 +86,11 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
             getattr(config, "google_cloud_project", None) if config is not None else None
         ) or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
 
-        processor_id = (
-            getattr(config, "google_processor_id", None) if config is not None else None
-        )
+        processor_id = getattr(config, "google_processor_id", None) if config is not None else None
         if not processor_id:
             # Fall back to the engine class default (Google-provided OCR processor)
             import inspect
+
             sig = inspect.signature(GoogleDocAiEngine.__init__)
             processor_id = sig.parameters["processor_id"].default
 

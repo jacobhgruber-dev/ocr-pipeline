@@ -142,5 +142,3 @@ class PostProcessor:
         return "".join(
             ch for ch in text if ch == "\n" or ch == "\t" or (ord(ch) >= 32 and ord(ch) != 127)
         )
-
-

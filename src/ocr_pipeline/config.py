@@ -290,7 +290,13 @@ class ConfigLoader:
             postprocess_steps=_coerce_str_list(
                 raw.get(
                     "postprocess_steps",
-                    ["soft_hyphens", "em_dash_breaks", "whitespace_normalize", "ligature_expand", "stray_control_chars"],
+                    [
+                        "soft_hyphens",
+                        "em_dash_breaks",
+                        "whitespace_normalize",
+                        "ligature_expand",
+                        "stray_control_chars",
+                    ],
                 )
             ),
             # Cost control
