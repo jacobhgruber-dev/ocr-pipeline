@@ -146,18 +146,17 @@ class TestCitationSystemPrompts:
         from ocr_pipeline.merger import _build_system_prompt
 
         prompt = _build_system_prompt(
-            content_type="theological", column_layout="auto", languages=["en", "la"]
+            profile_name="academic", column_layout="auto", languages=["en", "la"]
         )
-        # Profile-based prompt should contain theological domain rules
-        # (formatting rules are now part of the profile prompt itself)
-        assert "ecclesiastical" in prompt.lower()
+        # Academic profile should contain citation rules
+        assert "citation" in prompt.lower()
         assert "[illegible]" in prompt or "footnote" in prompt.lower()
 
     def test_academic_prompt_includes_citation_rules(self):
         from ocr_pipeline.merger import _build_system_prompt
 
         prompt = _build_system_prompt(
-            content_type="academic", column_layout="single", languages=["en"]
+            profile_name="academic", column_layout="single", languages=["en"]
         )
         # Academic template should mention citations or references
         assert (
@@ -166,10 +165,10 @@ class TestCitationSystemPrompts:
             or "footnote" in prompt.lower()
         )
 
-    def test_citation_focused_prompt_exists(self):
+    def test_citation_rules_in_academic_profile(self):
         from ocr_pipeline.profiles import get_profile
 
-        profile = get_profile("citation_focused")
+        profile = get_profile("academic")
         assert "citation" in profile.system_prompt.lower()
 
     def test_general_prompt_does_not_include_specialized_rules(self):
@@ -177,7 +176,7 @@ class TestCitationSystemPrompts:
         from ocr_pipeline.merger import _build_system_prompt
 
         prompt = _build_system_prompt(
-            content_type="general", column_layout="auto", languages=["en"]
+            profile_name="general", column_layout="auto", languages=["en"]
         )
         # General prompt shouldn't mention Denzinger or PAUL VI or AAS
         assert "Denzinger" not in prompt

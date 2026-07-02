@@ -19,11 +19,11 @@ cd ocr-pipeline
 uv sync
 
 # 3. Try it (no config file needed for basic use)
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type general
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile general
 
 # Or use Claude instead of Gemini (better for diacritics and citations):
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --content-type general --vlm-model claude-sonnet-5
+  --profile general --vlm-model claude-sonnet-5
 
 # For more options, see what's available:
 uv run ocr-pipeline --list-profiles
@@ -70,12 +70,11 @@ Not sure which profile to use? Match your document to this table:
 | Your document... | Use this profile | What you get | Budget |
 |---|---|---|---|
 | Letters, reports, novels, general text | `general` | Clean markdown, basic formatting | Free with Gemini |
-| Academic paper with citations and footnotes | `academic` | Citation preservation, CMOS 18 formatting, DOI/author detection | Free with Gemini |
-| Math, physics, chemistry papers | `mathematical` | LaTeX math mode ($...$ and $$...$$), equation preservation | Free with Gemini |
-| Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations | Free with Gemini |
-| Old theological journals (dual-column, Latin) | `theological_journal` | Dual-column linearization, ecclesiastical Latin rules, footnotes | Free (best with Claude) |
-| Irish/Gaelic dictionary or text with accents | `irish_hagiography` | Fada diacritic preservation (á,é,í,ó,ú), single-column, Irish+English+Latin | Free (best with Claude) |
-| Citation-heavy reference work | `citation_focused` | Every footnote/reference preserved verbatim, citation formatting untouched | Free (best with Claude) |
+| Academic paper with citations and footnotes | `academic` | Citation preservation (all styles), DOIs, abstracts, author affiliations | Free with Gemini (best with Claude) |
+| Math, physics, chemistry papers | `mathematical` | LaTeX math mode, blackboard bold, theorem/proof blocks, equation numbers | Free with Gemini (best with Claude) |
+| Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations, signature blocks | Free with Gemini (best with Claude) |
+| Technical manuals, datasheets, specs | `technical` | Callout boxes, revision tables, tolerances, part numbers, code blocks | Free with Gemini |
+| Books (fiction, textbooks, reference) | `books` | Front/back matter, epigraphs, dialogue, scene breaks, index entries | Free with Gemini |
 
 ### By budget
 
@@ -93,10 +92,10 @@ Add any languages your document uses: `--langs en,fr,de`
 
 **Best quality** (adds Claude for critical profiles):
 ```bash
-uv run ocr-pipeline --profile irish_hagiography --vlm-model claude-sonnet-5 \
+uv run ocr-pipeline --profile academic --vlm-model claude-sonnet-5 \
   --input ./pdfs/ --output ./out/
 ```
-Profiles marked "best with Claude" above benefit from it for diacritics and citations.
+Profiles marked "best with Claude" above benefit from it for precision on structured text.
 
 **If you're not sure**, start here:
 ```bash
@@ -109,7 +108,7 @@ This processes the first 3 pages as a trial. Check the output, then adjust the p
 ## Features
 
 - **Multi-engine ensemble** — Marker (local, free), Surya 2 (91 languages, layout + tables), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.
-- **VLM merge** — Gemini 2.5 Flash (default) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Configurable profiles and system prompts — 7 pre-built profiles for different document types (theological, academic, Irish hagiography, mathematical, legal, citation-focused, general), or use a custom system prompt. Corrects OCR errors, resolves disagreements, preserves formatting.
+- **VLM merge** — Gemini 2.5 Flash (default) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Configurable profiles and system prompts — 6 pre-built profiles for different document types (general, academic, mathematical, legal, technical, books), or use a custom system prompt. Corrects OCR errors, resolves disagreements, preserves formatting.
 - **Formatting preservation** — Footnotes (numbers, asterisks, daggers), italics, bold, tables (as markdown), and all special characters are preserved verbatim.
 - **Table extraction** — VLM instructed to output pipe-delimited markdown tables for all tabular content.
 - **GROBID metadata** — Extract title, authors, DOI, journal, volume, year. Injected as YAML frontmatter in per-document output.
@@ -215,15 +214,13 @@ uv run ocr-pipeline --input ./my_pdfs/ --output ./out/ \
 # Set a budget cap (stops API work when exceeded)
 uv run ocr-pipeline --input ./pdfs/ --budget 50.0
 
-# Content-type hints for better VLM accuracy
-uv run ocr-pipeline --input ./pdfs/ \
-  --content-type theological \
-  --column-layout dual \
-  --langs en,la
-
 # Use a document profile for better accuracy
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --content-type irish_hagiography --langs en,gle,la
+  --profile academic --langs en,la
+
+# Override profile suggestions
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --profile academic --engines mathpix --vlm-model claude-sonnet-5
 
 # Dry run — list files without processing
 uv run ocr-pipeline --input ./pdfs/ --dry-run
@@ -248,8 +245,8 @@ Usage: ocr-pipeline [OPTIONS]
   --no-vlm               Disable VLM merge
   --vlm-agreement FLOAT  Agreement threshold to skip VLM (default: 0.97)
   --budget FLOAT         Budget cap in USD
-  --content-type TYPE    general, theological, academic, mathematical, legal,
-                         citation_focused, irish_hagiography
+  --profile NAME         Document profile: general, academic, mathematical,
+                         legal, technical, books
   --column-layout TYPE   single, dual, auto
   --langs LIST           Comma-separated language codes (en, de, fr, la, gle, etc.)
   --dpi N                Render DPI (default: 300)
@@ -330,7 +327,7 @@ print(pipeline.stats)
 | `retry_base_delay_sec` | float | `1.0` | Initial retry delay |
 | `retry_max_delay_sec` | float | `60.0` | Maximum retry delay |
 | `api_timeout_sec` | float | `120.0` | Per-call timeout |
-| `content_type` | str | `"general"` | Content hint for VLM prompt. One of: `general`, `theological`, `academic`, `mathematical`, `legal`, `citation_focused`, `irish_hagiography` |
+| `profile` | str | `"general"` | Document profile for VLM prompt. One of: `general`, `academic`, `mathematical`, `legal`, `technical`, `books` |
 | `column_layout` | str | `"auto"` | Column layout hint |
 | `languages` | list[str] | `["en"]` | Document languages. Language hints are passed to OCR engines (Marker, Surya2) for improved character recognition accuracy. |
 
@@ -369,7 +366,7 @@ All examples assume you've set up API keys in `config.yaml` (or as environment v
 
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --content-type general --langs en
+  --profile general --langs en
 ```
 
 **What it does:** Runs Marker (free, local) on all PDFs. Gemini-2.5-flash merges
@@ -382,37 +379,42 @@ the results. Good for 90% of documents.
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
   --engines marker,mathpix \
-  --content-type academic --langs en,de,fr,la
+  --profile academic --langs en,de,fr,la
 ```
 
 **What it does:** Marker + Mathpix handle text and equations. The academic profile
 preserves citations, DOIs, and footnotes in CMOS 18 format. Language hints
 improve accuracy for non-English text.
 
-### Irish/Gaelic dictionary or text with diacritics
+### Technical document (manual, datasheet, spec)
 
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --engines marker,surya2 \
-  --content-type irish_hagiography --langs en,gle,la \
-  --vlm-model claude-sonnet-5
+  --engines marker,google_doc_ai \
+  --profile technical --langs en
 ```
 
-**What it does:** Marker + Surya2 (both support Irish language configuration).
-The irish_hagiography profile preserves fada diacritics (á, é, í, ó, ú) as
-orthographically significant characters. Claude is used for better diacritic
-preservation. Mathpix and Google Doc AI are skipped (no equations, no forms).
+**What it does:** Marker + Google Document AI handle structured tables, callout
+boxes, and revision tables. The technical profile preserves tolerances, part
+numbers, units, and code blocks.
 
-Claude is used instead of the default Gemini because it preserves
-diacritics and character-level detail more reliably. If you don't have an
-Anthropic key, remove `--vlm-model` to use Gemini (free tier available).
+### Books (fiction, textbooks, reference)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --profile books --langs en
+```
+
+**What it does:** Marker handles the prose and occasional tables/illustrations.
+The books profile preserves front/back matter, epigraphs, dialogue, scene
+breaks, and cross-references.
 
 ### Math-heavy papers (equations, LaTeX)
 
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
   --engines mathpix,marker \
-  --content-type mathematical --langs en
+  --profile mathematical --langs en
 ```
 
 **What it does:** Mathpix handles equation OCR (its specialty), Marker provides
@@ -423,11 +425,11 @@ LaTeX math mode ($...$ inline, $$...$$ display) for all equations.
 
 ```bash
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
-  --engines marker,mathpix --content-type citation_focused \
+  --engines marker,mathpix --profile academic \
   --langs en,la --vlm-model claude-sonnet-5
 ```
 
-**What it does:** The citation_focused profile instructs the VLM to preserve every
+**What it does:** The academic profile instructs the VLM to preserve every
 citation verbatim — footnotes, DOIs, author names, page ranges. Claude is used
 for its superior precision on structured citation text.
 
@@ -477,17 +479,16 @@ checking quality before running a full batch.
 
 Pre-built system prompt profiles tailored to specific document types. Profiles control how the VLM merge step handles formatting, citations, languages, and special characters.
 
-| Profile | Content Type | Description |
-|---|---|---|
-| theological_journal | theological | 1950s-1970s theological journal with ecclesiastical Latin, dual-column, footnotes |
-| academic | academic | Generic academic publication — preserves citations, DOIs, footnotes |
-| irish_hagiography | academic | Modern Irish hagiography dictionary — preserves fada diacritics (á,é,í,ó,ú), English/Irish/Latin |
-| mathematical | mathematical | Scientific paper — LaTeX math mode for equations |
-| legal | legal | Legal documents — preserves section symbols and statute references |
-| citation_focused | citation_focused | Citation-rich documents — preserves every reference verbatim |
-| general | general | Generic document — no project-specific assumptions |
+| Profile | Description |
+|---|---|
+| general | Generic document — no project-specific assumptions. 15 rules covering tables, figures, multi-column, headers/footers, lists, and code blocks. |
+| academic | Academic publication — preserves citations (all styles), DOIs, abstracts, author affiliations, footnotes, tables with notes, and equations. |
+| mathematical | Mathematical paper — LaTeX math mode, blackboard bold, calligraphic letters, theorem/proof blocks, equation numbers. |
+| legal | Legal documents — section symbols, statute references, case citations, paragraph hierarchy, signature blocks, defined terms. |
+| technical | Technical/engineering — callout boxes, revision tables, tolerances, part numbers, code blocks with syntax hints, diagrams, procedure steps. |
+| books | Books — front/back matter, block quotes, epigraphs, dialogue, scene breaks, illustrations with captions, cross-references, multi-column layout. |
 
-Select a content type via `--content-type` CLI flag or `content_type` in config.yaml. You can also provide a fully custom system prompt via `vlm.system_prompt` in config.yaml.
+Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can also provide a fully custom system prompt via `vlm.system_prompt` in config.yaml. Create custom profiles by adding YAML files to the `./profiles/` directory (see `profiles/README.md`).
 
 ---
 

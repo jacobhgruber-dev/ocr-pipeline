@@ -127,31 +127,22 @@ DEFAULT_SYSTEM_PROMPT = (
     "7. Return ONLY the merged markdown — no preamble, no explanation."
 )
 
-# Map legacy content_type values to profile names where they differ.
-_CONTENT_TYPE_TO_PROFILE: dict[str, str] = {
-    "theological": "theological_journal",
-}
-
 
 def _build_system_prompt(
-    content_type: str = "general",
+    profile_name: str = "general",
     column_layout: str = "auto",
     languages: list[str] | None = None,
     custom_prompt: str = "",
-    profile_name: str = "",
 ) -> str:
     """Assemble the VLM system prompt from profiles.py and layout hints.
 
     Args:
-        content_type: One of ``"theological"``, ``"mathematical"``, ``"legal"``,
-                      ``"general"``, etc. Falls back to ``"general"``.
+        profile_name: Name of a :class:`DocumentProfile` (e.g. ``"academic"``,
+                      ``"legal"``).  Falls back to ``"general"``.
         column_layout: ``"single"``, ``"dual"``, or ``"auto"``.
         languages: List of ISO 639-1 language codes the document may contain.
         custom_prompt: If non-empty, overrides all template assembly and is
                        returned as-is.
-        profile_name: If non-empty, looks up a :class:`DocumentProfile` and
-                      uses its system prompt as the base. Takes precedence
-                      over *content_type*.
 
     Returns:
         The assembled system prompt string.
@@ -159,13 +150,7 @@ def _build_system_prompt(
     if custom_prompt:
         return custom_prompt
 
-    # Resolve profile: profile_name trumps content_type.
-    if profile_name:
-        profile = get_profile(profile_name)
-    else:
-        profile_key = _CONTENT_TYPE_TO_PROFILE.get(content_type, content_type)
-        profile = get_profile(profile_key)
-
+    profile = get_profile(profile_name)
     base = profile.system_prompt
 
     # ── Column layout hint ────────────────────────────────────────────

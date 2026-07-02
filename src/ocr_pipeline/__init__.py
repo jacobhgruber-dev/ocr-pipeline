@@ -14,12 +14,9 @@ from .pipeline import Pipeline
 from .profiles import (
     DocumentProfile,
     PROFILES,
-    best_model,
     get_profile,
     list_profiles,
-    suggested_engines,
-    suggested_languages,
-    suggested_model,
+    load_user_profiles,
 )
 
 __all__ = [
@@ -39,8 +36,5 @@ __all__ = [
     "PROFILES",
     "get_profile",
     "list_profiles",
-    "suggested_engines",
-    "suggested_languages",
-    "suggested_model",
-    "best_model",
+    "load_user_profiles",
 ]

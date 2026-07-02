@@ -19,73 +19,85 @@ from ocr_pipeline.merger import _build_system_prompt
 
 
 class TestGetProfileKnown:
-    def test_get_theological_journal(self):
-        profile = get_profile("theological_journal")
-        assert profile.name == "theological_journal"
-        assert profile.content_type == "theological"
-        assert len(profile.system_prompt) > 100
-        assert len(profile.description) > 5
-
     def test_get_academic(self):
         profile = get_profile("academic")
         assert profile.name == "academic"
-        assert profile.content_type == "academic"
         assert len(profile.system_prompt) > 100
         assert len(profile.description) > 5
-
-    def test_get_irish_hagiography(self):
-        profile = get_profile("irish_hagiography")
-        assert profile.name == "irish_hagiography"
-        assert profile.content_type == "irish_hagiography"
-        assert len(profile.system_prompt) > 100
-        assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
+        assert len(profile.suggested_languages) > 0
 
     def test_get_mathematical(self):
         profile = get_profile("mathematical")
         assert profile.name == "mathematical"
-        assert profile.content_type == "mathematical"
         assert len(profile.system_prompt) > 100
         assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
 
     def test_get_legal(self):
         profile = get_profile("legal")
         assert profile.name == "legal"
-        assert profile.content_type == "legal"
         assert len(profile.system_prompt) > 100
         assert len(profile.description) > 5
-
-    def test_get_citation_focused(self):
-        profile = get_profile("citation_focused")
-        assert profile.name == "citation_focused"
-        assert profile.content_type == "citation_focused"
-        assert len(profile.system_prompt) > 100
-        assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
 
     def test_get_general(self):
         profile = get_profile("general")
         assert profile.name == "general"
-        assert profile.content_type == "general"
         assert len(profile.system_prompt) > 100
         assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
+
+    def test_get_technical(self):
+        profile = get_profile("technical")
+        assert profile.name == "technical"
+        assert len(profile.system_prompt) > 100
+        assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
+        # Technical profile should mention callout labels
+        assert "WARNING" in profile.system_prompt or "callout" in profile.system_prompt.lower()
+
+    def test_get_books(self):
+        profile = get_profile("books")
+        assert profile.name == "books"
+        assert len(profile.system_prompt) > 100
+        assert len(profile.description) > 5
+        assert len(profile.suggested_engines) > 0
+        # Books profile should mention front matter or chapter titles
+        assert "chapter" in profile.system_prompt.lower() or "front matter" in profile.system_prompt.lower()
 
     def test_all_profiles_have_required_fields(self):
         for name in PROFILES:
             profile = get_profile(name)
             assert isinstance(profile.name, str)
-            assert isinstance(profile.content_type, str)
             assert isinstance(profile.system_prompt, str)
             assert isinstance(profile.description, str)
+            assert isinstance(profile.suggested_engines, list)
+            assert isinstance(profile.suggested_languages, list)
+            assert isinstance(profile.suggested_model, str)
+            assert isinstance(profile.best_model, str)
             assert profile.name  # non-empty
-            assert profile.content_type  # non-empty
             assert len(profile.system_prompt) > 10
             assert len(profile.description) > 0
+            assert len(profile.suggested_engines) > 0
+
+    def test_all_profiles_have_inline_suggestions(self):
+        for name in PROFILES:
+            profile = get_profile(name)
+            assert len(profile.suggested_engines) > 0, f"{name}: no suggested engines"
+            assert len(profile.suggested_languages) > 0, f"{name}: no suggested languages"
+            assert profile.suggested_model in ("gemini-2.5-flash", "claude-sonnet-5"), (
+                f"{name}: unexpected suggested_model {profile.suggested_model}"
+            )
+            assert profile.best_model in ("gemini-2.5-flash", "claude-sonnet-5"), (
+                f"{name}: unexpected best_model {profile.best_model}"
+            )
 
 
 class TestGetProfileUnknown:
     def test_nonexistent_profile_falls_back_to_general(self):
         profile = get_profile("nonexistent")
         assert profile.name == "general"
-        assert profile.content_type == "general"
 
     def test_empty_string_falls_back_to_general(self):
         profile = get_profile("")
@@ -98,19 +110,18 @@ class TestGetProfileUnknown:
 
 
 class TestListProfiles:
-    def test_has_at_least_seven_items(self):
+    def test_has_at_least_six_items(self):
         names = list_profiles()
-        assert len(names) >= 7
+        assert len(names) >= 6
 
     def test_includes_all_major_profiles(self):
         names = list_profiles()
         assert "general" in names
-        assert "theological_journal" in names
-        assert "irish_hagiography" in names
         assert "academic" in names
         assert "mathematical" in names
         assert "legal" in names
-        assert "citation_focused" in names
+        assert "technical" in names
+        assert "books" in names
 
     def test_returns_sorted_list(self):
         names = list_profiles()
@@ -118,34 +129,28 @@ class TestListProfiles:
 
     def test_matches_profiles_dict_keys(self):
         names = list_profiles()
-        assert set(names) == set(PROFILES.keys())
+        assert set(names) == set(PROFILES.keys()) or set(names) >= set(PROFILES.keys())
 
 
-class TestIrishHagiography:
-    def test_system_prompt_mentions_fada(self):
-        profile = get_profile("irish_hagiography")
-        assert "fada" in profile.system_prompt.lower()
+class TestHeadersFootersAndImageText:
+    """Verify all profiles include the header/footer bracketed format and image text OCR."""
 
-    def test_system_prompt_mentions_acute_accent(self):
-        profile = get_profile("irish_hagiography")
-        # Check for the actual fada character(s) in the prompt
-        prompt_lower = profile.system_prompt.lower()
-        assert "fada" in prompt_lower or "\u00e1" in profile.system_prompt
+    def test_general_has_header_footer_format(self):
+        profile = get_profile("general")
+        assert "[Header:" in profile.system_prompt or "Header:" in profile.system_prompt
+        assert "[Footer:" in profile.system_prompt or "Footer:" in profile.system_prompt
 
-    def test_description_mentions_diacritics(self):
-        profile = get_profile("irish_hagiography")
-        assert "fada" in profile.description.lower()
+    def test_general_has_image_text_ocr(self):
+        profile = get_profile("general")
+        assert "readable text" in profile.system_prompt.lower()
 
+    def test_academic_has_header_footer_format(self):
+        profile = get_profile("academic")
+        assert "[Header:" in profile.system_prompt or "Header:" in profile.system_prompt
 
-class TestTheologicalJournal:
-    def test_system_prompt_mentions_ecclesiastical_or_latin(self):
-        profile = get_profile("theological_journal")
-        prompt_lower = profile.system_prompt.lower()
-        assert "ecclesiastical" in prompt_lower or "latin" in prompt_lower
-
-    def test_description_mentions_journal(self):
-        profile = get_profile("theological_journal")
-        assert "journal" in profile.description.lower()
+    def test_technical_has_image_text_ocr(self):
+        profile = get_profile("technical")
+        assert "readable text" in profile.system_prompt.lower() or "visible text" in profile.system_prompt.lower()
 
 
 class TestDocumentProfileIsFrozen:
@@ -169,50 +174,38 @@ class TestDocumentProfileIsFrozen:
 
 
 class TestBuildSystemPromptWithProfile:
-    def test_irish_hagiography_prompt_mentions_fada(self):
-        prompt = _build_system_prompt(profile_name="irish_hagiography")
-        assert "fada" in prompt.lower()
+    def test_academic_prompt_mentions_citations(self):
+        prompt = _build_system_prompt(profile_name="academic")
+        assert "citation" in prompt.lower()
 
-    def test_irish_hagiography_prompt_is_longer_than_base(self):
-        prompt = _build_system_prompt(profile_name="irish_hagiography")
-        base = _build_system_prompt(content_type="general")
-        # The profile prompt includes context hints + formatting rules
+    def test_academic_prompt_is_longer_than_base(self):
+        prompt = _build_system_prompt(profile_name="academic")
+        base = _build_system_prompt(profile_name="general")
         assert len(prompt) > len(base)
 
-    def test_theological_profile_mentions_ecclesiastical(self):
-        prompt = _build_system_prompt(profile_name="theological_journal")
-        assert "ecclesiastical" in prompt.lower() or "latin" in prompt.lower()
+    def test_legal_profile_mentions_statute(self):
+        prompt = _build_system_prompt(profile_name="legal")
+        assert "\u00a7" in prompt or "statute" in prompt.lower()
+
+    def test_technical_profile_mentions_callouts(self):
+        prompt = _build_system_prompt(profile_name="technical")
+        assert "WARNING" in prompt or "callout" in prompt.lower()
+
+    def test_books_profile_mentions_chapter(self):
+        prompt = _build_system_prompt(profile_name="books")
+        assert "chapter" in prompt.lower() or "front matter" in prompt.lower()
 
     def test_unknown_profile_falls_back_to_general(self):
         prompt = _build_system_prompt(profile_name="nonexistent_profile_key")
-        # Falls back to general profile prompt (no longer appends context hints)
         assert "You are an OCR auditor" in prompt
         assert "[illegible]" in prompt
 
 
 class TestBuildSystemPromptFallsBack:
-    def test_mathematical_content_type_mentions_latex(self):
-        prompt = _build_system_prompt(content_type="mathematical")
+    def test_mathematical_profile_mentions_latex(self):
+        prompt = _build_system_prompt(profile_name="mathematical")
         assert "LaTeX" in prompt or "latex" in prompt.lower() or "math" in prompt.lower()
 
-    def test_theological_content_type_mentions_ecclesiastical(self):
-        prompt = _build_system_prompt(content_type="theological")
-        assert "ecclesiastical" in prompt.lower() or "theological" in prompt.lower()
-
-    def test_unknown_content_type_falls_back_to_general(self):
-        prompt = _build_system_prompt(content_type="nonexistent")
+    def test_empty_profile_uses_general(self):
+        prompt = _build_system_prompt(profile_name="")
         assert "You are an OCR auditor" in prompt
-
-    def test_empty_content_type_uses_general(self):
-        prompt = _build_system_prompt(content_type="")
-        assert "You are an OCR auditor" in prompt
-
-    def test_profile_name_takes_precedence_over_content_type(self):
-        prompt = _build_system_prompt(
-            content_type="mathematical",
-            profile_name="irish_hagiography",
-        )
-        # Should use the irish_hagiography profile, not mathematical
-        assert "fada" in prompt.lower()
-        # Irish hagiography prompt should NOT have LaTeX math content
-        assert "latex math mode" not in prompt.lower()

@@ -182,17 +182,14 @@ retry_max_delay_sec: 60.0   # maximum delay between retries
 api_timeout_sec: 120.0      # per-call timeout
 
 # ---------------------------------------------------------------------------
-# Content Hints
+# Document Profile
 # ---------------------------------------------------------------------------
-# These drive the built-in VLM system prompt to improve accuracy for
-# specific document types. Set to "general" if unsure.
-#
-# Each content_type selects a pre-built VLM system prompt tailored to that
-# document type. You can also provide a custom system prompt via vlm.system_prompt.
-# See README.md for full profile descriptions.
+# Selects a pre-built VLM system prompt tailored to a document type.
+# Set to "general" if unsure. You can also provide a custom system prompt
+# via vlm.system_prompt. See README.md for full profile descriptions.
+# Options: "general", "academic", "mathematical", "legal", "technical", "books"
 
-content_type: "general"
-# Options: "general", "theological", "academic", "citation_focused", "mathematical", "legal", "irish_hagiography"
+profile: "general"
 
 column_layout: "auto"
 # Options: "auto" (detect), "single", "dual"

@@ -76,8 +76,8 @@ class PipelineConfig:
     retry_max_delay_sec: float = 60.0
     api_timeout_sec: float = 120.0
 
-    # -- Content hints (for VLM system prompt) -------------------------------
-    content_type: str = "general"  # "theological", "mathematical", "legal", "general"
+    # -- Document profile ----------------------------------------------------
+    profile: str = "general"  # "general", "academic", "mathematical", "legal", "technical", "books"
     column_layout: str = "auto"  # "single", "dual", "auto"
     languages: list[str] = field(default_factory=lambda: ["en"])
 
@@ -150,7 +150,7 @@ class ConfigLoader:
         ("retry_base_delay_sec", "OCR_PIPELINE_RETRY_BASE_DELAY_SEC", float),
         ("retry_max_delay_sec", "OCR_PIPELINE_RETRY_MAX_DELAY_SEC", float),
         ("api_timeout_sec", "OCR_PIPELINE_API_TIMEOUT_SEC", float),
-        ("content_type", "OCR_PIPELINE_CONTENT_TYPE", str),
+        ("profile", "OCR_PIPELINE_PROFILE", str),
         ("column_layout", "OCR_PIPELINE_COLUMN_LAYOUT", str),
         ("output_formats", "OCR_PIPELINE_OUTPUT_FORMATS", None),  # comma-separated -> list
         ("marker_venv", "OCR_PIPELINE_MARKER_VENV", str),
@@ -324,7 +324,7 @@ class ConfigLoader:
             retry_max_delay_sec=float(raw.get("retry_max_delay_sec", 60.0)),
             api_timeout_sec=float(raw.get("api_timeout_sec", 120.0)),
             # Content hints
-            content_type=str(raw.get("content_type", "general")),
+            profile=str(raw.get("profile", "general")),
             column_layout=str(raw.get("column_layout", "auto")),
             languages=_coerce_str_list(raw.get("languages", ["en"])),
             # Output formats

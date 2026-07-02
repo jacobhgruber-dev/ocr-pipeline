@@ -268,7 +268,7 @@ class PageProcessor:
         # VLM merge
         try:
             system_prompt = _build_system_prompt(
-                content_type=self.config.content_type,
+                profile_name=self.config.profile,
                 column_layout=self.config.column_layout,
                 languages=self.config.languages,
                 custom_prompt=self.config.vlm_system_prompt,
@@ -413,7 +413,7 @@ class PageProcessor:
 
         try:
             system_prompt = _build_system_prompt(
-                content_type=self.config.content_type,
+                profile_name=self.config.profile,
                 column_layout=self.config.column_layout,
                 languages=self.config.languages,
                 custom_prompt=self.config.vlm_system_prompt,

@@ -8,7 +8,7 @@ Usage:
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test
     uv run ocr-pipeline --list-profiles
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --profile irish_hagiography
+    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --profile academic
 """
 
 from __future__ import annotations
@@ -28,12 +28,7 @@ from .languages import (
 )
 from .pipeline import Pipeline
 from .profiles import (
-    PROFILES,
-    best_model,
     get_profile,
-    suggested_engines,
-    suggested_languages,
-    suggested_model,
 )
 
 # ---------------------------------------------------------------------------
@@ -47,7 +42,6 @@ _CLI_VALUE_MAP: list[tuple[str, str, Callable[[Any], Any] | None]] = [
     ("vlm_model", "vlm_model", None),
     ("vlm_agreement", "vlm_agreement_threshold", None),
     ("budget", "budget_cap_usd", None),
-    ("content_type", "content_type", None),
     ("column_layout", "column_layout", None),
     ("langs", "languages", lambda v: [lang.strip() for lang in v.split(",") if lang.strip()]),
     ("dpi", "render_dpi", None),
@@ -80,7 +74,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --engines marker,mathpix"
             " --vlm-model gemini-2.0-flash-001\n"
             "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --budget 10.0"
-            " --content-type theological --langs en,la\n"
+            " --profile academic --langs en,la\n"
             "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run\n"
             "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test\n"
         ),
@@ -147,15 +141,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
     # -- Content hints -------------------------------------------------------
     parser.add_argument(
-        "--content-type",
-        default=None,
-        help="Content type: general, theological, mathematical, legal",
-    )
-    parser.add_argument(
         "--profile",
         type=str,
         default=None,
-        help="Document profile name (auto-fills content_type, engines, model, and languages)",
+        help="Document profile name (auto-fills engines, model, and languages). One of: general, academic, mathematical, legal, technical, books.",
     )
     parser.add_argument(
         "--column-layout",
@@ -303,14 +292,13 @@ def _build_config(args: argparse.Namespace) -> PipelineConfig:
     # Profile auto-fill: use profile defaults for fields not explicitly set via CLI
     if args.profile is not None:
         profile = get_profile(args.profile)
-        if args.content_type is None:
-            config.content_type = profile.content_type
+        config.profile = args.profile
         if args.engines is None:
-            config.engines = suggested_engines(args.profile)
+            config.engines = list(profile.suggested_engines)
         if args.vlm_model is None:
-            config.vlm_model = suggested_model(args.profile)
+            config.vlm_model = profile.suggested_model
         if args.langs is None:
-            config.languages = suggested_languages(args.profile)
+            config.languages = list(profile.suggested_languages)
 
     # Apply value overrides (only when user explicitly provided the flag)
     for cli_attr, cfg_field, transform in _CLI_VALUE_MAP:
@@ -350,7 +338,7 @@ def _dry_run(config: PipelineConfig) -> None:
     print(f"VLM merge:          {'enabled' if config.vlm_enabled else 'disabled'}")
     if config.vlm_enabled:
         print(f"VLM model:          {config.vlm_model}")
-    print(f"Content type:       {config.content_type}")
+    print(f"Profile:             {config.profile}")
     print(f"Column layout:      {config.column_layout}")
     print(f"Languages:          {', '.join(config.languages)}")
     print(f"Render DPI:         {config.render_dpi}")
@@ -376,19 +364,22 @@ def _dry_run(config: PipelineConfig) -> None:
 
 def _print_profiles() -> None:
     """Print all available document profiles and exit."""
+    from .profiles import list_profiles as _list_profiles
+
     print("Available document profiles (use with --profile):\n")
-    for profile in PROFILES.values():
+    all_names = _list_profiles()
+    for name in sorted(all_names):
+        profile = get_profile(name)
         print(f"  {profile.name}")
-        print(f"    Content type: {profile.content_type}")
         print(f"    Description: {profile.description}")
-        engines = ", ".join(suggested_engines(profile.name))
-        default_model = suggested_model(profile.name)
-        best = best_model(profile.name)
-        langs = ", ".join(suggested_languages(profile.name))
+        engines = ", ".join(profile.suggested_engines)
+        default_model = profile.suggested_model
+        best = profile.best_model
+        langs = ", ".join(profile.suggested_languages)
         print(f"    Suggested engines: {engines}")
         if best != default_model:
             print(f"    Default model: {default_model} (free tier)")
-            print(f"    Best quality: {best} (paid — add --vlm-model {best})")
+            print(f"    Best quality: {best} (paid -- add --vlm-model {best})")
         else:
             print(f"    Model: {default_model} (free tier)")
         print(f"    Suggested languages: {langs}")
@@ -396,7 +387,7 @@ def _print_profiles() -> None:
         print(f"    uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile {profile.name}")
         print()
     print(
-        "The --profile flag auto-fills content_type, engines, and languages.\n"
+        "The --profile flag auto-fills engines, model, and languages.\n"
         "VLM model defaults to gemini-2.5-flash (free tier available).\n"
         "You can override any value: --profile academic --engines mathpix --vlm-model claude-sonnet-5"
     )

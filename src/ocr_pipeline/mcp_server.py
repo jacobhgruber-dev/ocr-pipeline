@@ -20,12 +20,8 @@ from .languages import (
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
-    best_model,
     get_profile,
     list_profiles,
-    suggested_engines,
-    suggested_languages,
-    suggested_model,
 )
 
 logger = logging.getLogger("ocr-pipeline-mcp")
@@ -53,7 +49,6 @@ def _build_config(
     engines: str,
     vlm_model: str,
     vlm_enabled: bool,
-    content_type: str,
     languages: str,
     test_mode: bool,
     profile_name: str = "",
@@ -83,19 +78,16 @@ def _build_config(
     # Profile auto-fill: use profile suggestions for fields at their defaults.
     _default_engines = "marker"
     _default_vlm_model = "gemini-2.5-flash"
-    _default_content_type = "general"
     _default_languages = "en"
 
     if profile_name:
         profile = get_profile(profile_name)
         if engines == _default_engines:
-            engines = ",".join(suggested_engines(profile_name))
+            engines = ",".join(profile.suggested_engines)
         if vlm_model == _default_vlm_model:
-            vlm_model = suggested_model(profile_name)
-        if content_type == _default_content_type:
-            content_type = profile.content_type
+            vlm_model = profile.suggested_model
         if languages == _default_languages:
-            languages = ",".join(suggested_languages(profile_name))
+            languages = ",".join(profile.suggested_languages)
 
     engine_list = [e.strip() for e in engines.split(",") if e.strip()]
     lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
@@ -106,7 +98,7 @@ def _build_config(
     cfg.engines = engine_list
     cfg.vlm_model = vlm_model
     cfg.vlm_enabled = vlm_enabled
-    cfg.content_type = content_type
+    cfg.profile = profile_name if profile_name else "general"
     cfg.languages = lang_list
     cfg.test_mode = test_mode
 
@@ -142,7 +134,6 @@ async def ocr_pdf(
     engines: str = "marker",
     vlm_model: str = "gemini-2.5-flash",
     vlm_enabled: bool = True,
-    content_type: str = "general",
     languages: str = "en",
     test_mode: bool = False,
     profile_name: str = "",
@@ -158,10 +149,9 @@ async def ocr_pdf(
         engines: Comma-separated engine names (marker, mathpix, surya2, google_doc_ai).
         vlm_model: VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.).
         vlm_enabled: Whether to use VLM to merge engine outputs.
-        content_type: Document type hint (general, theological, academic, mathematical).
         languages: Comma-separated language codes (en, de, fr, la, grc, he, etc.).
         test_mode: If True, process only the first 3 pages.
-        profile_name: Document profile name (auto-fills content_type, engines, model, languages).
+        profile_name: Document profile name (auto-fills engines, model, languages).
     """
     output_dir = output_dir or "./ocr_output"
 
@@ -172,7 +162,6 @@ async def ocr_pdf(
             engines,
             vlm_model,
             vlm_enabled,
-            content_type,
             languages,
             test_mode,
             profile_name=profile_name,
@@ -287,7 +276,7 @@ async def ocr_profiles() -> dict[str, Any]:
 
     Returns all pre-registered document profiles with their names,
     content types, descriptions, suggested engines, and recommended
-    VLM models. Use these with the content_type parameter of
+    VLM models. Use these with the profile_name parameter of
     ocr_pdf to get tailored VLM system prompts.
     """
     result = []
@@ -295,11 +284,11 @@ async def ocr_profiles() -> dict[str, Any]:
         result.append(
             {
                 "name": profile.name,
-                "content_type": profile.content_type,
                 "description": profile.description,
-                "suggested_engines": suggested_engines(profile.name),
-                "suggested_model": suggested_model(profile.name),
-                "best_model": best_model(profile.name),
+                "suggested_engines": profile.suggested_engines,
+                "suggested_languages": profile.suggested_languages,
+                "suggested_model": profile.suggested_model,
+                "best_model": profile.best_model,
             }
         )
     return {"profiles": result}
