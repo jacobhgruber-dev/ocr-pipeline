@@ -73,18 +73,37 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         venv_path = getattr(config, "marker_venv", None) if config is not None else None
         if venv_path is None:
             raise ValueError(
-                "MarkerEngine requires a venv_path. "
-                "Provide it via config.marker_venv or pass it explicitly."
+                "MarkerEngine requires a venv_path.\n"
+                "Set marker_venv in config.yaml, or install with: uv sync --extra marker"
             )
         return MarkerEngine(venv_path=venv_path)
 
     if name == EngineName.MATHPIX:
+        app_id = getattr(config, "mathpix_app_id", "") if config is not None else ""
+        app_key = getattr(config, "mathpix_app_key", "") if config is not None else ""
+        if not app_id:
+            app_id = os.environ.get("MATHPIX_APP_ID", "")
+        if not app_key:
+            app_key = os.environ.get("MATHPIX_APP_KEY", "")
+        if not app_id or not app_key:
+            raise ValueError(
+                "MathpixEngine requires credentials.\n"
+                "Set mathpix_app_id and mathpix_app_key in config.yaml, "
+                "or set MATHPIX_APP_ID and MATHPIX_APP_KEY env vars.\n"
+                "Get keys at: https://mathpix.com"
+            )
         return MathpixEngine()
 
     if name == EngineName.GOOGLE_DOC_AI:
         project_id = (
             getattr(config, "google_cloud_project", None) if config is not None else None
         ) or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+        if not project_id:
+            raise ValueError(
+                "GoogleDocAiEngine requires a Google Cloud project.\n"
+                "Set google_cloud_project in config.yaml or GOOGLE_CLOUD_PROJECT env var.\n"
+                "See: https://cloud.google.com/document-ai"
+            )
 
         processor_id = getattr(config, "google_processor_id", None) if config is not None else None
         if not processor_id:
@@ -113,7 +132,13 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         venv = None
         if config is not None:
             venv = getattr(config, "surya2_venv", None) or getattr(config, "marker_venv", None)
-        return Surya2Engine(venv_path=Path(venv) if venv else None)
+        try:
+            return Surya2Engine(venv_path=Path(venv) if venv else None)
+        except ValueError:
+            raise ValueError(
+                "Surya2Engine requires a venv_path.\n"
+                "Set surya2_venv in config.yaml, or install with: uv sync --extra surya2"
+            )
 
     # Should never reach here
     raise ValueError(f"Unknown engine: {name!r}")

@@ -70,6 +70,12 @@ class Pipeline:
         self.config = config
         self._vlm_merger = vlm_merger or DefaultVlmMerger()
 
+        # Validate language codes early
+        from .languages import validate_language_config
+
+        if self.config.languages:
+            validate_language_config(self.config.languages)
+
         # Budget
         self.budget = BudgetTracker(config.budget_cap_usd)
 
