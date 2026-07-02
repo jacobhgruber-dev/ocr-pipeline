@@ -33,7 +33,7 @@ That's it. The pipeline discovers all PDFs under `input_dir`, processes them, an
 ## Features
 
 - **Multi-engine ensemble** — Marker (local, free), Surya 2 (91 languages, layout + tables), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.
-- **VLM merge** — Gemini 3.5 Flash (default, ~$0.0002/page) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves formatting.
+- **VLM merge** — Gemini 2.5 Flash (default) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Configurable profiles and system prompts — 7 pre-built profiles for different document types (theological, academic, Irish hagiography, mathematical, legal, citation-focused, general), or use a custom system prompt. Corrects OCR errors, resolves disagreements, preserves formatting.
 - **Formatting preservation** — Footnotes (numbers, asterisks, daggers), italics, bold, tables (as markdown), and all special characters are preserved verbatim.
 - **Table extraction** — VLM instructed to output pipe-delimited markdown tables for all tabular content.
 - **GROBID metadata** — Extract title, authors, DOI, journal, volume, year. Injected as YAML frontmatter in per-document output.
@@ -145,6 +145,10 @@ uv run ocr-pipeline --input ./pdfs/ \
   --column-layout dual \
   --langs en,la
 
+# Use a document profile for better accuracy
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --content-type irish_hagiography --langs en,gle,la
+
 # Dry run — list files without processing
 uv run ocr-pipeline --input ./pdfs/ --dry-run
 
@@ -231,9 +235,9 @@ print(pipeline.stats)
 | `retry_base_delay_sec` | float | `1.0` | Initial retry delay |
 | `retry_max_delay_sec` | float | `60.0` | Maximum retry delay |
 | `api_timeout_sec` | float | `120.0` | Per-call timeout |
-| `content_type` | str | `"general"` | Content hint for VLM prompt |
+| `content_type` | str | `"general"` | Content hint for VLM prompt. One of: `general`, `theological`, `academic`, `mathematical`, `legal`, `citation_focused`, `irish_hagiography` |
 | `column_layout` | str | `"auto"` | Column layout hint |
-| `languages` | list[str] | `["en"]` | Document languages |
+| `languages` | list[str] | `["en"]` | Document languages. Language hints are passed to OCR engines (Marker, Surya2) for improved character recognition accuracy. |
 
 ### Environment variable overrides
 
@@ -246,6 +250,24 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 export GEMINI_API_KEY="AIza..."
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 ```
+
+---
+
+## Document Profiles
+
+Pre-built system prompt profiles tailored to specific document types. Profiles control how the VLM merge step handles formatting, citations, languages, and special characters.
+
+| Profile | Content Type | Description |
+|---|---|---|
+| theological_journal | theological | 1950s-1970s theological journal with ecclesiastical Latin, dual-column, footnotes |
+| academic | academic | Generic academic publication — preserves citations, DOIs, footnotes |
+| irish_hagiography | academic | Modern Irish hagiography dictionary — preserves fada diacritics (á,é,í,ó,ú), English/Irish/Latin |
+| mathematical | mathematical | Scientific paper — LaTeX math mode for equations |
+| legal | legal | Legal documents — preserves section symbols and statute references |
+| citation_focused | citation_focused | Citation-rich documents — preserves every reference verbatim |
+| general | general | Generic document — no project-specific assumptions |
+
+Select a content type via `--content-type` CLI flag or `content_type` in config.yaml. You can also provide a fully custom system prompt via `vlm.system_prompt` in config.yaml.
 
 ---
 

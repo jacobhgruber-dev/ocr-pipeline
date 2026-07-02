@@ -48,12 +48,16 @@ vlm:
   enabled: true
 
   # Model to use for merging. Cheapest option shown first.
-  model: "gemini-2.0-flash-001"
+  model: "gemini-2.5-flash"
+  # Alternative models:
+  #   gemini-2.0-flash-001         - cheaper, lower quality
+  #   gemini-2.5-pro               - higher quality, higher cost
+  #   gemini-1.5-pro               - larger context window
+  #   claude-haiku-4-5              - fast, cheap Claude
+  #   claude-sonnet-4-6             - higher quality Claude
+  #   claude-3.5-haiku              - older fast Claude
+  #   claude-3.5-sonnet             - older quality Claude
   # Get your Gemini API key at https://aistudio.google.com (free tier: 1500 req/day).
-
-  # Alternative models (pick one):
-  # model: "claude-haiku-4-5"       # Get key at https://console.anthropic.com
-  # model: "claude-sonnet-4-6"      # Higher quality, higher cost
 
   # Fallback model if the primary model fails.
   fallback_model: "claude-sonnet-4-6"
@@ -178,19 +182,26 @@ api_timeout_sec: 120.0      # per-call timeout
 # ---------------------------------------------------------------------------
 # These drive the built-in VLM system prompt to improve accuracy for
 # specific document types. Set to "general" if unsure.
+#
+# Each content_type selects a pre-built VLM system prompt tailored to that
+# document type. You can also provide a custom system prompt via vlm.system_prompt.
+# See README.md for full profile descriptions.
 
 content_type: "general"
-# Options: "general", "theological", "mathematical", "legal"
+# Options: "general", "theological", "academic", "citation_focused", "mathematical", "legal", "irish_hagiography"
 
 column_layout: "auto"
 # Options: "auto" (detect), "single", "dual"
 
 # Languages present in the document (ISO 639-1 codes).
+# These are passed to both the VLM for merge hints and to OCR engines
+# (Marker, Surya2) for improved character recognition.
 languages:
   - en
   # - la
   # - de
   # - fr
+  # - gle  # Irish
 
 # ---------------------------------------------------------------------------
 # Marker Engine (advanced)

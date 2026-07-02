@@ -84,11 +84,21 @@ class OcrEngine(Protocol):
 
     name: str  # unique identifier, e.g. "my_engine"
 
-    def recognize(self, image_path: Path) -> EngineOutput:
-        """Run OCR on a single page image. Must be idempotent.
+    def recognize(
+        self,
+        image_path: Path,
+        page_index: int,
+        timeout_sec: float = 120.0,
+        languages: list[str] | None = None,
+    ) -> EngineOutput:
+        """Run OCR on a single page image.  Must be thread-safe.
 
-        Returns an EngineOutput with engine=self.name, text=..., and
-        possibly error=... on failure.
+        Args:
+            image_path: Path to the rendered page image (PNG).
+            page_index: Zero-based page number (for logging/checkpointing).
+            timeout_sec: Per-call timeout in seconds.
+            languages: Optional list of ISO 639-1 language codes to pass to
+                       the OCR engine for language-aware recognition.
         """
         ...
 ```
@@ -109,8 +119,10 @@ class OcrEngine(Protocol):
        def __init__(self, config: "PipelineConfig"):
            self.config = config
 
-       def recognize(self, image_path: Path) -> EngineOutput:
-           # Your OCR logic here
+       def recognize(self, image_path: Path, page_index: int = 0,
+                      timeout_sec: float = 120.0,
+                      languages: list[str] | None = None) -> EngineOutput:
+           # Your OCR logic here. Language hints improve recognition accuracy.
            ...
            return EngineOutput(engine=self.name, text=result)
    ```
@@ -183,6 +195,8 @@ VLM merge models are configured by string ID in `config.yaml`. To add a new mode
    Add the corresponding SDK dependency to `pyproject.toml`.
 
 3. **Update config documentation** — Add the new model to the comments in `config.example.yaml` and the README.
+
+4. **If your new model is tailored to a specific document type**, consider adding a corresponding profile in the `_SYSTEM_PROMPT_TEMPLATES` and `_DOCUMENT_CONTEXT_HINTS` dictionaries in `merger.py`. Each content_type can have a custom system prompt that the merger assembles automatically.
 
 ---
 
