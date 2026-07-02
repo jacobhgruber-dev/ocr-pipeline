@@ -606,7 +606,10 @@ def compute_engine_agreement(outputs: list[EngineOutput]) -> float:
 
 # Per-million token rates in USD
 _ANTHROPIC_RATES: dict[str, tuple[float, float]] = {
-    # model_prefix: (input_rate_per_M, output_rate_per_M)
+    # Specific model IDs (checked first)
+    "claude-sonnet-4-6": (3.0, 15.0),
+    "claude-haiku-4-5": (1.0, 5.0),
+    # Fallback prefix matches
     "claude-4-opus": (15.0, 75.0),
     "claude-4-sonnet": (3.0, 15.0),
     "claude-3.5-haiku": (1.0, 5.0),
