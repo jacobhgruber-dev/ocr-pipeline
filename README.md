@@ -21,9 +21,17 @@ uv sync
 # 3. Configure
 cp config.example.yaml config.yaml
 # Edit config.yaml: set input_dir, output_dir, and add API keys
+# TIP: Not sure what to use? Run: uv run ocr-pipeline --list-profiles
+#      and uv run ocr-pipeline --list-engines to see what's available.
 
 # 4. Run
 uv run ocr-pipeline --config config.yaml
+
+# Or skip the config file and use CLI flags:
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type general
+
+# Not sure which content type to use? See all options:
+uv run ocr-pipeline --list-profiles
 ```
 
 That's it. The pipeline discovers all PDFs under `input_dir`, processes them, and writes markdown to `output_dir/`.
@@ -249,6 +257,129 @@ export MATHPIX_APP_KEY="your_key"
 export ANTHROPIC_API_KEY="sk-ant-..."
 export GEMINI_API_KEY="AIza..."
 export GOOGLE_CLOUD_PROJECT="your-project-id"
+```
+
+---
+
+## Common Recipes
+
+Each scenario below shows the recommended command for a specific document type.
+All examples assume you've set up API keys in `config.yaml` (or as environment variables).
+
+### General document (newspaper, report, book chapter)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --content-type general --langs en
+```
+
+**What it does:** Runs Marker (free, local) on all PDFs. Gemini-2.5-flash merges
+the results. Good for 90% of documents.
+
+**Estimated cost:** ~$0.0002/page (VLM only)
+
+### Multilingual academic paper
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker,mathpix \
+  --content-type academic --langs en,de,fr,la
+```
+
+**What it does:** Marker + Mathpix handle text and equations. The academic profile
+preserves citations, DOIs, and footnotes in CMOS 18 format. Language hints
+improve accuracy for non-English text.
+
+### Irish/Gaelic dictionary or text with diacritics
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker,surya2 \
+  --content-type irish_hagiography --langs en,gle,la \
+  --vlm-model claude-sonnet-4-6
+```
+
+**What it does:** Marker + Surya2 (both support Irish language configuration).
+The irish_hagiography profile preserves fada diacritics (á, é, í, ó, ú) as
+orthographically significant characters. Claude is used for better diacritic
+preservation. Mathpix and Google Doc AI are skipped (no equations, no forms).
+
+### Math-heavy papers (equations, LaTeX)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines mathpix,marker \
+  --content-type mathematical --langs en
+```
+
+**What it does:** Mathpix handles equation OCR (its specialty), Marker provides
+a fallback for plain text. The mathematical profile instructs the VLM to use
+LaTeX math mode ($...$ inline, $$...$$ display) for all equations.
+
+### Citation-rich document (bibliography, footnotes)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker,mathpix --content-type citation_focused \
+  --langs en,la --vlm-model claude-sonnet-4-6
+```
+
+**What it does:** The citation_focused profile instructs the VLM to preserve every
+citation verbatim — footnotes, DOIs, author names, page ranges. Claude is used
+for its superior precision on structured citation text.
+
+### Free-only pipeline (no API keys needed)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker --no-vlm --langs en
+```
+
+**What it does:** Uses only Marker (local, free). VLM merge is disabled so no
+Gemini/Claude API key is needed. Output is raw Marker text after post-processing
+cleanup.
+
+**Estimated cost:** $0.00
+
+### Cost-sensitive: cap your spending
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker,mathpix --budget 5.00
+```
+
+**What it does:** Sets a $5.00 budget cap. The pipeline tracks cumulative cost and
+refuses new API work when the limit is exceeded. VLM merge is skipped; engine
+output is used directly instead.
+
+### Test before committing (first 3 pages only)
+
+```bash
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --engines marker --test
+```
+
+**What it does:** Processes only the first 3 pages of each PDF. Good for quickly
+checking quality before running a full batch.
+
+---
+
+## Discovering What's Available
+
+The pipeline has discovery commands so you don't need to memorize options:
+
+```bash
+# List all document profiles with descriptions and suggested engines
+uv run ocr-pipeline --list-profiles
+
+# List all OCR engines with requirements and best-use guidance
+uv run ocr-pipeline --list-engines
+
+# List supported language codes
+uv run ocr-pipeline --list-languages
+
+# See what would run without actually processing
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
 ```
 
 ---
