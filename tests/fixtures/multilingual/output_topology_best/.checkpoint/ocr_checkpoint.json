@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:40:53.084236+00:00",
+  "updated_at": "2026-07-02T23:47:17.513052+00:00",
+  "pdfs": {
+    "topology_math.pdf": {
+      "sha256": "0235e060788e83f5961e87ccbd7d117ee7c0a2199ef2623ec93119fb8004ca59",
+      "short_sha": "0235e060788e",
+      "path": "topology_math.pdf",
+      "filename": "topology_math.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0235e060788e83f5961e87ccbd7d117ee7c0a2199ef2623ec93119fb8004ca59",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "failed",
+          "engine_outputs": {
+            "marker": {
+              "engine": "marker",
+              "text": "",
+              "error": "Command '['/Users/jacobgruber/Projects/ocr-pipeline/.marker-venv/bin/python', '/var/folders/l1/_vlhws7x1gv132mtl76_g7800000gn/T/tmpfodt34da.py']' timed out after 120.0 seconds",
+              "duration_sec": 363.8755255829892,
+              "retries": 2
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:40:53.084675+00:00",
+          "completed_at": "2026-07-02T23:46:57.104334+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "0235e060788e83f5961e87ccbd7d117ee7c0a2199ef2623ec93119fb8004ca59",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "marker": {
+              "engine": "marker",
+              "text": "## To Karen, Waltraut and Elisabeth",
+              "error": null,
+              "duration_sec": 20.424008165995474,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:40:53.084736+00:00",
+          "completed_at": "2026-07-02T23:47:17.511785+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "topology_math.pdf",
+        "size_bytes": 47166,
+        "mtime_epoch": 1783034468.9799309,
+        "sha256": "0235e060788e83f5961e87ccbd7d117ee7c0a2199ef2623ec93119fb8004ca59"
+      }
+    }
+  }
+}

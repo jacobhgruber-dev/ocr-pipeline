@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:32:21.180256+00:00",
+  "updated_at": "2026-07-02T23:32:48.065977+00:00",
+  "pdfs": {
+    "russian_math.pdf": {
+      "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+      "short_sha": "ea6fe16a17fd",
+      "path": "russian_math.pdf",
+      "filename": "russian_math.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:32:21.180762+00:00",
+          "completed_at": "2026-07-02T23:32:46.436379+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:32:21.183647+00:00",
+          "completed_at": "2026-07-02T23:32:48.065786+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "russian_math.pdf",
+        "size_bytes": 241968,
+        "mtime_epoch": 1783034468.9743624,
+        "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc"
+      }
+    }
+  }
+}

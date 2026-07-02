@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:22:13.242388+00:00",
+  "updated_at": "2026-07-02T23:31:32.199729+00:00",
+  "pdfs": {
+    "french_les_mis.pdf": {
+      "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+      "short_sha": "0ba3c8fd79dc",
+      "path": "french_les_mis.pdf",
+      "filename": "french_les_mis.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "marker": {
+              "engine": "marker",
+              "text": "sont trois gendarmes et Jean Valjean.\n\n- Monseigneur..., dit un des gendarmes.\n- Monseigneur..., murmure Jean Valjean, stupéfait.\n- Silence, dit le gendarme, c'est Monseigneur l'évêque.\n\nMais l'évêque s'approche de Jean Valjean et lui dit :\n\n– Ah! Vous voilà! Je vous ai aussi donné les chandeliers, pourquoi ne les avez-vous pas emportés avec les couverts?\n\nJean Valjean ouvre de grands yeux en entendant l'évêque.\n\n- Monseigneur, dit le gendarme, cet homme nous a dit que vous lui aviez donné ces couverts, c'était donc vrai ?\n  - Naturellement, répond l'évêque.\n\nEt il va à la cheminée, prend deux chandeliers en argent, les donne à Jean Valjean et lui dit :\n\n Mon ami, avant de vous en aller, prenez vos chandeliers. Les voici.\n\nJean Valjean se met à trembler. Il prend les deux chandeliers machinalement.\n\nMaintenant, dit l'évêque, allez en paix.\n\nJean Valjean sort de la maison de l'évêque et marche rapidement. Il se trouve bientôt hors de la ville.\n\nTout à coup, il entend un bruit joyeux. Il tourne la tête et voit venir sur le sentier un petit garçon de dix ans qui chantonne. Tout en chantant, il fait sauter dans sa main quelques pièces de monnaie. Toute sa fortune.\n\nTout à coup, une des pièces tombe et va rouler jus-",
+              "error": null,
+              "duration_sec": 359.7659771250037,
+              "retries": 2
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:23:44.272590+00:00",
+          "completed_at": "2026-07-02T23:29:44.116974+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "marker": {
+              "engine": "marker",
+              "text": "qu'aux pieds de Jean Valjean. Jean Valjean met le pied dessus.\n\nL'enfant, qui suit sa pièce du regard, s'approche de l'homme.\n\n- Monsieur, dit-il, ma pièce!\n- Comment t'appelles-tu? dit Jean Valjean.\n- Petit-Gervais, monsieur.\n- Va-t'en, dit Jean Valjean.\n- Monsieur, rendez-moi ma pièce.\n\nIl semble que Jean Valjean n'entend pas. Il a un air effrayant. L'enfant le prend par sa veste et le secoue. Il se met à pleurer en hurlant :\n\n- Je veux ma pièce! Je veux ma pièce!\n\nTout à coup, Jean Valjean le regarde. Ses yeux sont pleins de haine.\n\n- Va-t'en, crie-t-il à l'enfant.\n\nL'enfant, effrayé, se met à courir sans oser se retourner. Au bout d'un moment, il disparaît.\n\nJean Valjean semble alors revenir à la réalité. Il voit la pièce à ses pieds et dit :\n\n– Qu'est-ce que c'est que ça ?\n\nIl la prend, se redresse et se met à regarder de tous les côtés. Alors, il crie de toutes ses forces :\n\n- Petit-Gervais! Petit-Gervais!\n\nIl se tait et attend. Il murmure encore : Petit-Gervais, puis il tombe à genoux. Il se rend compte du mal qu'il vient de faire. Les poings dans ses cheveux et le visage dans ses genoux, il crie :\n\n- Je suis un misérable!",
+              "error": null,
+              "duration_sec": 108.09434333299578,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:23:44.272672+00:00",
+          "completed_at": "2026-07-02T23:31:32.197678+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "french_les_mis.pdf",
+        "size_bytes": 685395,
+        "mtime_epoch": 1783034468.9711783,
+        "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3"
+      }
+    }
+  }
+}

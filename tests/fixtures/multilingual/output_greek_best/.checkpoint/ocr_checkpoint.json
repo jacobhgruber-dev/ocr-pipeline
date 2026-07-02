@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:21:26.890540+00:00",
+  "updated_at": "2026-07-02T23:22:04.768989+00:00",
+  "pdfs": {
+    "greek_ethics.pdf": {
+      "sha256": "c6fb5f9b2571476a45069762d45420e1ccfb633c8cfee20cb8d8af1239eec797",
+      "short_sha": "c6fb5f9b2571",
+      "path": "greek_ethics.pdf",
+      "filename": "greek_ethics.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "c6fb5f9b2571476a45069762d45420e1ccfb633c8cfee20cb8d8af1239eec797",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1618, \"output_tokens\": 326}",
+          "started_at": "2026-07-02T23:21:26.891070+00:00",
+          "completed_at": "2026-07-02T23:22:04.768633+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        },
+        {
+          "sha256": "c6fb5f9b2571476a45069762d45420e1ccfb633c8cfee20cb8d8af1239eec797",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1914, \"output_tokens\": 741}",
+          "started_at": "2026-07-02T23:21:26.891145+00:00",
+          "completed_at": "2026-07-02T23:21:37.604014+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "greek_ethics.pdf",
+        "size_bytes": 75797,
+        "mtime_epoch": 1783034468.9673347,
+        "sha256": "c6fb5f9b2571476a45069762d45420e1ccfb633c8cfee20cb8d8af1239eec797"
+      }
+    }
+  }
+}

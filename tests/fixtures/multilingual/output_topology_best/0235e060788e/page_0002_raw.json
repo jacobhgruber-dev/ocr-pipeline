@@ -1,0 +1,17 @@
+{
+  "page_index": 1,
+  "page_label": "page_0002",
+  "engine_outputs": {
+    "marker": {
+      "text": "## To Karen, Waltraut and Elisabeth",
+      "error": null,
+      "duration_sec": 20.424008165995474,
+      "retries": 0
+    }
+  },
+  "merged_markdown": "## To Karen, Waltraut and Elisabeth",
+  "vlm_raw_response": "",
+  "vlm_model": "",
+  "engines_agreement": 0.0,
+  "processed_at": "2026-07-02T23:47:17.510703+00:00"
+}

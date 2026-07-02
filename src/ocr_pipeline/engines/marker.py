@@ -91,8 +91,6 @@ class MarkerEngine:
     ) -> str:
         """Core subprocess invocation — raises on failure so tenacity can retry."""
 
-        lang_arg = json.dumps(languages) if languages else "None"
-
         script = f"""\
 import json, sys
 try:
@@ -102,7 +100,6 @@ try:
 
     converter = PdfConverter(
         artifact_dict=create_model_dict(),
-        languages={lang_arg},
     )
     rendered = converter({json.dumps(str(image_path))})
     text, ext, images = text_from_rendered(rendered)
