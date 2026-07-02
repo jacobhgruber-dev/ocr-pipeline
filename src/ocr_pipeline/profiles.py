@@ -608,8 +608,8 @@ PROFILES: dict[str, DocumentProfile] = {
         ),
         suggested_engines=["mathpix", "marker"],
         suggested_languages=["en"],
-        suggested_model="claude-sonnet-5",
-        best_model="claude-sonnet-5",
+        suggested_model="gemini-2.5-flash",
+        best_model="gemini-2.5-flash",
     ),
     "legal": DocumentProfile(
         name="legal",

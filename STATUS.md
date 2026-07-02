@@ -45,7 +45,36 @@ User-extensible: custom profiles load from `profiles/*.yaml` (3 examples provide
 
 ## Test Fixtures
 
-12 real-world PDFs from public domain sources across all 6 profiles. See `tests/fixtures/SOURCES.md`.
+- **12 English-language PDFs** from public domain sources (all 6 profiles). See `tests/fixtures/SOURCES.md`.
+- **5 multilingual PDFs** from Anna's Archive: Greek (Aristotle), French (Hugo), Russian (math), Chinese (ML), English (topology). See `tests/fixtures/multilingual/`.
+- All 12 English fixtures tested with gemini-2.5-flash: **0 failures**.
+- All 5 multilingual fixtures tested with gemini-2.5-flash AND claude-sonnet-5: **script-dependent results**.
+
+## Critical Finding: Script-Dependent Model Behavior
+
+Multi-language testing revealed that **no single VLM model handles all scripts**. Model selection is not a cost/quality tradeoff — it's a correctness question:
+
+| Script | Gemini 2.5 Flash | Claude Sonnet 5 |
+|---|---|---|
+| **Latin + diacritics** (French éèêàôîç) | ✅ Perfect | ✅ Good |
+| **Greek** (polytonic άέήίόύώ) | ✅ Perfect | Not tested |
+| **Cyrillic** (Russian Глава, §, ∃) | ✅ Perfect (3245 chars) | ❌ Catastrophic — replaces with Latin lookalikes (1859 chars) |
+| **CJK** (Chinese 目录, 判定问题) | ❌ Total failure — garbled Latin | ✅ Flawless (3808 chars) |
+| **Math LaTeX** ($\mathbb{R}$, $\gamma$) | ✅ With improved prompts | ⚠️ Prefers Unicode (γ) over LaTeX ($\gamma$) |
+
+### Product Implications
+
+1. **Script-aware model routing is essential.** Profiles should not blindly recommend one model. The pipeline needs to detect the dominant script of each page and route to the appropriate model:
+   - Cyrillic/diacritic-heavy Latin → Gemini (Claude destroys Cyrillic)
+   - CJK → Claude (Gemini fails entirely)
+   - Greek → Gemini
+   - Plain Latin → Either, prefer cheaper Gemini
+
+2. **Mathematical profile should use Gemini**, not Claude. Despite Anthropic's claim that "Claude defaults to LaTeX," Gemini 2.5 Flash with our improved prompts produces better LaTeX output for OCR transcription. Claude defaults to Unicode math characters (γ instead of $\gamma$), which is correct for display but wrong for LaTeX rendering pipelines.
+
+3. **Language registry needs model-to-script mapping.** The 53-language registry should include preferred VLM model per language based on script support.
+
+4. **profiles.py best_model values should be adjusted:** mathematical → gemini-2.5-flash (not claude-sonnet-5)
 
 ## Architecture Decisions
 
@@ -57,14 +86,17 @@ User-extensible: custom profiles load from `profiles/*.yaml` (3 examples provide
 
 ## Known Gaps
 
+- **Script-aware model routing not implemented** — profiles recommend a single model, but multi-language testing shows catastrophic failures when the wrong model meets the wrong script
+- **mathematical profile's best_model is wrong** — should be gemini-2.5-flash (not claude-sonnet-5) based on real test results
 - Table detection is prompt-based (VLM) — no dedicated ML model
 - Image handling is placeholder-based — no embedded image extraction
 - Progress bar counts PDFs not pages (display limitation, total pages logged at start)
-- No before/after integration test results yet — fixtures collected, pending pipeline run
+- Marker's `languages` parameter removed — installed version doesn't support it; language hints go to VLM only
 
 ## Recent Changes
 
 See `git log` for full history. Key commits:
+- `53781f6` — Fix Marker languages bug + 5 multilingual test fixtures
 - `87f9cd3` — Research-backed prompt improvements + 12 real test PDFs
 - `9793ac6` — 7→6 universal profiles, remove content_type, user-extensible profiles
 - `810ddec` — Cross-PDF concatenation, quality confidence scores, table+figure prompts
