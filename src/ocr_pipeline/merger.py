@@ -18,6 +18,7 @@ from typing import Protocol, runtime_checkable
 
 from .errors import MergeError
 from .models import EngineName, EngineOutput
+from .profiles import get_profile
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +247,39 @@ _SYSTEM_PROMPT_TEMPLATES: dict[str, str] = {
         "6. Do NOT add interpretive notes, commentary, or translation.\n"
         "7. Return ONLY the merged markdown — no preamble, no explanation."
     ),
+    "irish_hagiography": (
+        "You are an OCR auditor for a modern Irish hagiography dictionary.\n"
+        "You receive a scanned page image and multiple OCR transcriptions. "
+        "Your job is to produce the authoritative markdown for this page.\n"
+        "\n"
+        "The text is a single-column dictionary with entries in a mix of "
+        "modern Irish, English, and Latin.\n"
+        "\n"
+        "Rules:\n"
+        "1. Compare all transcriptions against the image. Where they agree, "
+        "keep the consensus.\n"
+        "2. Where they disagree, use the image to determine the correct text.\n"
+        "3. Preserve ALL text — do not summarize or omit anything. The output "
+        "must be a complete transcription.\n"
+        "4. Mark any text you cannot read with [illegible].\n"
+        "5. Format as clean markdown. Use **bold** for headwords/entry "
+        "headings, *italic* for book titles and Latin phrases.\n"
+        "6. SINGLE-COLUMN LAYOUT: The page is single-column. Do not attempt "
+        "column detection or dual-column linearization.\n"
+        "7. IRISH DIACRITICS: The fada (acute accent) on Irish vowels "
+        "(á, é, í, ó, ú) is orthographically\n"
+        "   significant — it distinguishes different letters. á vs a are "
+        "NOT variants of the same\n"
+        "   letter. NEVER drop a fada and NEVER add one not present in the "
+        "image.\n"
+        "8. MODERN IRISH ORTHOGRAPHY: Modern Irish uses u (not v) for the "
+        "vowel. Do not apply\n"
+        "   ecclesiastical Latin u/v conventions.\n"
+        "9. DICTIONARY FORMAT: Preserve headword boldness, definition "
+        "structure, and cross-references.\n"
+        "10. Do NOT add interpretive notes, commentary, or translation.\n"
+        "11. Return ONLY the merged markdown — no preamble, no explanation."
+    ),
     "general": DEFAULT_SYSTEM_PROMPT,
 }
 
@@ -255,6 +289,7 @@ def _build_system_prompt(
     column_layout: str = "auto",
     languages: list[str] | None = None,
     custom_prompt: str = "",
+    profile_name: str = "",
 ) -> str:
     """Assemble the VLM system prompt from content type and layout hints.
 
@@ -265,6 +300,9 @@ def _build_system_prompt(
         languages: List of ISO 639-1 language codes the document may contain.
         custom_prompt: If non-empty, overrides all template assembly and is
                        returned as-is.
+        profile_name: If non-empty, looks up a :class:`DocumentProfile` and
+                      uses its system prompt as the base. Takes precedence
+                      over *content_type*.
 
     Returns:
         The assembled system prompt string.
@@ -272,10 +310,17 @@ def _build_system_prompt(
     if custom_prompt:
         return custom_prompt
 
-    base = _SYSTEM_PROMPT_TEMPLATES.get(content_type, _SYSTEM_PROMPT_TEMPLATES["general"])
+    # Profile overrides content_type
+    if profile_name:
+        profile = get_profile(profile_name)
+        base = profile.system_prompt
+        ct = profile.content_type
+    else:
+        base = _SYSTEM_PROMPT_TEMPLATES.get(content_type, _SYSTEM_PROMPT_TEMPLATES["general"])
+        ct = content_type
 
     # ── Document context hint ─────────────────────────────────────────
-    context_hint = _DOCUMENT_CONTEXT_HINTS.get(content_type, _DOCUMENT_CONTEXT_HINTS["general"])
+    context_hint = _DOCUMENT_CONTEXT_HINTS.get(ct, _DOCUMENT_CONTEXT_HINTS["general"])
     base += f"\n\n{context_hint}"
 
     # ── Formatting preservation rules (always appended) ───────────────
@@ -284,8 +329,7 @@ def _build_system_prompt(
     # ── Column layout hint ────────────────────────────────────────────
     if column_layout == "dual":
         base += (
-            "\n\nLAYOUT: The page uses dual-column layout. "
-            "Linearize left column first, then right."
+            "\n\nLAYOUT: The page uses dual-column layout. Linearize left column first, then right."
         )
     elif column_layout == "single":
         base += "\n\nLAYOUT: The page is single-column. Do not attempt column detection."
@@ -326,6 +370,12 @@ _DOCUMENT_CONTEXT_HINTS: dict[str, str] = {
         "This document contains extensive citations. "
         "Preserve every footnote, reference, and bibliographic entry verbatim. "
         "Do not normalize or alter any citation format."
+    ),
+    "irish_hagiography": (
+        "This is a modern Irish hagiography dictionary. "
+        "Preserve Irish fada diacritics (á, é, í, ó, ú) exactly — they are "
+        "orthographically significant. Single-column dictionary layout. "
+        "Modern Irish uses u (not v)."
     ),
     "general": (
         "This is a general document. "
@@ -381,6 +431,7 @@ def _call_anthropic(
     api_key = None
     try:
         from .engines.base import CredentialStore
+
         api_key = CredentialStore().get("ANTHROPIC_API_KEY")
     except Exception:
         pass
@@ -492,6 +543,7 @@ def _call_gemini(
     api_key = None
     try:
         from .engines.base import CredentialStore
+
         api_key = CredentialStore().get("GEMINI_API_KEY")
     except Exception:
         pass
@@ -774,15 +826,22 @@ def compute_engine_agreement(outputs: list[EngineOutput]) -> float:
 # Per-million token rates in USD
 _ANTHROPIC_RATES: dict[str, tuple[float, float]] = {
     # model_prefix: (input_rate_per_M, output_rate_per_M)
-    "claude-haiku": (1.0, 5.0),
-    "claude-sonnet": (3.0, 15.0),
+    "claude-4-opus": (15.0, 75.0),
+    "claude-4-sonnet": (3.0, 15.0),
+    "claude-3.5-haiku": (1.0, 5.0),
+    "claude-3.5-sonnet": (3.0, 15.0),
     "claude-opus": (15.0, 75.0),
+    "claude-sonnet": (3.0, 15.0),
+    "claude-haiku": (1.0, 5.0),
 }
 
 _GEMINI_RATES: dict[str, tuple[float, float]] = {
     # model_prefix: (input_rate_per_M, output_rate_per_M)
-    "gemini-3.5-flash": (0.15, 0.60),
+    "gemini-2.5-flash": (0.15, 0.60),
     "gemini-2.5-pro": (1.25, 10.0),
+    "gemini-2.0-flash": (0.10, 0.40),
+    "gemini-1.5-pro": (3.50, 10.50),
+    "gemini-3.5-flash": (0.15, 0.60),
 }
 
 

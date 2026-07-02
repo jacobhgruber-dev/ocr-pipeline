@@ -3,6 +3,7 @@
 from .config import PipelineConfig, ConfigLoader
 from .merger import VlmMerger, DefaultVlmMerger, StubVlmMerger
 from .pipeline import Pipeline
+from .profiles import DocumentProfile, PROFILES, get_profile, list_profiles
 
 __all__ = [
     "Pipeline",
@@ -11,4 +12,8 @@ __all__ = [
     "VlmMerger",
     "DefaultVlmMerger",
     "StubVlmMerger",
+    "DocumentProfile",
+    "PROFILES",
+    "get_profile",
+    "list_profiles",
 ]
