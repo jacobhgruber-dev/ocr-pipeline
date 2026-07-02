@@ -48,6 +48,7 @@ class OcrEngine(Protocol):
         image_path: Path,
         page_index: int,
         timeout_sec: float = 120.0,
+        languages: list[str] | None = None,
     ) -> EngineOutput:
         """Run OCR on a single page image.  Must be thread-safe."""
         ...
@@ -283,7 +284,9 @@ class CredentialStore:
                             self._data[str(k)] = str(v)
         except Exception:
             logger.warning(
-                "Failed to parse %s", self._LEGACY_CONFIG, exc_info=True,
+                "Failed to parse %s",
+                self._LEGACY_CONFIG,
+                exc_info=True,
             )
 
     # -- public API --------------------------------------------------------

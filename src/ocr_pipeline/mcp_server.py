@@ -160,9 +160,7 @@ async def ocr_pdf(
 
         # process_one is synchronous (uses ThreadPoolExecutor internally).
         # Wrap in to_thread so the MCP handler doesn't block the event loop.
-        stats = await asyncio.to_thread(
-            pipeline.process_one, Path(pdf_path).resolve()
-        )
+        stats = await asyncio.to_thread(pipeline.process_one, Path(pdf_path).resolve())
 
         text_preview = _find_output_preview(cfg.output_dir)
 
@@ -183,16 +181,20 @@ async def ocr_pdf(
 async def ocr_page(
     image_path: str,
     engine: str = "marker",
+    languages: str = "en",
 ) -> dict[str, Any]:
     """OCR a single page image using a specific engine.
 
     Args:
         image_path: Absolute path to a PNG or JPEG image of a document page.
         engine: OCR engine to use (marker, mathpix, surya2, google_doc_ai).
+        languages: Comma-separated language codes (e.g., "en,de,fr").
     """
     img = Path(image_path).resolve()
     if not img.is_file():
         return {"status": "error", "message": f"Image not found: {image_path}"}
+
+    lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
 
     # Load config for engine parameters (marker_venv, credentials, etc.)
     try:
@@ -201,9 +203,7 @@ async def ocr_page(
         try:
             cfg = ConfigLoader.from_yaml(Path("config.yaml"))
         except Exception:
-            cfg = PipelineConfig(
-                input_dir=img.parent, output_dir=Path("./ocr_output")
-            )
+            cfg = PipelineConfig(input_dir=img.parent, output_dir=Path("./ocr_output"))
         ConfigLoader.apply_env_credentials(cfg)
 
     try:
@@ -224,6 +224,7 @@ async def ocr_page(
             img,
             0,
             cfg.api_timeout_sec,
+            lang_list,
         )
         duration = round(time.perf_counter() - t0, 2)
 
@@ -258,9 +259,7 @@ async def ocr_status() -> dict[str, Any]:
         try:
             cfg = ConfigLoader.from_yaml(Path("config.yaml"))
         except Exception:
-            cfg = PipelineConfig(
-                input_dir=Path("."), output_dir=Path("./ocr_output")
-            )
+            cfg = PipelineConfig(input_dir=Path("."), output_dir=Path("./ocr_output"))
         ConfigLoader.apply_env_credentials(cfg)
 
     for name in engine_names:
@@ -305,9 +304,7 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
         try:
             cfg = ConfigLoader.from_yaml(Path("config.yaml"))
         except Exception:
-            cfg = PipelineConfig(
-                input_dir=pdf.parent, output_dir=Path("./ocr_output")
-            )
+            cfg = PipelineConfig(input_dir=pdf.parent, output_dir=Path("./ocr_output"))
         ConfigLoader.apply_env_credentials(cfg)
     grobid_url: str = cfg.grobid_url
 
@@ -322,9 +319,7 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
                 ),
             }
 
-        metadata = await asyncio.to_thread(
-            engine.extract_metadata, pdf, timeout_sec=120.0
-        )
+        metadata = await asyncio.to_thread(engine.extract_metadata, pdf, timeout_sec=120.0)
 
         return {
             "status": "ok",

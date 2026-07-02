@@ -38,6 +38,7 @@ class MarkerEngine:
         image_path: Path,
         page_index: int,
         timeout_sec: float = 300.0,
+        languages: list[str] | None = None,
     ) -> EngineOutput:
         """Run Marker/Surya OCR on a single PNG image via subprocess.
 
@@ -62,7 +63,7 @@ class MarkerEngine:
 
         # --- Run (with retry) ---
         try:
-            text = self._run_marker(image_path, timeout_sec)
+            text = self._run_marker(image_path, timeout_sec, languages)
         except Exception as exc:
             elapsed = time.perf_counter() - t0
             retries = self._run_marker.retry_stats.get("attempts", 0)  # type: ignore[attr-defined]
@@ -85,8 +86,12 @@ class MarkerEngine:
     # -- internal (retry-wrapped) ---------------------------------------------
 
     @with_api_retry(extra_retry_on=(subprocess.TimeoutExpired,))
-    def _run_marker(self, image_path: Path, timeout_sec: float) -> str:
+    def _run_marker(
+        self, image_path: Path, timeout_sec: float, languages: list[str] | None = None
+    ) -> str:
         """Core subprocess invocation — raises on failure so tenacity can retry."""
+
+        lang_arg = json.dumps(languages) if languages else "None"
 
         script = f"""\
 import json, sys
@@ -95,7 +100,10 @@ try:
     from marker.models import create_model_dict
     from marker.output import text_from_rendered
 
-    converter = PdfConverter(artifact_dict=create_model_dict())
+    converter = PdfConverter(
+        artifact_dict=create_model_dict(),
+        languages={lang_arg},
+    )
     rendered = converter({json.dumps(str(image_path))})
     text, ext, images = text_from_rendered(rendered)
     print(json.dumps({{"text": text}}))

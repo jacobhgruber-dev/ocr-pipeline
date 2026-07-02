@@ -55,9 +55,7 @@ class Surya2Engine:
         relative to the project root.
         """
         if venv_path is None:
-            project_root = (
-                Path(__file__).resolve().parent.parent.parent.parent.parent
-            )
+            project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
             for candidate_name in (".venv-marker", ".venv-surya"):
                 candidate = project_root / candidate_name
                 if (candidate / "bin" / "python").exists():
@@ -65,8 +63,7 @@ class Surya2Engine:
                     break
         if venv_path is None:
             raise ValueError(
-                "No venv with surya-ocr found. "
-                "Install: uv add surya-ocr (or pip install surya-ocr)"
+                "No venv with surya-ocr found. Install: uv add surya-ocr (or pip install surya-ocr)"
             )
         self.venv_path = Path(venv_path)
         self._python = self.venv_path / "bin" / "python"
@@ -82,6 +79,7 @@ class Surya2Engine:
         image_path: Path,
         page_index: int,
         timeout_sec: float = 300.0,
+        languages: list[str] | None = None,
         pdf_path: Path | None = None,
     ) -> EngineOutput:
         """Run Surya 2 OCR on a page image.
@@ -104,7 +102,7 @@ class Surya2Engine:
             )
 
         try:
-            output = self._run_surya(image_path, page_index, timeout_sec, pdf_path)
+            output = self._run_surya(image_path, page_index, timeout_sec, pdf_path, languages)
         except Exception as exc:
             elapsed = time.perf_counter() - t0
             retries = self._run_surya.retry_stats.get("attempts", 0)  # type: ignore[attr-defined]
@@ -137,11 +135,12 @@ class Surya2Engine:
         page_index: int,
         timeout_sec: float,
         pdf_path: Path | None,
+        languages: list[str] | None = None,
     ) -> dict:
         """Invoke Surya 2 via subprocess — raises on failure so tenacity retries."""
 
         label_map_entries = ",\n        ".join(
-            f'{json.dumps(k)}: {json.dumps(v)}' for k, v in _SURYA_LABEL_MAP.items()
+            f"{json.dumps(k)}: {json.dumps(v)}" for k, v in _SURYA_LABEL_MAP.items()
         )
 
         # Build the subprocess script --------------------------------------------------
@@ -159,7 +158,7 @@ try:
     from PIL import Image
 
     # --- Determine input image -------------------------------------------------
-    pdf_path = {json.dumps(str(pdf_path)) if pdf_path else 'None'}
+    pdf_path = {json.dumps(str(pdf_path)) if pdf_path else "None"}
     page_num = {page_index}
     img_path = None
 
@@ -283,9 +282,7 @@ except Exception as e:
 
         script_path: Path | None = None
         try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".py", delete=False
-            ) as f:
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
                 f.write(script)
                 script_path = Path(f.name)
 
@@ -336,8 +333,7 @@ except Exception as e:
             return False
 
         check_script = (
-            "import surya.foundation, surya.detection, surya.recognition, surya.layout; "
-            "print('ok')"
+            "import surya.foundation, surya.detection, surya.recognition, surya.layout; print('ok')"
         )
         try:
             result = subprocess.run(

@@ -295,9 +295,7 @@ class Pipeline:
         try:
             self._produce_document_output(pdf_path, output_dir, short_sha, page_count)
         except Exception:
-            logger.debug(
-                "Skipping document-level output for %s", short_sha, exc_info=True
-            )
+            logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
 
         return {
             "pages_processed": pages_processed,
@@ -321,7 +319,7 @@ class Pipeline:
         # Collect existing per-page markdown
         md_pages: list[tuple[int, str]] = []
         for i in range(page_count):
-            md_path = output_dir / f"page_{i+1:04d}_final.md"
+            md_path = output_dir / f"page_{i + 1:04d}_final.md"
             if md_path.is_file():
                 md_text = md_path.read_text(encoding="utf-8")
                 if md_text.strip():
@@ -369,7 +367,7 @@ class Pipeline:
             PageResult(
                 sha256="",
                 page_index=i,
-                page_label=f"page_{i+1:04d}",
+                page_label=f"page_{i + 1:04d}",
                 merged_markdown=text,
             )
             for i, text in sorted(md_pages)
@@ -467,6 +465,7 @@ class Pipeline:
                         png_path,
                         page_index,
                         self.config.api_timeout_sec,
+                        self.config.languages,
                     )
                 future_map[future] = name
 
@@ -510,6 +509,7 @@ class Pipeline:
                 png_path,
                 page_index,
                 self.config.api_timeout_sec,  # type: ignore[union-attr, arg-type]
+                self.config.languages,
             )
 
     # ------------------------------------------------------------------

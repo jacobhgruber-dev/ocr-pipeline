@@ -52,6 +52,7 @@ class GoogleDocAiEngine:
         image_path: Path,
         page_index: int,
         timeout_sec: float = 120.0,
+        languages: list[str] | None = None,
     ) -> EngineOutput:
         """Run Google Document AI OCR on a single PNG image.
 

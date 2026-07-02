@@ -44,6 +44,7 @@ class MathpixEngine:
         image_path: Path,
         page_index: int,
         timeout_sec: float = 120.0,
+        languages: list[str] | None = None,
     ) -> EngineOutput:
         """Send *image_path* to the Mathpix ``/v3/text`` endpoint.
 

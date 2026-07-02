@@ -47,6 +47,7 @@ class GrobidEngine:
         image_path: Path,
         page_index: int,
         timeout_sec: float = 120.0,
+        languages: list[str] | None = None,
         pdf_path: Path | None = None,
     ) -> EngineOutput:
         """Extract metadata from a PDF via GROBID.
