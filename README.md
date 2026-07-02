@@ -21,6 +21,10 @@ uv sync
 # 3. Try it (no config file needed for basic use)
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type general
 
+# Or use Claude instead of Gemini (better for diacritics and citations):
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+  --content-type general --vlm-model claude-sonnet-4-6
+
 # For more options, see what's available:
 uv run ocr-pipeline --list-profiles
 
@@ -353,6 +357,10 @@ The irish_hagiography profile preserves fada diacritics (á, é, í, ó, ú) as
 orthographically significant characters. Claude is used for better diacritic
 preservation. Mathpix and Google Doc AI are skipped (no equations, no forms).
 
+Claude is used instead of the default Gemini because it preserves
+diacritics and character-level detail more reliably. If you don't have an
+Anthropic key, remove `--vlm-model` to use Gemini (free tier available).
+
 ### Math-heavy papers (equations, LaTeX)
 
 ```bash
@@ -446,6 +454,15 @@ Use Marker as your default. Add Mathpix for math-heavy documents. Use Google Doc
 
 ## Obtaining API Keys
 
+**You don't need any API keys to start.** The pipeline works with just Marker
+(a free, local OCR engine) and --no-vlm. You only need keys if you want:
+
+- VLM merge (Gemini key — free tier available at aistudio.google.com)
+- Mathpix (for math-heavy documents)
+- Google Document AI (for structured documents)
+
+See the "Free-only pipeline" recipe in Common Recipes above.
+
 ### Mathpix
 
 1. Go to https://mathpix.com
@@ -458,6 +475,10 @@ Set in config.yaml:
 mathpix_app_id: "your_app_id"
 mathpix_app_key: "your_app_key"
 ```
+
+Or via environment:
+export MATHPIX_APP_ID="your_app_id"
+export MATHPIX_APP_KEY="your_app_key"
 
 ### Google Gemini (VLM merge)
 
@@ -484,6 +505,10 @@ Set in config.yaml:
 anthropic_api_key: "sk-ant-..."
 ```
 
+Or via environment: `export ANTHROPIC_API_KEY="sk-ant-..."`
+
+If you use Gemini (which has a generous free tier), you don't need an Anthropic key at all.
+
 ### Google Document AI
 
 1. Go to https://cloud.google.com/document-ai
@@ -497,6 +522,10 @@ Set in config.yaml:
 google_cloud_project: "your-project-id"
 google_processor_id: "your-processor-id"
 ```
+
+Or via environment:
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
 ---
 
