@@ -255,8 +255,9 @@ Usage: ocr-pipeline [OPTIONS]
   --dpi N                Render DPI (default: 300)
   --workers N            Max parallel workers (default: 4)
   --marker-concurrency N Max concurrent Marker subprocesses (default: 1)
-  --pdf-concurrency N   PDFs processed in parallel (default: 2)
   --max-retries N        Max API retries (default: 3)
+  --retry-base-delay SEC Initial retry delay in seconds (default: 1.0)
+  --retry-max-delay SEC  Max retry delay in seconds (default: 60.0)
   --timeout SEC          API timeout in seconds (default: 120.0)
   --marker-venv PATH     Path to Marker virtual environment
 
