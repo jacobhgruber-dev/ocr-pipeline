@@ -2,7 +2,7 @@
 
 **Multi-engine OCR with VLM merge for PDF documents.**
 
-Three OCR engines run in parallel on each page. A Vision Language Model (Gemini or Claude) reads the page image and all engine outputs, then writes a single clean markdown transcription — correcting errors, resolving disagreements, and preserving document structure.
+Multiple OCR engines run in parallel on each page. A Vision Language Model (Gemini or Claude) reads the page image and all engine outputs, then writes a single clean markdown transcription — correcting errors, resolving disagreements, and preserving document structure.
 
 Built-in checkpoint/resume means you can stop and restart without losing progress. Budget tracking prevents surprise API bills. Every API call gets exponential-backoff retry. The pipeline is both a CLI tool and a Python library.
 
@@ -12,29 +12,50 @@ Built-in checkpoint/resume means you can stop and restart without losing progres
 
 ```bash
 # 1. Clone the package
-git clone https://github.com/jacobhgruber-dev/academic-research-mcp.git
-cd academic-research-mcp/ocr_pipeline
+git clone https://github.com/jacobhgruber-dev/ocr-pipeline.git
+cd ocr-pipeline
 
 # 2. Install
 uv sync
 
-# 3. Configure
-cp config.example.yaml config.yaml
-# Edit config.yaml: set input_dir, output_dir, and add API keys
-# TIP: Not sure what to use? Run: uv run ocr-pipeline --list-profiles
-#      and uv run ocr-pipeline --list-engines to see what's available.
-
-# 4. Run
-uv run ocr-pipeline --config config.yaml
-
-# Or skip the config file and use CLI flags:
+# 3. Try it (no config file needed for basic use)
 uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type general
 
-# Not sure which content type to use? See all options:
+# For more options, see what's available:
 uv run ocr-pipeline --list-profiles
+
+# Alternative: use a config file for repeatable runs
+cp config.example.yaml config.yaml
+# Edit config.yaml: set input_dir, output_dir, and add API keys
+
+# Then:
+uv run ocr-pipeline --config config.yaml
 ```
 
 That's it. The pipeline discovers all PDFs under `input_dir`, processes them, and writes markdown to `output_dir/`.
+
+---
+
+## Discovering What's Available
+
+Before configuring, explore what the pipeline offers:
+
+```bash
+# List all document profiles with suggested engines and VLM models
+uv run ocr-pipeline --list-profiles
+
+# List all OCR engines with requirements and guidance
+uv run ocr-pipeline --list-engines
+
+# List 53 supported language codes
+uv run ocr-pipeline --list-languages
+
+# List languages supported by a specific engine
+uv run ocr-pipeline --list-languages-for marker
+
+# See what would run without processing (safe preview)
+uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
+```
 
 ---
 
@@ -172,18 +193,34 @@ uv run ocr-pipeline --input ./pdfs/ --test
 ```
 Usage: ocr-pipeline [OPTIONS]
 
-  --config PATH         Path to config.yaml (default: config.yaml)
-  --input PATH          PDF input directory (overrides config)
-  --output PATH         Output directory (overrides config)
-  --engines LIST        Comma-separated: marker,mathpix,google_doc_ai
-  --vlm-model MODEL     VLM model for merge (gemini-2.0-flash-001, claude-haiku-4-5, etc.)
-  --budget FLOAT        Budget cap in USD
-  --content-type TYPE   general, theological, mathematical, legal
-  --column-layout TYPE  single, dual, auto
-  --langs LIST          Comma-separated language codes (en,la,de,fr)
-  --dry-run             List PDFs without processing
-  --test                Process only first 3 pages
-  --workers N           Max parallel workers (default: 4)
+  --config PATH          Path to config.yaml (default: config.yaml)
+  --input PATH           PDF input directory
+  --output PATH          Output directory
+  --engines LIST         Comma-separated: marker,mathpix,surya2,google_doc_ai
+  --vlm-model MODEL      VLM model for merge (gemini-2.5-flash, claude-sonnet-4-6, etc.)
+  --no-vlm               Disable VLM merge
+  --vlm-agreement FLOAT  Agreement threshold to skip VLM (default: 0.97)
+  --budget FLOAT         Budget cap in USD
+  --content-type TYPE    general, theological, academic, mathematical, legal,
+                         citation_focused, irish_hagiography
+  --column-layout TYPE   single, dual, auto
+  --langs LIST           Comma-separated language codes (en, de, fr, la, gle, etc.)
+  --dpi N                Render DPI (default: 300)
+  --workers N            Max parallel workers (default: 4)
+  --marker-concurrency N Max concurrent Marker subprocesses (default: 1)
+  --max-retries N        Max API retries (default: 3)
+  --timeout SEC          API timeout in seconds (default: 120.0)
+  --marker-venv PATH     Path to Marker virtual environment
+
+  --test                 Process only first 3 pages per PDF
+  --dry-run              List PDFs without processing
+  --no-postprocess       Skip post-processing cleanup
+  --verbose              Verbose logging (DEBUG level)
+
+  --list-profiles        List all document profiles with suggestions
+  --list-engines         List all OCR engines with requirements
+  --list-languages       List all supported language codes
+  --list-languages-for ENGINE  List languages supported by a specific engine
 ```
 
 ---
@@ -258,6 +295,18 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 export GEMINI_API_KEY="AIza..."
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 ```
+
+### VLM Model Reference
+
+| Model | Provider | Cost (input/output per 1M tokens) | Best for |
+|---|---|---|---|
+| `gemini-2.5-flash` | Google | $0.15 / $0.60 | Default — fast, cheap, good accuracy |
+| `gemini-2.0-flash` | Google | $0.10 / $0.40 | Cheapest option |
+| `gemini-2.5-pro` | Google | $1.25 / $10.00 | Higher quality, larger context |
+| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | Fast Claude option |
+| `claude-sonnet-4-6` | Anthropic | $3.00 / $15.00 | Best for diacritics, citations, nuanced text |
+| `claude-3.5-haiku` | Anthropic | $1.00 / $5.00 | Older fast Claude |
+| `claude-3.5-sonnet` | Anthropic | $3.00 / $15.00 | Older quality Claude |
 
 ---
 
@@ -364,26 +413,6 @@ checking quality before running a full batch.
 
 ---
 
-## Discovering What's Available
-
-The pipeline has discovery commands so you don't need to memorize options:
-
-```bash
-# List all document profiles with descriptions and suggested engines
-uv run ocr-pipeline --list-profiles
-
-# List all OCR engines with requirements and best-use guidance
-uv run ocr-pipeline --list-engines
-
-# List supported language codes
-uv run ocr-pipeline --list-languages
-
-# See what would run without actually processing
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
-```
-
----
-
 ## Document Profiles
 
 Pre-built system prompt profiles tailored to specific document types. Profiles control how the VLM merge step handles formatting, citations, languages, and special characters.
@@ -409,7 +438,7 @@ Select a content type via `--content-type` CLI flag or `content_type` in config.
 | **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. |
 | **Mathpix** | API | $0.005/page | Math-heavy PDFs | Best math/equation OCR available. Free tier: 1000 pages/month. |
 | **Google Document AI** | API | $0.0015/page | Enterprise, forms | Google Cloud processor setup required. Free tier: 500 pages/month. |
-| **Surya 2** | Local | Free | Coming soon | Next-generation local OCR. Not yet integrated. |
+| **Surya 2** | Local | Free | Multilingual documents, layout analysis | 91-language VLM OCR. Requires `uv sync --extra surya2`. |
 
 Use Marker as your default. Add Mathpix for math-heavy documents. Use Google Document AI for forms or when you need Google's enterprise OCR quality.
 
