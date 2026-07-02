@@ -321,8 +321,9 @@ print(pipeline.stats)
 | `postprocess.steps` | list[str] | all five | Which cleanup steps to run |
 | `budget_cap_usd` | float | `null` | Dollar cap (null = no limit) |
 | `engine_cost_per_page` | dict | see below | Per-page cost estimates |
-| `max_workers` | int | `4` | Parallel workers |
+| `max_workers` | int | `4` | Parallel workers per PDF |
 | `marker_concurrency` | int | `1` | Marker parallel limit |
+| `pdf_concurrency` | int | `2` | PDFs processed in parallel (large batches) |
 | `max_retries` | int | `3` | API call retries |
 | `retry_base_delay_sec` | float | `1.0` | Initial retry delay |
 | `retry_max_delay_sec` | float | `60.0` | Maximum retry delay |

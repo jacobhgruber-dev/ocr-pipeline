@@ -164,6 +164,10 @@ max_workers: 4
 # Marker engine concurrency limit (Marker is memory-intensive).
 marker_concurrency: 1
 
+# Maximum PDFs processed in parallel (default: 2).
+# Increase for many small PDFs; lower for large PDFs that each use heavy engines.
+pdf_concurrency: 2
+
 # -- Test Mode ----------------------------------------------------------------
 # Limit processing to the first 3 pages per PDF for quick testing.
 test_mode: false

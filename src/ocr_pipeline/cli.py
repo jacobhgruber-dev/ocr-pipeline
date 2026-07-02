@@ -355,6 +355,7 @@ def _dry_run(config: PipelineConfig) -> None:
     print(f"Languages:          {', '.join(config.languages)}")
     print(f"Render DPI:         {config.render_dpi}")
     print(f"Max workers:        {config.max_workers}")
+    print(f"PDF concurrency:    {config.pdf_concurrency}")
     print(f"Marker concurrency: {config.marker_concurrency}")
     if config.budget_cap_usd is not None:
         print(f"Budget cap:         ${config.budget_cap_usd:.2f}")

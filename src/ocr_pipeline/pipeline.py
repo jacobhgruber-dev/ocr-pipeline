@@ -139,6 +139,9 @@ class Pipeline:
     def run(self) -> dict[str, Any]:
         """Process all PDFs in ``config.input_dir``.
 
+        PDFs are processed in parallel (controlled by ``pdf_concurrency``,
+        default 2).  Each PDF's pages are processed in parallel internally.
+
         Returns:
             Stats dict with keys ``pdfs_processed``, ``pdfs_failed``,
             ``pages_processed``, ``pages_complete``, ``pages_failed``,
@@ -151,23 +154,58 @@ class Pipeline:
             logger.warning("No PDFs found in %s", self.config.input_dir)
             return self._build_stats(0.0)
 
-        logger.info("Found %d PDF(s) in %s", len(pdf_paths), self.config.input_dir)
-
-        progress = PipelineProgress(total_pages=len(pdf_paths), budget=self.budget)
-
-        for i, pdf_path in enumerate(pdf_paths):
+        # Pre-compute total pages for progress reporting
+        total_pages = 0
+        for pdf_path in pdf_paths:
             try:
-                pdf_stats = self.process_one(pdf_path)
-                self._pdfs_processed += 1
-                self._pages_processed += pdf_stats.get("pages_processed", 0)
-                self._pages_complete += pdf_stats.get("pages_complete", 0)
-                self._pages_failed += pdf_stats.get("pages_failed", 0)
-            except Exception as exc:
-                logger.error("Failed to process %s: %s", pdf_path.name, exc)
-                self._pdfs_failed += 1
-                self._pages_processed += 1  # count as attempted
+                total_pages += get_page_count(pdf_path)
+            except Exception:
+                total_pages += 1  # assume at least 1 page
+        if self.config.test_mode:
+            total_pages = min(total_pages, 3 * len(pdf_paths))
 
-            progress.update(i, 0.0)
+        logger.info(
+            "Found %d PDF(s) (%d total pages) in %s",
+            len(pdf_paths),
+            total_pages,
+            self.config.input_dir,
+        )
+
+        pdf_workers = getattr(self.config, "pdf_concurrency", 2)
+        progress = PipelineProgress(
+            total_pages=len(pdf_paths), budget=self.budget
+        )
+        stats_lock = threading.Lock()
+
+        with ThreadPoolExecutor(max_workers=pdf_workers) as executor:
+            future_to_path: dict[Future[dict[str, Any]], Path] = {
+                executor.submit(self.process_one, pdf_path): pdf_path
+                for pdf_path in pdf_paths
+            }
+
+            for future in as_completed(future_to_path):
+                pdf_path = future_to_path[future]
+                try:
+                    pdf_stats = future.result()
+                    with stats_lock:
+                        self._pdfs_processed += 1
+                        self._pages_processed += pdf_stats.get(
+                            "pages_processed", 0
+                        )
+                        self._pages_complete += pdf_stats.get(
+                            "pages_complete", 0
+                        )
+                        self._pages_failed += pdf_stats.get(
+                            "pages_failed", 0
+                        )
+                except Exception as exc:
+                    logger.error(
+                        "Failed to process %s: %s", pdf_path.name, exc
+                    )
+                    with stats_lock:
+                        self._pdfs_failed += 1
+
+                progress.update(0, 0.0)
 
         progress.close()
 
