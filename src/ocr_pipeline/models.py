@@ -137,6 +137,7 @@ class EngineOutput:
     duration_sec: float = 0.0
     retries: int = 0
     blocks: list[Block] | None = None  # structured blocks with bounding boxes
+    confidence: float | None = None  # engine-level confidence (e.g. from surya2)
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -148,6 +149,8 @@ class EngineOutput:
         }
         if self.blocks is not None:
             result["blocks"] = [b.to_dict() for b in self.blocks]
+        if self.confidence is not None:
+            result["confidence"] = self.confidence
         return result
 
     @classmethod
@@ -162,6 +165,7 @@ class EngineOutput:
             duration_sec=float(d.get("duration_sec", 0.0)),
             retries=int(d.get("retries", 0)),
             blocks=blocks,
+            confidence=d.get("confidence"),
         )
 
 
@@ -213,6 +217,7 @@ class PageResult:
     error: str | None = None
     estimated_cost: float = 0.0
     metadata: dict[str, Any] = field(default_factory=dict)
+    confidence: float | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a plain dict.
@@ -234,6 +239,7 @@ class PageResult:
             "error": self.error,
             "estimated_cost": self.estimated_cost,
             "metadata": self.metadata,
+            "confidence": self.confidence,
         }
 
     @classmethod
@@ -256,6 +262,7 @@ class PageResult:
             error=d.get("error"),
             estimated_cost=float(d.get("estimated_cost", 0.0)),
             metadata=d.get("metadata", {}),
+            confidence=d.get("confidence"),
         )
 
 

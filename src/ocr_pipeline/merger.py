@@ -473,7 +473,7 @@ def merge_with_vlm(
     page_index: int,
     pdf_identifier: str,
     system_prompt: str = "",
-    model: str = "gemini-3.5-flash",
+    model: str = "gemini-2.5-flash",
     fallback_model: str = "claude-sonnet-5",
     max_tokens: int = 4096,
     timeout_sec: float = 120.0,
@@ -492,7 +492,7 @@ def merge_with_vlm(
         pdf_identifier: Short identifier for the source PDF.
         system_prompt: VLM system prompt. If empty, uses
                        :data:`DEFAULT_SYSTEM_PROMPT`.
-        model: VLM model ID. Default: ``"gemini-3.5-flash"``.
+        model: VLM model ID. Default: ``"gemini-2.5-flash"``.
         fallback_model: Model to use if primary model output is low quality.
                         Default: ``"claude-sonnet-5"``.
         max_tokens: Max output tokens.
@@ -625,7 +625,6 @@ _GEMINI_RATES: dict[str, tuple[float, float]] = {
     "gemini-2.5-pro": (1.25, 10.0),
     "gemini-2.0-flash": (0.10, 0.40),
     "gemini-1.5-pro": (3.50, 10.50),
-    "gemini-3.5-flash": (0.15, 0.60),
 }
 
 

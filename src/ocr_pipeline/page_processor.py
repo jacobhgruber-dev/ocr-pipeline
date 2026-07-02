@@ -152,6 +152,9 @@ class PageProcessor:
             # Phase 5: estimate costs
             self._estimate_costs(ctx)
 
+            # Compute average confidence across engine outputs
+            self._compute_confidence(ctx)
+
             # Phase 6: save outputs
             self._save_outputs(ctx)
 
@@ -306,6 +309,22 @@ class PageProcessor:
         )
         ctx.cost += engine_cost
         ctx.page.estimated_cost = ctx.cost
+
+    def _compute_confidence(self, ctx: PageContext) -> None:
+        """Compute average confidence across all engine outputs.
+
+        Sets ``ctx.page.confidence`` to the average of all engine
+        confidence values, or ``None`` if no engine provides confidence.
+        """
+        confidences = [
+            eo.confidence
+            for eo in ctx.engine_outputs
+            if eo.confidence is not None and eo.confidence > 0
+        ]
+        if confidences:
+            ctx.page.confidence = sum(confidences) / len(confidences)
+        else:
+            ctx.page.confidence = None
 
     # ------------------------------------------------------------------
     # Phase 6: save outputs

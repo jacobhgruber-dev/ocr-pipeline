@@ -13,7 +13,12 @@ class MarkdownFormatter:
     """Produces markdown output (passthrough from merged markdown)."""
 
     def format(self, page: PageResult) -> str:
-        return page.merged_markdown
+        text = page.merged_markdown
+        if page.confidence is not None:
+            conf_pct = round(page.confidence * 100, 1)
+            conf_line = f"<!-- OCR confidence: {conf_pct}% -->\n\n"
+            text = conf_line + text
+        return text
 
     def extension(self) -> str:
         return ".md"

@@ -21,6 +21,8 @@ from concurrent.futures import Future, ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
 
+from datetime import datetime, timezone
+
 from .checkpoint import CheckpointManager
 from .config import PipelineConfig
 from .costing import BudgetTracker
@@ -107,6 +109,7 @@ class Pipeline:
         self._pages_processed: int = 0
         self._pages_complete: int = 0
         self._pages_failed: int = 0
+        self._total_confidence: float = 0.0
 
     # ------------------------------------------------------------------
     # engine initialization
@@ -173,7 +176,7 @@ class Pipeline:
 
         pdf_workers = getattr(self.config, "pdf_concurrency", 2)
         progress = PipelineProgress(
-            total_pages=len(pdf_paths), budget=self.budget
+            total_pages=total_pages, budget=self.budget
         )
         stats_lock = threading.Lock()
 
@@ -185,6 +188,7 @@ class Pipeline:
 
             for future in as_completed(future_to_path):
                 pdf_path = future_to_path[future]
+                pdf_stats: dict[str, Any] = {}
                 try:
                     pdf_stats = future.result()
                     with stats_lock:
@@ -205,9 +209,20 @@ class Pipeline:
                     with stats_lock:
                         self._pdfs_failed += 1
 
-                progress.update(0, 0.0)
+                pages_done = pdf_stats.get("pages_processed", 0) + pdf_stats.get("pages_skipped", 0)
+                for _ in range(max(pages_done, 1)):
+                    progress.update(0, 0.0)
+
+                with stats_lock:
+                    self._total_confidence += pdf_stats.get("pages_confidence_sum", 0.0)
 
         progress.close()
+
+        # Concatenate all per-PDF document outputs into a collection file
+        try:
+            self._produce_collection_output()
+        except Exception:
+            logger.debug("Failed to produce collection output", exc_info=True)
 
         duration = round(time.perf_counter() - t0, 1)
         return self._build_stats(duration)
@@ -256,6 +271,7 @@ class Pipeline:
                     "pages_processed": 0,
                     "pages_complete": 0,
                     "pages_failed": 0,
+                    "pages_confidence_sum": 0.0,
                 }
 
         # Determine page count (per-page extractability tested individually)
@@ -282,6 +298,7 @@ class Pipeline:
         pages_processed = 0
         pages_complete = 0
         pages_failed = 0
+        pages_confidence_sum = 0.0
 
         # Collect pages that need processing
         pending = [
@@ -293,7 +310,7 @@ class Pipeline:
 
         if not pending:
             logger.info("PDF %s: all %d pages already complete", short_sha, page_count)
-            return {"pages_processed": 0, "pages_complete": 0, "pages_failed": 0}
+            return {"pages_processed": 0, "pages_complete": 0, "pages_failed": 0, "pages_confidence_sum": 0.0}
 
         # Process pending pages with thread pool
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
@@ -320,6 +337,8 @@ class Pipeline:
                     else:
                         pages_failed += 1
                     pages_processed += 1
+                    if result_page.confidence is not None:
+                        pages_confidence_sum += result_page.confidence
                     self._log_page(result_page, short_sha)
                 except Exception as exc:
                     logger.error(
@@ -345,6 +364,7 @@ class Pipeline:
             "pages_processed": pages_processed,
             "pages_complete": pages_complete,
             "pages_failed": pages_failed,
+            "pages_confidence_sum": pages_confidence_sum,
         }
 
     def _produce_document_output(
@@ -421,6 +441,53 @@ class Pipeline:
         out_path = output_dir / f"{short_sha}.md"
         out_path.write_text(content, encoding="utf-8")
         logger.info("Saved document-level markdown for %s: %s", short_sha, out_path)
+
+        # Also write a document.md copy for cross-PDF collection
+        doc_path = output_dir / "document.md"
+        doc_path.write_text(content, encoding="utf-8")
+
+    def _produce_collection_output(self) -> None:
+        """Concatenate all per-PDF document.md files into a collection.
+
+        Finds all ``*/document.md`` under ``config.output_dir``, sorts by
+        directory name, concatenates with ``\\n\\n---\\n\\n`` separators,
+        and writes ``collection.md`` in the top-level output directory.
+        """
+        doc_files = sorted(
+            self.config.output_dir.rglob("*/document.md"),
+            key=lambda p: str(p.parent),
+        )
+
+        if not doc_files:
+            logger.debug("No document.md files found for collection output")
+            return
+
+        parts: list[str] = []
+        for doc_path in doc_files:
+            text = doc_path.read_text(encoding="utf-8")
+            if text.strip():
+                parts.append(text)
+
+        if not parts:
+            return
+
+        timestamp = datetime.now(timezone.utc).isoformat()
+        header = (
+            f"# OCR Pipeline Output\n\n"
+            f"Generated: {timestamp}\n"
+            f"PDFs processed: {self._pdfs_processed}\n"
+            f"Total pages: {self._pages_processed}\n\n"
+            f"---\n\n"
+        )
+
+        body = "\n\n---\n\n".join(parts)
+        collection_path = self.config.output_dir / "collection.md"
+        collection_path.write_text(header + body, encoding="utf-8")
+        logger.info(
+            "Saved collection output (%d document(s)): %s",
+            len(doc_files),
+            collection_path,
+        )
 
     @property
     def stats(self) -> dict[str, Any]:
@@ -662,4 +729,5 @@ class Pipeline:
             "pages_failed": self._pages_failed,
             "total_cost": round(self.budget.spent_usd, 4),
             "duration_sec": duration_sec,
+            "avg_confidence": round(self._total_confidence / max(self._pages_complete, 1), 3),
         }
