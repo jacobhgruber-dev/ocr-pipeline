@@ -616,10 +616,11 @@ PROFILES: dict[str, DocumentProfile] = {
         system_prompt=_LEGAL_PROMPT,
         description=(
             "Legal document. Preserves section symbols, case citations, "
-            "paragraph hierarchy, signature blocks, and marginalia."
+            "paragraph hierarchy, signature blocks, and marginalia. "
+            "Add google_doc_ai engine for forms and structured layouts "
+            "(requires Google Cloud credentials)."
         ),
-        suggested_engines=["marker"],
-        # google_doc_ai optional for structured legal forms
+        suggested_engines=["marker", "google_doc_ai"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="claude-sonnet-5",
@@ -630,10 +631,10 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Technical or engineering document. Preserves callout boxes, revision "
             "tables, tolerances, part numbers, code blocks with syntax hints, "
-            "diagrams, and procedure steps."
+            "diagrams, and procedure steps. Add google_doc_ai engine for "
+            "structured datasheets and form-heavy specs (requires Google Cloud)."
         ),
-        suggested_engines=["marker"],
-        # google_doc_ai optional for structured datasheets and forms
+        suggested_engines=["marker", "google_doc_ai"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
