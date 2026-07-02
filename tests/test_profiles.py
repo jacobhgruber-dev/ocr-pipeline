@@ -185,9 +185,9 @@ class TestBuildSystemPromptWithProfile:
 
     def test_unknown_profile_falls_back_to_general(self):
         prompt = _build_system_prompt(profile_name="nonexistent_profile_key")
-        # Verify core prompt is the same as general fallback
+        # Falls back to general profile prompt (no longer appends context hints)
         assert "You are an OCR auditor" in prompt
-        assert "general" in prompt.lower()
+        assert "[illegible]" in prompt
 
 
 class TestBuildSystemPromptFallsBack:

@@ -142,15 +142,15 @@ class TestCitationPreservation:
 class TestCitationSystemPrompts:
     """Verify VLM system prompts include citation preservation rules."""
 
-    def test_theological_prompt_includes_formatting_rules(self):
+    def test_theological_prompt_uses_profile_not_template(self):
         from ocr_pipeline.merger import _build_system_prompt
 
         prompt = _build_system_prompt(
             content_type="theological", column_layout="auto", languages=["en", "la"]
         )
-        # Should include the document context hint and formatting rules
+        # Profile-based prompt should contain theological domain rules
+        # (formatting rules are now part of the profile prompt itself)
         assert "ecclesiastical" in prompt.lower()
-        assert "FORMATTING RULES" in prompt
         assert "[illegible]" in prompt or "footnote" in prompt.lower()
 
     def test_academic_prompt_includes_citation_rules(self):
@@ -167,9 +167,10 @@ class TestCitationSystemPrompts:
         )
 
     def test_citation_focused_prompt_exists(self):
-        from ocr_pipeline.merger import _SYSTEM_PROMPT_TEMPLATES
+        from ocr_pipeline.profiles import get_profile
 
-        assert "citation_focused" in _SYSTEM_PROMPT_TEMPLATES
+        profile = get_profile("citation_focused")
+        assert "citation" in profile.system_prompt.lower()
 
     def test_general_prompt_does_not_include_specialized_rules(self):
         """General prompt should not include theological-specific citation rules."""

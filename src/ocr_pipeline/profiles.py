@@ -349,3 +349,20 @@ def suggested_model(profile_name: str) -> str:
         "citation_focused": "claude-sonnet-4-6",
     }
     return _MODEL_SUGGESTIONS.get(profile_name, "gemini-2.5-flash")
+
+
+def suggested_languages(profile_name: str) -> list[str]:
+    """Return recommended language codes for a document profile.
+
+    Falls back to ``["en"]`` for unknown profiles.
+    """
+    _LANGUAGE_SUGGESTIONS: dict[str, list[str]] = {
+        "general": ["en"],
+        "academic": ["en"],
+        "theological_journal": ["en", "la"],
+        "irish_hagiography": ["en", "gle", "la"],
+        "mathematical": ["en"],
+        "legal": ["en"],
+        "citation_focused": ["en"],
+    }
+    return _LANGUAGE_SUGGESTIONS.get(profile_name, ["en"])

@@ -127,160 +127,9 @@ DEFAULT_SYSTEM_PROMPT = (
     "7. Return ONLY the merged markdown — no preamble, no explanation."
 )
 
-_SYSTEM_PROMPT_TEMPLATES: dict[str, str] = {
-    "theological": (
-        "You are an OCR auditor for a historical theological journal.\n"
-        "You receive a scanned page image and three OCR transcriptions "
-        "(Google Document AI, Mathpix, and Marker/Surya). Your job is to "
-        "produce the authoritative markdown for this page.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all three transcriptions against the image. Where they "
-        "agree, keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything. The output "
-        "must be a complete transcription.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Use **bold** for headlines, *italic* "
-        "for Latin/document titles.\n"
-        "   Use blockquotes (>) for extended quotations.\n"
-        "6. If the page contains dual-column layout, linearize left column "
-        "first, then right.\n"
-        "7. If the page contains footnotes, include them at the bottom "
-        "prefixed with [^N]:\n"
-        "   where N matches the superscript marker.\n"
-        "8. Do NOT add interpretive notes, commentary, or translation.\n"
-        "9. If all three OCR outputs agree on a passage, reproduce it "
-        "verbatim.\n"
-        "10. For ambiguous characters (e.g., u/v, i/j in ecclesiastical "
-        "Latin), prefer the\n"
-        "    reading most consistent with the document's orthographic style.\n"
-        "11. Return ONLY the merged markdown — no preamble, no explanation."
-    ),
-    "academic": (
-        "You are an OCR auditor for an academic publication.\n"
-        "You receive a scanned page image and multiple OCR transcriptions. "
-        "Your job is to produce the authoritative markdown for this page.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all transcriptions against the image. Where they agree, "
-        "keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything. The output "
-        "must be a complete transcription.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Use **bold** for headlines, *italic* "
-        "for titles.\n"
-        "6. Do NOT add interpretive notes, commentary, or translation.\n"
-        "7. Return ONLY the merged markdown — no preamble, no explanation.\n"
-        "8. Preserve all citation metadata: author names, titles, publication "
-        "dates,\n"
-        "   journal/volume/issue numbers, DOIs, and page ranges.\n"
-        "9. Format footnotes with [^N]: markers.\n"
-        "10. Preserve all bibliographic references exactly as printed.\n"
-        "11. If the document follows Chicago Manual of Style (CMOS 18), "
-        "ensure footnote\n"
-        '    formatting matches: Firstname Lastname, "Title of Article," '
-        "*Journal Name*\n"
-        "    Volume, no. Issue (Year): Page.\n"
-        "12. For theological documents, preserve ecclesiastical Latin, "
-        "AAS (Acta Apostolicae\n"
-        "    Sedis) references, and Denzinger (DS/DH) numbers."
-    ),
-    "citation_focused": (
-        "You are an OCR auditor for a citation-rich document.\n"
-        "You receive a scanned page image and multiple OCR transcriptions. "
-        "Your job is to produce the authoritative markdown for this page, "
-        "with special attention to citation accuracy.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all transcriptions against the image. Where they agree, "
-        "keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Use **bold** for headlines, *italic* "
-        "for titles.\n"
-        "6. CRITICAL: Preserve EVERY citation in full. Pay extra attention "
-        "to footnotes,\n"
-        "   endnotes, parenthetical citations, and bibliographic entries.\n"
-        "7. Preserve footnote markers ([^N]) and their corresponding text.\n"
-        "8. For references with DOIs, preserve the full DOI string.\n"
-        "9. Mark any uncertain citations with [?].\n"
-        "10. Do NOT add interpretive notes, commentary, or translation.\n"
-        "11. Return ONLY the merged markdown — no preamble, no explanation."
-    ),
-    "mathematical": (
-        "You are an OCR auditor for a scientific paper.\n"
-        "You receive a scanned page image and multiple OCR transcriptions. "
-        "Your job is to produce the authoritative markdown for this page.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all transcriptions against the image. Where they agree, "
-        "keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything. The output "
-        "must be a complete transcription.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Use **bold** for headlines, *italic* "
-        "for emphasis.\n"
-        "6. For mathematical expressions, prefer LaTeX math mode: use $...$ "
-        "for inline math and $$...$$ for display math.\n"
-        "7. If the page contains citations, preserve them verbatim.\n"
-        "8. Do NOT add interpretive notes, commentary, or translation.\n"
-        "9. Return ONLY the merged markdown — no preamble, no explanation."
-    ),
-    "legal": (
-        "You are an OCR auditor for a legal document.\n"
-        "You receive a scanned page image and multiple OCR transcriptions. "
-        "Your job is to produce the authoritative markdown for this page.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all transcriptions against the image. Where they agree, "
-        "keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything. The output "
-        "must be a complete transcription.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Preserve section numbering and legal "
-        "citations exactly.\n"
-        "6. Do NOT add interpretive notes, commentary, or translation.\n"
-        "7. Return ONLY the merged markdown — no preamble, no explanation."
-    ),
-    "irish_hagiography": (
-        "You are an OCR auditor for a modern Irish hagiography dictionary.\n"
-        "You receive a scanned page image and multiple OCR transcriptions. "
-        "Your job is to produce the authoritative markdown for this page.\n"
-        "\n"
-        "The text is a single-column dictionary with entries in a mix of "
-        "modern Irish, English, and Latin.\n"
-        "\n"
-        "Rules:\n"
-        "1. Compare all transcriptions against the image. Where they agree, "
-        "keep the consensus.\n"
-        "2. Where they disagree, use the image to determine the correct text.\n"
-        "3. Preserve ALL text — do not summarize or omit anything. The output "
-        "must be a complete transcription.\n"
-        "4. Mark any text you cannot read with [illegible].\n"
-        "5. Format as clean markdown. Use **bold** for headwords/entry "
-        "headings, *italic* for book titles and Latin phrases.\n"
-        "6. SINGLE-COLUMN LAYOUT: The page is single-column. Do not attempt "
-        "column detection or dual-column linearization.\n"
-        "7. IRISH DIACRITICS: The fada (acute accent) on Irish vowels "
-        "(á, é, í, ó, ú) is orthographically\n"
-        "   significant — it distinguishes different letters. á vs a are "
-        "NOT variants of the same\n"
-        "   letter. NEVER drop a fada and NEVER add one not present in the "
-        "image.\n"
-        "8. MODERN IRISH ORTHOGRAPHY: Modern Irish uses u (not v) for the "
-        "vowel. Do not apply\n"
-        "   ecclesiastical Latin u/v conventions.\n"
-        "9. DICTIONARY FORMAT: Preserve headword boldness, definition "
-        "structure, and cross-references.\n"
-        "10. Do NOT add interpretive notes, commentary, or translation.\n"
-        "11. Return ONLY the merged markdown — no preamble, no explanation."
-    ),
-    "general": DEFAULT_SYSTEM_PROMPT,
+# Map legacy content_type values to profile names where they differ.
+_CONTENT_TYPE_TO_PROFILE: dict[str, str] = {
+    "theological": "theological_journal",
 }
 
 
@@ -291,11 +140,11 @@ def _build_system_prompt(
     custom_prompt: str = "",
     profile_name: str = "",
 ) -> str:
-    """Assemble the VLM system prompt from content type and layout hints.
+    """Assemble the VLM system prompt from profiles.py and layout hints.
 
     Args:
         content_type: One of ``"theological"``, ``"mathematical"``, ``"legal"``,
-                      ``"general"``.
+                      ``"general"``, etc. Falls back to ``"general"``.
         column_layout: ``"single"``, ``"dual"``, or ``"auto"``.
         languages: List of ISO 639-1 language codes the document may contain.
         custom_prompt: If non-empty, overrides all template assembly and is
@@ -310,21 +159,14 @@ def _build_system_prompt(
     if custom_prompt:
         return custom_prompt
 
-    # Profile overrides content_type
+    # Resolve profile: profile_name trumps content_type.
     if profile_name:
         profile = get_profile(profile_name)
-        base = profile.system_prompt
-        ct = profile.content_type
     else:
-        base = _SYSTEM_PROMPT_TEMPLATES.get(content_type, _SYSTEM_PROMPT_TEMPLATES["general"])
-        ct = content_type
+        profile_key = _CONTENT_TYPE_TO_PROFILE.get(content_type, content_type)
+        profile = get_profile(profile_key)
 
-    # ── Document context hint ─────────────────────────────────────────
-    context_hint = _DOCUMENT_CONTEXT_HINTS.get(ct, _DOCUMENT_CONTEXT_HINTS["general"])
-    base += f"\n\n{context_hint}"
-
-    # ── Formatting preservation rules (always appended) ───────────────
-    base += f"\n\n{_FORMATTING_PRESERVATION_RULES}"
+    base = profile.system_prompt
 
     # ── Column layout hint ────────────────────────────────────────────
     if column_layout == "dual":
@@ -343,67 +185,6 @@ def _build_system_prompt(
         )
 
     return base
-
-
-# ── Document context hints (injected per content_type) ─────────────────────
-
-_DOCUMENT_CONTEXT_HINTS: dict[str, str] = {
-    "theological": (
-        "This is an ecclesiastical or theological document. "
-        "It may contain ecclesiastical Latin, dual-column layout, "
-        "and extensive footnotes with academic citations."
-    ),
-    "academic": (
-        "This is an academic publication. "
-        "Preserve all footnotes, DOIs, and bibliographic references verbatim. "
-        "If the page contains tables, preserve them as markdown tables."
-    ),
-    "mathematical": (
-        "This is a scientific or mathematical document. "
-        "Preserve all equations, formulas, and LaTeX-style notation verbatim."
-    ),
-    "legal": (
-        "This is a legal document. "
-        "Preserve all section symbols (§), statute references, and citation formats exactly."
-    ),
-    "citation_focused": (
-        "This document contains extensive citations. "
-        "Preserve every footnote, reference, and bibliographic entry verbatim. "
-        "Do not normalize or alter any citation format."
-    ),
-    "irish_hagiography": (
-        "This is a modern Irish hagiography dictionary. "
-        "Preserve Irish fada diacritics (á, é, í, ó, ú) exactly — they are "
-        "orthographically significant. Single-column dictionary layout. "
-        "Modern Irish uses u (not v)."
-    ),
-    "general": (
-        "This is a general document. "
-        "Preserve the original formatting, footnotes, and any tables verbatim."
-    ),
-}
-
-# ── Formatting preservation rules (appended to every prompt) ────────
-
-_FORMATTING_PRESERVATION_RULES = (
-    "FORMATTING RULES:\n"
-    "1. Preserve ALL text verbatim — do not summarize, omit, or alter anything.\n"
-    "2. Mark any text you cannot read with [illegible].\n"
-    "3. Format as clean markdown: **bold** for headlines, *italic* for "
-    "Latin phrases, book titles, and journal names.\n"
-    "4. Use blockquotes (>) for extended quotations.\n"
-    "5. If the page contains dual-column layout, linearize left column "
-    "first, then right.\n"
-    "6. If the page contains footnotes, preserve EVERY footnote marker "
-    "(numbers, asterisks, daggers, etc.) and include the footnote text "
-    "at the bottom prefixed with [^N]: where N matches the marker.\n"
-    "7. If the page contains tables, preserve them as markdown tables "
-    "(pipe-delimited columns, header row separated by dashes).\n"
-    "8. Preserve special characters exactly: en dashes (–), em dashes (—), "
-    "section symbols (§), pilcrows (¶), and all Unicode characters.\n"
-    "9. Do NOT add interpretive notes, commentary, or translation.\n"
-    "10. Return ONLY the merged markdown — no preamble, no explanation."
-)
 
 
 # ── Provider-specific API callers ─────────────────────────────────────────
