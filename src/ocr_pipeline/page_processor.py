@@ -128,6 +128,8 @@ class PageProcessor:
                 # VLM enabled: render + merge even with embedded text
                 self._render_page(ctx)
                 self._vlm_merge_extracted(ctx)
+                # Sync ctx.merged_markdown for _save_outputs (which uses it as source of truth)
+                ctx.merged_markdown = ctx.page.merged_markdown
                 self._save_outputs(ctx)
                 ctx.page.status = PageStatus.COMPLETE
                 ctx.page.completed_at = _now_iso()
