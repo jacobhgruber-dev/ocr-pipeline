@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """CLI entry point for the OCR pipeline.
 
 Usage:
@@ -6,6 +7,7 @@ Usage:
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --config config.yaml
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test
+    uv run ocr-pipeline --list-profiles
 """
 
 from __future__ import annotations
@@ -17,7 +19,17 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .config import ConfigLoader, PipelineConfig
+from .languages import (
+    LANGUAGE_NAMES,
+    _engine_support_label,
+    list_languages_for_engine,
+)
 from .pipeline import Pipeline
+from .profiles import (
+    PROFILES,
+    suggested_engines,
+    suggested_model,
+)
 
 # ---------------------------------------------------------------------------
 # CLI-arg → PipelineConfig mapping
@@ -205,6 +217,28 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Show what would be done without running OCR",
     )
+    parser.add_argument(
+        "--list-profiles",
+        action="store_true",
+        help="List available document profiles and exit",
+    )
+    parser.add_argument(
+        "--list-engines",
+        action="store_true",
+        help="List available OCR engines and exit",
+    )
+    parser.add_argument(
+        "--list-languages",
+        action="store_true",
+        help="List supported language codes and exit",
+    )
+    parser.add_argument(
+        "--list-languages-for",
+        type=str,
+        default=None,
+        metavar="ENGINE",
+        help="List languages supported by ENGINE (marker, surya2, google_doc_ai)",
+    )
 
     # -- Post-processing -----------------------------------------------------
     parser.add_argument(
@@ -312,6 +346,118 @@ def _dry_run(config: PipelineConfig) -> None:
 
 
 # ---------------------------------------------------------------------------
+# List-profiles
+# ---------------------------------------------------------------------------
+
+
+def _print_profiles() -> None:
+    """Print all available document profiles and exit."""
+    print("Available document profiles (use with --content-type):\n")
+    for profile in PROFILES.values():
+        print(f"  {profile.name}")
+        print(f"    Content type: {profile.content_type}")
+        print(f"    Description: {profile.description}")
+        engines = ", ".join(suggested_engines(profile.name))
+        model = suggested_model(profile.name)
+        print(f"    Suggested engines: {engines}")
+        print(f"    Suggested VLM model: {model}")
+        print()
+    print(
+        "Usage: uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type <profile_name>"
+    )
+
+
+# ---------------------------------------------------------------------------
+# List-engines
+# ---------------------------------------------------------------------------
+
+_ENGINE_INFO: dict[str, dict[str, str]] = {
+    "marker": {
+        "header": "Local, free. General-purpose OCR (requires Marker venv).",
+        "best_for": "general documents.",
+        "install": "uv sync --extra marker",
+        "cost": "free",
+    },
+    "mathpix": {
+        "header": "API. Math-specialized OCR.",
+        "best_for": "math-heavy PDFs, equations, LaTeX.",
+        "requires": "MATHPIX_APP_ID and MATHPIX_APP_KEY",
+        "free_tier": "1000 pages/month. Paid: ~$0.005/page",
+    },
+    "surya2": {
+        "header": "Local, free. Next-gen VLM-based OCR (91 languages).",
+        "best_for": "multilingual documents, layout analysis.",
+        "install": "uv sync --extra surya2",
+        "cost": "free",
+    },
+    "google_doc_ai": {
+        "header": "API. Google Cloud Document AI (enterprise OCR).",
+        "best_for": "forms, structured documents.",
+        "requires": "GOOGLE_CLOUD_PROJECT and credentials",
+        "free_tier": "500 pages/month. Paid: ~$0.0015/page",
+    },
+    "grobid": {
+        "header": "API (local). Metadata extraction (not page OCR).",
+        "best_for": "extracting title, authors, DOIs from academic PDFs.",
+        "requires": "Docker running grobid container",
+        "install": "docker run -d -p 8070:8070 lfoppiano/grobid:0.8.1",
+        "cost": "free (runs locally)",
+    },
+}
+
+
+def _print_engines() -> None:
+    """Print all available OCR engines and exit."""
+    print("Available OCR engines (use with --engines):\n")
+    for name, info in _ENGINE_INFO.items():
+        print(f"  {name}")
+        for key, _label in [
+            ("header", None),
+            ("best_for", "Best for"),
+            ("requires", "Requires"),
+            ("install", "Install"),
+            ("free_tier", "Free tier"),
+            ("cost", "Cost"),
+        ]:
+            value = info.get(key)
+            if value:
+                if _label:
+                    print(f"    {_label}: {value}")
+                else:
+                    print(f"    {value}")
+        print()
+
+
+# ---------------------------------------------------------------------------
+# List-languages
+# ---------------------------------------------------------------------------
+
+
+def _print_languages() -> None:
+    """Print all known language codes with names and engine support."""
+    print("Supported languages (use with --langs):\n")
+    for code in sorted(LANGUAGE_NAMES.keys()):
+        name = LANGUAGE_NAMES[code]
+        label = _engine_support_label(code)
+        print(f"  {code:<6s} {name:<22s} {label}")
+
+
+def _print_languages_for_engine(engine: str) -> None:
+    """Print language codes supported by a specific engine."""
+    try:
+        codes = list_languages_for_engine(engine)
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Languages supported by engine '{engine}':\n")
+    for code in codes:
+        name = LANGUAGE_NAMES.get(code, code)
+        print(f"  {code:<6s} {name}")
+    print(f"\n{len(codes)} language(s) total.")
+
+
+# ---------------------------------------------------------------------------
 # Stats printer
 # ---------------------------------------------------------------------------
 
@@ -345,6 +491,20 @@ def main() -> None:
         format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+
+    # Discovery commands (no input/output required)
+    if args.list_profiles:
+        _print_profiles()
+        sys.exit(0)
+    if args.list_engines:
+        _print_engines()
+        sys.exit(0)
+    if args.list_languages:
+        _print_languages()
+        sys.exit(0)
+    if args.list_languages_for:
+        _print_languages_for_engine(args.list_languages_for)
+        sys.exit(0)
 
     # Build configuration
     config = _build_config(args)

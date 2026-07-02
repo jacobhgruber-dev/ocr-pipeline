@@ -315,3 +315,37 @@ def get_profile(name: str) -> DocumentProfile:
 def list_profiles() -> list[str]:
     """Return the list of registered profile names."""
     return sorted(PROFILES.keys())
+
+
+def suggested_engines(profile_name: str) -> list[str]:
+    """Return recommended OCR engines for *profile_name*, in priority order.
+
+    Falls back to ``["marker"]`` for unknown profiles.
+    """
+    _ENGINE_SUGGESTIONS: dict[str, list[str]] = {
+        "general": ["marker"],
+        "academic": ["marker", "mathpix"],
+        "theological_journal": ["marker", "mathpix", "google_doc_ai"],
+        "irish_hagiography": ["marker", "surya2"],
+        "mathematical": ["mathpix", "marker"],
+        "legal": ["marker", "google_doc_ai"],
+        "citation_focused": ["marker", "mathpix"],
+    }
+    return _ENGINE_SUGGESTIONS.get(profile_name, ["marker"])
+
+
+def suggested_model(profile_name: str) -> str:
+    """Return a recommended VLM model name for *profile_name*.
+
+    Falls back to ``"gemini-2.5-flash"`` for unknown profiles.
+    """
+    _MODEL_SUGGESTIONS: dict[str, str] = {
+        "general": "gemini-2.5-flash",
+        "academic": "gemini-2.5-flash",
+        "theological_journal": "claude-sonnet-4-6",
+        "irish_hagiography": "claude-sonnet-4-6",
+        "mathematical": "gemini-2.5-flash",
+        "legal": "gemini-2.5-flash",
+        "citation_focused": "claude-sonnet-4-6",
+    }
+    return _MODEL_SUGGESTIONS.get(profile_name, "gemini-2.5-flash")

@@ -12,7 +12,18 @@ from mcp.server.fastmcp import FastMCP
 
 from .config import ConfigLoader, PipelineConfig
 from .engines import create_engine
+from .languages import (
+    LANGUAGE_NAMES,
+    ENGINE_NAMES,
+    list_languages_for_engine,
+)
 from .pipeline import Pipeline
+from .profiles import (
+    PROFILES,
+    list_profiles,
+    suggested_engines,
+    suggested_model,
+)
 
 logger = logging.getLogger("ocr-pipeline-mcp")
 
@@ -247,6 +258,29 @@ async def ocr_page(
 
 
 @mcp.tool()
+async def ocr_profiles() -> dict[str, Any]:
+    """List available document profiles for OCR processing.
+
+    Returns all pre-registered document profiles with their names,
+    content types, descriptions, suggested engines, and recommended
+    VLM models. Use these with the content_type parameter of
+    ocr_pdf to get tailored VLM system prompts.
+    """
+    result = []
+    for profile in PROFILES.values():
+        result.append(
+            {
+                "name": profile.name,
+                "content_type": profile.content_type,
+                "description": profile.description,
+                "suggested_engines": suggested_engines(profile.name),
+                "suggested_model": suggested_model(profile.name),
+            }
+        )
+    return {"profiles": result}
+
+
+@mcp.tool()
 async def ocr_status() -> dict[str, Any]:
     """Check which OCR engines are available and their health status."""
     engine_names = ["marker", "mathpix", "surya2", "google_doc_ai", "grobid"]
@@ -270,7 +304,49 @@ async def ocr_status() -> dict[str, Any]:
         except Exception as exc:
             statuses[name] = f"unavailable: {exc}"
 
-    return {"engines": statuses}
+    return {
+        "engines": statuses,
+        "profiles_available": list_profiles(),
+        "vlm_models_available": [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+            "claude-haiku-4-5",
+            "claude-sonnet-4-6",
+            "claude-3.5-haiku",
+            "claude-3.5-sonnet",
+        ],
+    }
+
+
+@mcp.tool()
+async def ocr_languages(engine: str | None = None) -> dict[str, Any]:
+    """List supported language codes and their names.
+
+    Args:
+        engine: If provided, filter to languages supported by this engine
+                (marker, surya2, google_doc_ai). If omitted, list all.
+    """
+    if engine is not None:
+        if engine not in ENGINE_NAMES:
+            return {
+                "status": "error",
+                "message": (
+                    f"Unknown engine: {engine!r}. "
+                    f"Valid choices: {', '.join(sorted(ENGINE_NAMES.keys()))}"
+                ),
+            }
+        try:
+            codes = list_languages_for_engine(engine)
+        except ValueError as exc:
+            return {"status": "error", "message": str(exc)}
+        langs = [{"code": code, "name": LANGUAGE_NAMES.get(code, code)} for code in codes]
+        return {"languages": langs, "engine": engine, "count": len(langs)}
+
+    # List all known languages
+    langs = [{"code": code, "name": name} for code, name in LANGUAGE_NAMES.items()]
+    langs.sort(key=lambda x: x["code"])
+    return {"languages": langs, "count": len(langs)}
 
 
 @mcp.tool()
