@@ -14,6 +14,7 @@ from .pipeline import Pipeline
 from .profiles import (
     DocumentProfile,
     PROFILES,
+    best_model,
     get_profile,
     list_profiles,
     suggested_engines,
@@ -41,4 +42,5 @@ __all__ = [
     "suggested_engines",
     "suggested_languages",
     "suggested_model",
+    "best_model",
 ]

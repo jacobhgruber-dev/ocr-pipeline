@@ -63,6 +63,49 @@ uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
 
 ---
 
+## Choosing a Profile
+
+Not sure which profile to use? Match your document to this table:
+
+| Your document... | Use this profile | What you get | Budget |
+|---|---|---|---|
+| Letters, reports, novels, general text | `general` | Clean markdown, basic formatting | Free with Gemini |
+| Academic paper with citations and footnotes | `academic` | Citation preservation, CMOS 18 formatting, DOI/author detection | Free with Gemini |
+| Math, physics, chemistry papers | `mathematical` | LaTeX math mode ($...$ and $$...$$), equation preservation | Free with Gemini |
+| Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations | Free with Gemini |
+| Old theological journals (dual-column, Latin) | `theological_journal` | Dual-column linearization, ecclesiastical Latin rules, footnotes | Free (best with Claude) |
+| Irish/Gaelic dictionary or text with accents | `irish_hagiography` | Fada diacritic preservation (á,é,í,ó,ú), single-column, Irish+English+Latin | Free (best with Claude) |
+| Citation-heavy reference work | `citation_focused` | Every footnote/reference preserved verbatim, citation formatting untouched | Free (best with Claude) |
+
+### By budget
+
+**$0 budget** — free-only mode:
+```bash
+uv run ocr-pipeline --profile general --no-vlm --input ./pdfs/ --output ./out/
+```
+No API keys needed. Uses Marker (or Marker+Surya2) locally. VLM merge disabled.
+
+**Free tier** (Gemini free tier: 1500 req/day):
+```bash
+uv run ocr-pipeline --profile general --input ./pdfs/ --output ./out/
+```
+Add any languages your document uses: `--langs en,fr,de`
+
+**Best quality** (adds Claude for critical profiles):
+```bash
+uv run ocr-pipeline --profile irish_hagiography --vlm-model claude-sonnet-5 \
+  --input ./pdfs/ --output ./out/
+```
+Profiles marked "best with Claude" above benefit from it for diacritics and citations.
+
+**If you're not sure**, start here:
+```bash
+uv run ocr-pipeline --profile general --input ./pdfs/ --output ./out/ --test
+```
+This processes the first 3 pages as a trial. Check the output, then adjust the profile and re-run.
+
+---
+
 ## Features
 
 - **Multi-engine ensemble** — Marker (local, free), Surya 2 (91 languages, layout + tables), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.

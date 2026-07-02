@@ -29,6 +29,7 @@ from .languages import (
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
+    best_model,
     get_profile,
     suggested_engines,
     suggested_languages,
@@ -380,17 +381,23 @@ def _print_profiles() -> None:
         print(f"    Content type: {profile.content_type}")
         print(f"    Description: {profile.description}")
         engines = ", ".join(suggested_engines(profile.name))
-        model = suggested_model(profile.name)
+        default_model = suggested_model(profile.name)
+        best = best_model(profile.name)
         langs = ", ".join(suggested_languages(profile.name))
         print(f"    Suggested engines: {engines}")
-        print(f"    Suggested VLM model: {model}")
+        if best != default_model:
+            print(f"    Default model: {default_model} (free tier)")
+            print(f"    Best quality: {best} (paid — add --vlm-model {best})")
+        else:
+            print(f"    Model: {default_model} (free tier)")
         print(f"    Suggested languages: {langs}")
         print("  Quick command:")
         print(f"    uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile {profile.name}")
         print()
     print(
-        "The --profile flag auto-fills content_type, engines, VLM model, and languages.\n"
-        "You can override any auto-filled value: --profile academic --engines mathpix"
+        "The --profile flag auto-fills content_type, engines, and languages.\n"
+        "VLM model defaults to gemini-2.5-flash (free tier available).\n"
+        "You can override any value: --profile academic --engines mathpix --vlm-model claude-sonnet-5"
     )
 
 

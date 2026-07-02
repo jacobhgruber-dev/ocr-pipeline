@@ -20,6 +20,7 @@ from .languages import (
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
+    best_model,
     get_profile,
     list_profiles,
     suggested_engines,
@@ -298,6 +299,7 @@ async def ocr_profiles() -> dict[str, Any]:
                 "description": profile.description,
                 "suggested_engines": suggested_engines(profile.name),
                 "suggested_model": suggested_model(profile.name),
+                "best_model": best_model(profile.name),
             }
         )
     return {"profiles": result}

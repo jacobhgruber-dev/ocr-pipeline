@@ -368,20 +368,27 @@ def suggested_engines(profile_name: str) -> list[str]:
 
 
 def suggested_model(profile_name: str) -> str:
-    """Return a recommended VLM model name for *profile_name*.
+    """Return the recommended VLM model for a profile.
 
-    Falls back to ``"gemini-2.5-flash"`` for unknown profiles.
+    Always returns ``"gemini-2.5-flash"`` (free tier available at aistudio.google.com).
+    For profiles where Claude provides better results, see :func:`best_model`.
     """
-    _MODEL_SUGGESTIONS: dict[str, str] = {
-        "general": "gemini-2.5-flash",
-        "academic": "gemini-2.5-flash",
+    return "gemini-2.5-flash"
+
+
+def best_model(profile_name: str) -> str:
+    """Return the best-quality VLM model for a profile (may be paid).
+
+    Returns ``"claude-sonnet-5"`` for profiles where diacritic preservation
+    or citation accuracy benefits from Claude. Returns ``"gemini-2.5-flash"``
+    otherwise.
+    """
+    _BEST_MODEL: dict[str, str] = {
         "theological_journal": "claude-sonnet-5",
         "irish_hagiography": "claude-sonnet-5",
-        "mathematical": "gemini-2.5-flash",
-        "legal": "gemini-2.5-flash",
         "citation_focused": "claude-sonnet-5",
     }
-    return _MODEL_SUGGESTIONS.get(profile_name, "gemini-2.5-flash")
+    return _BEST_MODEL.get(profile_name, "gemini-2.5-flash")
 
 
 def suggested_languages(profile_name: str) -> list[str]:
