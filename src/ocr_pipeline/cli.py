@@ -8,6 +8,7 @@ Usage:
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run
     uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test
     uv run ocr-pipeline --list-profiles
+    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --profile irish_hagiography
 """
 
 from __future__ import annotations
@@ -23,11 +24,14 @@ from .languages import (
     LANGUAGE_NAMES,
     _engine_support_label,
     list_languages_for_engine,
+    warn_unknown_languages,
 )
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
+    get_profile,
     suggested_engines,
+    suggested_languages,
     suggested_model,
 )
 
@@ -145,6 +149,12 @@ def _build_parser() -> argparse.ArgumentParser:
         "--content-type",
         default=None,
         help="Content type: general, theological, mathematical, legal",
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default=None,
+        help="Document profile name (auto-fills content_type, engines, model, and languages)",
     )
     parser.add_argument(
         "--column-layout",
@@ -289,6 +299,18 @@ def _build_config(args: argparse.Namespace) -> PipelineConfig:
     if args.output is not None:
         config.output_dir = args.output
 
+    # Profile auto-fill: use profile defaults for fields not explicitly set via CLI
+    if args.profile is not None:
+        profile = get_profile(args.profile)
+        if args.content_type is None:
+            config.content_type = profile.content_type
+        if args.engines is None:
+            config.engines = suggested_engines(args.profile)
+        if args.vlm_model is None:
+            config.vlm_model = suggested_model(args.profile)
+        if args.langs is None:
+            config.languages = suggested_languages(args.profile)
+
     # Apply value overrides (only when user explicitly provided the flag)
     for cli_attr, cfg_field, transform in _CLI_VALUE_MAP:
         value = getattr(args, cli_attr)
@@ -352,18 +374,23 @@ def _dry_run(config: PipelineConfig) -> None:
 
 def _print_profiles() -> None:
     """Print all available document profiles and exit."""
-    print("Available document profiles (use with --content-type):\n")
+    print("Available document profiles (use with --profile):\n")
     for profile in PROFILES.values():
         print(f"  {profile.name}")
         print(f"    Content type: {profile.content_type}")
         print(f"    Description: {profile.description}")
         engines = ", ".join(suggested_engines(profile.name))
         model = suggested_model(profile.name)
+        langs = ", ".join(suggested_languages(profile.name))
         print(f"    Suggested engines: {engines}")
         print(f"    Suggested VLM model: {model}")
+        print(f"    Suggested languages: {langs}")
+        print("  Quick command:")
+        print(f"    uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile {profile.name}")
         print()
     print(
-        "Usage: uv run ocr-pipeline --input ./pdfs/ --output ./out/ --content-type <profile_name>"
+        "The --profile flag auto-fills content_type, engines, VLM model, and languages.\n"
+        "You can override any auto-filled value: --profile academic --engines mathpix"
     )
 
 
@@ -505,6 +532,13 @@ def main() -> None:
     if args.list_languages_for:
         _print_languages_for_engine(args.list_languages_for)
         sys.exit(0)
+
+    # Validate language codes early (before pipeline construction)
+    if args.langs is not None:
+        lang_list = [lang.strip() for lang in args.langs.split(",") if lang.strip()]
+        warnings_list = warn_unknown_languages(lang_list)
+        for warning in warnings_list:
+            logger.warning(warning)
 
     # Build configuration
     config = _build_config(args)

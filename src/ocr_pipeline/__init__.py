@@ -17,6 +17,7 @@ from .profiles import (
     get_profile,
     list_profiles,
     suggested_engines,
+    suggested_languages,
     suggested_model,
 )
 
@@ -38,5 +39,6 @@ __all__ = [
     "get_profile",
     "list_profiles",
     "suggested_engines",
+    "suggested_languages",
     "suggested_model",
 ]

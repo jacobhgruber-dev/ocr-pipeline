@@ -20,8 +20,10 @@ from .languages import (
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
+    get_profile,
     list_profiles,
     suggested_engines,
+    suggested_languages,
     suggested_model,
 )
 
@@ -53,6 +55,7 @@ def _build_config(
     content_type: str,
     languages: str,
     test_mode: bool,
+    profile_name: str = "",
 ) -> PipelineConfig:
     """Build a PipelineConfig from tool parameters.
 
@@ -66,9 +69,6 @@ def _build_config(
     out = Path(output_dir).resolve()
     out.mkdir(parents=True, exist_ok=True)
 
-    engine_list = [e.strip() for e in engines.split(",") if e.strip()]
-    lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
-
     # Try env-based config first, then project config.yaml, then bare fallback.
     try:
         cfg = ConfigLoader.from_env()
@@ -78,6 +78,26 @@ def _build_config(
         except Exception:
             cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
         ConfigLoader.apply_env_credentials(cfg)
+
+    # Profile auto-fill: use profile suggestions for fields at their defaults.
+    _default_engines = "marker"
+    _default_vlm_model = "gemini-2.5-flash"
+    _default_content_type = "general"
+    _default_languages = "en"
+
+    if profile_name:
+        profile = get_profile(profile_name)
+        if engines == _default_engines:
+            engines = ",".join(suggested_engines(profile_name))
+        if vlm_model == _default_vlm_model:
+            vlm_model = suggested_model(profile_name)
+        if content_type == _default_content_type:
+            content_type = profile.content_type
+        if languages == _default_languages:
+            languages = ",".join(suggested_languages(profile_name))
+
+    engine_list = [e.strip() for e in engines.split(",") if e.strip()]
+    lang_list = [lang.strip() for lang in languages.split(",") if lang.strip()]
 
     # Override with tool-supplied values
     cfg.input_dir = pdf.parent
@@ -124,6 +144,7 @@ async def ocr_pdf(
     content_type: str = "general",
     languages: str = "en",
     test_mode: bool = False,
+    profile_name: str = "",
 ) -> dict[str, Any]:
     """OCR a PDF file through the full pipeline and return extracted markdown.
 
@@ -139,6 +160,7 @@ async def ocr_pdf(
         content_type: Document type hint (general, theological, academic, mathematical).
         languages: Comma-separated language codes (en, de, fr, la, grc, he, etc.).
         test_mode: If True, process only the first 3 pages.
+        profile_name: Document profile name (auto-fills content_type, engines, model, languages).
     """
     output_dir = output_dir or "./ocr_output"
 
@@ -152,6 +174,7 @@ async def ocr_pdf(
             content_type,
             languages,
             test_mode,
+            profile_name=profile_name,
         )
     except ValueError as exc:
         return {"status": "error", "message": str(exc)}
