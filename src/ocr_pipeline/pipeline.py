@@ -389,7 +389,42 @@ class Pipeline:
 
         metadata = self._extract_metadata(pdf_path)
         if metadata or md_pages:
+            # Inject per-page metadata comment when enabled
+            if self.config.include_metadata_per_page and metadata:
+                self._inject_page_metadata(output_dir, page_count, metadata)
             self._save_document_output(output_dir, short_sha, md_pages, metadata)
+
+    def _inject_page_metadata(
+        self,
+        output_dir: Path,
+        page_count: int,
+        metadata: MetadataResult,
+    ) -> None:
+        """Prepend a metadata comment to each per-page markdown file.
+
+        Makes every page file self-contained — readers see the document
+        identity, language, and page number even without the YAML frontmatter
+        from the concatenated document output.
+        """
+        title_part = f'" {metadata.title}"' if metadata.title else ""
+        author_part = f" | author: {metadata.authors[0]}" if metadata.authors else ""
+        lang_part = f" | lang: {metadata.language}" if metadata.language else ""
+        doc_type = f" | type: {metadata.document_type}" if metadata.document_type else ""
+
+        for i in range(page_count):
+            md_path = output_dir / f"page_{i + 1:04d}_final.md"
+            if not md_path.is_file():
+                continue
+            existing = md_path.read_text(encoding="utf-8")
+            if existing.startswith("<!-- doc:"):
+                continue  # already has metadata
+
+            page_num = i + 1
+            comment = (
+                f"<!-- doc:{title_part}{author_part}{lang_part}"
+                f"{doc_type} | page: {page_num} -->\n\n"
+            )
+            md_path.write_text(comment + existing, encoding="utf-8")
 
     def _extract_metadata(self, pdf_path: Path) -> MetadataResult:
         """Extract metadata using VLM → GROBID → empty fallback chain."""

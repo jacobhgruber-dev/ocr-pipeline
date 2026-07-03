@@ -94,6 +94,9 @@ class PipelineConfig:
     google_processor_id: str = ""  # Google Doc AI processor ID
     grobid_url: str = "http://localhost:8070"  # GROBID REST API URL
     vlm_metadata_model: str = "gemini-2.5-flash"  # VLM model for metadata extraction
+    include_metadata_per_page: bool = True
+    """Prepend a metadata comment to each page file so standalone pages
+    identify their document (title, author, language, page number)."""
 
     def _resolve_marker_venv(self, config_dir: Path | None = None) -> None:
         """Resolve a relative ``marker_venv`` against *config_dir*.
@@ -159,6 +162,11 @@ class ConfigLoader:
         ("google_processor_id", "OCR_PIPELINE_GOOGLE_PROCESSOR_ID", str),
         ("grobid_url", "GROBID_URL", str),
         ("vlm_metadata_model", "OCR_PIPELINE_VLM_METADATA_MODEL", str),
+        (
+            "include_metadata_per_page",
+            "OCR_PIPELINE_INCLUDE_METADATA_PER_PAGE",
+            None,
+        ),  # bool handled via value.lower() inline
         ("mathpix_app_id", "MATHPIX_APP_ID", str),
         ("mathpix_app_key", "MATHPIX_APP_KEY", str),
         ("anthropic_api_key", "ANTHROPIC_API_KEY", str),
@@ -337,6 +345,7 @@ class ConfigLoader:
             google_processor_id=str(raw.get("google_processor_id", "")),
             grobid_url=str(raw.get("grobid_url", "http://localhost:8070")),
             vlm_metadata_model=str(raw.get("vlm_metadata_model", "gemini-2.5-flash")),
+            include_metadata_per_page=bool(raw.get("include_metadata_per_page", True)),
             # Credentials
             mathpix_app_id=str(raw.get("mathpix_app_id", "")),
             mathpix_app_key=str(raw.get("mathpix_app_key", "")),
