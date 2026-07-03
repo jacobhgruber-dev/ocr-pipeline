@@ -68,13 +68,19 @@ uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
 Not sure which profile to use? Match your document to this table:
 
 | Your document... | Use this profile | What you get | Budget |
-|---|---|---|---|
+|---|---|---|---|---|
 | Letters, reports, novels, general text | `general` | Clean markdown, basic formatting | Free with Gemini |
-| Academic paper with citations and footnotes | `academic` | Citation preservation (all styles), DOIs, abstracts, author affiliations | Free with Gemini (best with Claude) |
-| Math, physics, chemistry papers | `mathematical` | LaTeX math mode, blackboard bold, theorem/proof blocks, equation numbers | Free with Gemini (best with Claude) |
-| Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations, signature blocks | Free with Gemini (best with Claude) |
-| Technical manuals, datasheets, specs | `technical` | Callout boxes, revision tables, tolerances, part numbers, code blocks | Free with Gemini |
+| Academic paper with citations and footnotes | `academic` | Citation preservation (all styles), DOIs, abstracts, author affiliations | Free (best with Claude) |
+| Math, physics, chemistry papers | `mathematical` | LaTeX math mode, blackboard bold, theorem/proof blocks, equation numbers | Free with Gemini |
+| Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations, signature blocks. Add google_doc_ai engine for forms. | Free (best with Claude) |
+| Technical manuals, datasheets, specs | `technical` | Callout boxes, tables, tolerances, code blocks. Add google_doc_ai engine for structured layouts. | Free with Gemini |
 | Books (fiction, textbooks, reference) | `books` | Front/back matter, epigraphs, dialogue, scene breaks, index entries | Free with Gemini |
+| Chinese/Japanese/Korean documents | `general` or `academic` + `--vlm-model claude-sonnet-5` | CJK ideograph preservation (Gemini fails on these scripts) | Paid (Claude only)
+
+> **Model notes:** "(best with Claude)" means Claude improves citation or diacritic accuracy
+> but Gemini works fine for most pages. Only CJK scripts REQUIRE Claude — Gemini
+> produces garbled output on Chinese/Japanese/Korean. For all other scripts (including
+> Cyrillic, Greek, and Latin with diacritics), Gemini is equal or better.
 
 ### By budget
 
@@ -346,14 +352,20 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 ### VLM Model Reference
 
 | Model | Provider | Cost (input/output per 1M tokens) | Best for |
-|---|---|---|---|
-| `gemini-2.5-flash` | Google | $0.15 / $0.60 | Default — fast, cheap, good accuracy |
+|---|---|---|---|---|
+| `gemini-2.5-flash` | Google | $0.15 / $0.60 | Default — best for Latin, Cyrillic, Greek, and LaTeX math |
 | `gemini-2.0-flash` | Google | $0.10 / $0.40 | Cheapest option |
 | `gemini-2.5-pro` | Google | $1.25 / $10.00 | Higher quality, larger context |
+| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | CJK (Chinese/Japanese/Korean) — Gemini fails on these scripts |
 | `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | Fast Claude option |
-| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | Best for diacritics, citations, nuanced text |
 | `claude-3.5-haiku` | Anthropic | $1.00 / $5.00 | Older fast Claude |
 | `claude-3.5-sonnet` | Anthropic | $3.00 / $15.00 | Older quality Claude |
+
+> **Script awareness:** Testing across Latin, Cyrillic, Greek, CJK, and French
+> diacritics shows that model quality is **script-dependent**. Gemini 2.5 Flash
+> handles most scripts perfectly but fails on Chinese/Japanese/Korean. Claude
+> handles CJK perfectly but replaces Cyrillic with Latin lookalikes. If your
+> document contains multiple scripts, run a test page first to verify output.
 
 ---
 

@@ -18,7 +18,7 @@ Last updated: 2026-07-02
 |---|---|---|---|---|
 | `general` | marker | gemini-2.5-flash | 13 | Catch-all: tables, figures, multi-column, headers, lists, code |
 | `academic` | marker, mathpix | gemini-2.5-flash | 15 | Citations (all styles), DOIs, abstracts, affiliations, LaTeX in papers |
-| `mathematical` | mathpix, marker | **claude-sonnet-5** | 15 | LaTeX math, \mathbb/\mathcal, theorems, matrices, statistical tables |
+| `mathematical` | mathpix, marker | gemini-2.5-flash | 15 | LaTeX math, \mathbb/\mathcal, theorems, matrices, statistical tables |
 | `legal` | marker, google_doc_ai | gemini-2.5-flash | 15 | § symbols, case citations, paragraph hierarchy, signature blocks |
 | `technical` | marker, google_doc_ai | gemini-2.5-flash | 14 | Callout boxes, tolerances, BOMs, code blocks, revision tables |
 | `books` | marker | gemini-2.5-flash | 17 | Front/back matter, TOC/index, dialogue, scene breaks, Roman numerals |
@@ -70,11 +70,24 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
    - Greek → Gemini
    - Plain Latin → Either, prefer cheaper Gemini
 
-2. **Mathematical profile should use Gemini**, not Claude. Despite Anthropic's claim that "Claude defaults to LaTeX," Gemini 2.5 Flash with our improved prompts produces better LaTeX output for OCR transcription. Claude defaults to Unicode math characters (γ instead of $\gamma$), which is correct for display but wrong for LaTeX rendering pipelines.
+2. **Mathematical profile fixed — uses Gemini**, not Claude. Gemini 2.5 Flash with our improved prompts produces better LaTeX output for OCR transcription than Claude (which defaults to Unicode math characters for transcription).
 
-3. **Language registry needs model-to-script mapping.** The 53-language registry should include preferred VLM model per language based on script support.
+3. **Google Doc AI tested and verified.** Adds better table column alignment, sub/superscript preservation, footer text capture, and header separation. Worth keeping as a suggested engine for legal and technical profiles. At $0.0015/page with 500 free pages/month — effectively free.
 
-4. **profiles.py best_model values should be adjusted:** mathematical → gemini-2.5-flash (not claude-sonnet-5)
+4. **Research-backed prompt improvements work.** Testing confirmed that few-shot examples, XML tags, anti-truncation rules, and character-level formatting instructions dramatically improve VLM output across all profiles and models.
+
+## What We Learned
+
+| Finding | Source | Action Taken |
+|---|---|---|
+| Gemini produces excellent LaTeX with good prompts | Math theorem page — full `$\mathbb{R}$`, `$\square$`, `$\gamma$` | Kept Gemini as default for mathematical profile |
+| Claude destroys Cyrillic (replaces with Latin lookalikes) | Russian math book — 0 Cyrillic chars, all garbled | Documented script-dependent behavior in README |
+| Gemini fails on Chinese (garbled Latin) | Chinese ML book — 0 CJK ideographs | Documented Claude as only option for CJK |
+| Few-shot examples fix format adherence | Books test — all 6 attributions preserved (`—Plato`, `—MONTAIGNE`) | Applied to all 6 profiles |
+| Anti-truncation rules work | Academic test — Gemini stopped at 330 tokens before fix | Added `<completeness>` section to all prompts |
+| Character-level instructions beat visual descriptions | Legal test — "wrap in *asterisks*" vs "use italic" | Rewrote all italic rules |
+| Google Doc AI adds structural precision | Legal + Technical fixtures — better tables, headers, subs | Kept as optional suggestion with credential note |
+| Marker's `languages` parameter was broken | All image-only PDFs failed | Removed unsupported kwarg; language hints go to VLM only |
 
 ## Architecture Decisions
 
@@ -87,7 +100,6 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 ## Known Gaps
 
 - **Script-aware model routing not implemented** — profiles recommend a single model, but multi-language testing shows catastrophic failures when the wrong model meets the wrong script
-- **mathematical profile's best_model is wrong** — should be gemini-2.5-flash (not claude-sonnet-5) based on real test results
 - Table detection is prompt-based (VLM) — no dedicated ML model
 - Image handling is placeholder-based — no embedded image extraction
 - Progress bar counts PDFs not pages (display limitation, total pages logged at start)
@@ -96,8 +108,9 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 ## Recent Changes
 
 See `git log` for full history. Key commits:
+- `66af62a` — Restore Google Doc AI as optional suggestion (tested and verified)
+- `6daa80a` — Fix mathematical profile best_model to gemini-2.5-flash (test evidence)
 - `53781f6` — Fix Marker languages bug + 5 multilingual test fixtures
 - `87f9cd3` — Research-backed prompt improvements + 12 real test PDFs
 - `9793ac6` — 7→6 universal profiles, remove content_type, user-extensible profiles
 - `810ddec` — Cross-PDF concatenation, quality confidence scores, table+figure prompts
-- `cbfc368` — Parallel PDF processing + page-aware progress
