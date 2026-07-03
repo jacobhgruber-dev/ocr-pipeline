@@ -1,136 +1,78 @@
 # OCR Pipeline — Project Status
 
-Last updated: 2026-07-02
+Last updated: 2026-07-03
 
 ## Build
 
 | Metric | Value |
 |---|---|
-| Tests | 238 passing (unit), 0 failing |
-| Lint | ruff clean (27 source files) |
-| Types | mypy clean (27 source files) |
-| Python | 3.12+ |
+| Tests | 247 passing (unit + integration) |
+| Lint | ruff clean (30 source files) |
+| Types | mypy clean |
+| Python | 3.10+ (CI: 3.10, 3.12) |
+| Version | 0.2.0 |
 | License | MIT |
+| CI | GitHub Actions (lint, type check, test on push/PR) |
+| Docker | Dockerfile + docker-compose (GROBID) |
 
 ## Profiles (6)
 
-| Profile | Engines | Model | Rules | Description |
+| Profile | Engines | Default Model | CJK Model | Rules |
 |---|---|---|---|---|
-| `general` | marker, tesseract | gemini-2.5-flash | 13 | Catch-all: tables, figures, multi-column, headers, lists, code |
-| `academic` | marker, mathpix | gemini-2.5-flash | 15 | Citations (all styles), DOIs, abstracts, affiliations, LaTeX in papers |
-| `mathematical` | mathpix, marker | gemini-2.5-flash | 15 | LaTeX math, \mathbb/\mathcal, theorems, matrices, statistical tables |
-| `legal` | marker, google_doc_ai | gemini-2.5-flash | 15 | § symbols, case citations, paragraph hierarchy, signature blocks |
-| `technical` | marker, google_doc_ai | gemini-2.5-flash | 14 | Callout boxes, tolerances, BOMs, code blocks, revision tables |
-| `books` | marker, tesseract | gemini-2.5-flash | 17 | Front/back matter, TOC/index, dialogue, scene breaks, Roman numerals |
+| `general` | marker, tesseract, mathpix | gemini-2.5-flash | claude-haiku-4-5 | 13 |
+| `academic` | marker, mathpix | gemini-2.5-flash | claude-haiku-4-5 | 15 |
+| `mathematical` | mathpix, marker, tesseract | gemini-2.5-flash | claude-haiku-4-5 | 15 |
+| `legal` | marker, mathpix, google_doc_ai | gemini-2.5-flash | claude-haiku-4-5 | 15 |
+| `technical` | marker, mathpix, google_doc_ai | gemini-2.5-flash | claude-haiku-4-5 | 14 |
+| `books` | marker, tesseract | gemini-2.5-flash | claude-haiku-4-5 | 17 |
 
-All profiles include: few-shot examples, XML-structured prompts, anti-truncation rules, [Header:]/[Footer:] bracketed format, image text OCR.
-
-User-extensible: custom profiles load from `profiles/*.yaml` (3 examples provided).
+All profiles include: few-shot examples, XML-structured prompts, anti-truncation, `[Header:]/[Footer:]` format, image text OCR. Script-aware routing auto-detects page script and routes CJK → Claude.
 
 ## Engines (6)
 
 | Engine | Type | Free? | Best for |
 |---|---|---|---|
 | marker | Local Python venv | ✅ | General OCR, prose |
-| **tesseract** | **Local binary** | **✅** | **Arabic/RTL scripts, Cyrillic, universal fallback** |
-| mathpix | API (paid) | 1000 pg/mo free | LaTeX math, equations |
-| surya2 | Local Python venv | ✅ | 91 languages, layout |
+| tesseract | Local binary | ✅ | Arabic/RTL, Cyrillic, universal fallback |
+| mathpix | API (paid) | 1000 pg/mo free | LaTeX math, equations, Cyrillic |
+| surya2 | Local Python venv | ✅ | 91 languages, Arabic, layout |
 | google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
-| grobid | Local Docker | ✅ | Metadata extraction |
-
-**Tesseract:** The most widely deployed OCR engine — powers Google Books, bundled with Linux. Added after a 16-run comparison study confirmed: (1) Tesseract is the ONLY working engine for Arabic RTL (Marker fails entirely), (2) 6x faster than Marker for Cyrillic with equivalent quality, (3) within 4% of Marker quality for Latin scripts, serving as reliable fallback. Pipeline auto-adds Tesseract when RTL languages detected.
-
-## Language Support
-
-- 53 ISO 639-1 codes in registry with human-readable names
-- Fuzzy-matching validation (typing "irish" warns "Did you mean 'gle'?")
-- Per-engine language support: marker (41), surya2 (all 53), google_doc_ai (51)
-
-## Test Fixtures
-
-- **12 English-language PDFs** from public domain sources (all 6 profiles). See `tests/fixtures/SOURCES.md`.
-- **5 multilingual PDFs** from Anna's Archive: Greek (Aristotle), French (Hugo), Russian (math), Chinese (ML), English (topology). See `tests/fixtures/multilingual/`.
-- All 12 English fixtures tested with gemini-2.5-flash: **0 failures**.
-- All 5 multilingual fixtures tested with gemini-2.5-flash AND claude-sonnet-5: **script-dependent results**.
-
-## Critical Finding: Script-Dependent Model Behavior
-
-Multi-language testing revealed that **no single VLM model handles all scripts**. Model selection is not a cost/quality tradeoff — it's a correctness question:
-
-| Script | Gemini 2.5 Flash | Claude Sonnet 5 |
-|---|---|---|
-| **Latin + diacritics** (French éèêàôîç) | ✅ Perfect | ✅ Good |
-| **Greek** (polytonic άέήίόύώ) | ✅ Perfect | Not tested |
-| **Cyrillic** (Russian Глава, §, ∃) | ✅ Perfect (3245 chars) | ❌ Catastrophic — replaces with Latin lookalikes (1859 chars) |
-| **CJK** (Chinese 目录, 判定问题) | ❌ Total failure — garbled Latin | ✅ Flawless (3808 chars) |
-| **Math LaTeX** ($\mathbb{R}$, $\gamma$) | ✅ With improved prompts | ⚠️ Prefers Unicode (γ) over LaTeX ($\gamma$) |
-
-### Product Implications
-
-1. **Script-aware model routing is essential.** Profiles should not blindly recommend one model. The pipeline needs to detect the dominant script of each page and route to the appropriate model:
-   - Cyrillic/diacritic-heavy Latin → Gemini (Claude destroys Cyrillic)
-   - CJK → Claude (Gemini fails entirely)
-   - Greek → Gemini
-   - Plain Latin → Either, prefer cheaper Gemini
-
-2. **Mathematical profile fixed — uses Gemini**, not Claude. Gemini 2.5 Flash with our improved prompts produces better LaTeX output for OCR transcription than Claude (which defaults to Unicode math characters for transcription).
-
-3. **Google Doc AI tested and verified.** Adds better table column alignment, sub/superscript preservation, footer text capture, and header separation. Worth keeping as a suggested engine for legal and technical profiles. At $0.0015/page with 500 free pages/month — effectively free.
-
-4. **Research-backed prompt improvements work.** Testing confirmed that few-shot examples, XML tags, anti-truncation rules, and character-level formatting instructions dramatically improve VLM output across all profiles and models.
-
-## What We Learned
-
-| Finding | Source | Action Taken |
-|---|---|---|
-| Gemini produces excellent LaTeX with good prompts | Math theorem page — full `$\mathbb{R}$`, `$\square$`, `$\gamma$` | Kept Gemini as default for mathematical profile |
-| Claude destroys Cyrillic (replaces with Latin lookalikes) | Russian math book — 0 Cyrillic chars, all garbled | Documented script-dependent behavior in README |
-| Gemini fails on Chinese (garbled Latin) | Chinese ML book — 0 CJK ideographs | Documented Claude as only option for CJK |
-| Few-shot examples fix format adherence | Books test — all 6 attributions preserved (`—Plato`, `—MONTAIGNE`) | Applied to all 6 profiles |
-| Anti-truncation rules work | Academic test — Gemini stopped at 330 tokens before fix | Added `<completeness>` section to all prompts |
-| Character-level instructions beat visual descriptions | Legal test — "wrap in *asterisks*" vs "use italic" | Rewrote all italic rules |
-| Google Doc AI adds structural precision | Legal + Technical fixtures — better tables, headers, subs | Kept as optional suggestion with credential note |
-| Marker's `languages` parameter was broken | All image-only PDFs failed | Removed unsupported kwarg; language hints go to VLM only |
+| grobid | Local Docker | ✅ | Academic metadata extraction |
 
 ## Architecture Decisions
 
-1. **Profiles as single source of truth** — `profiles.py` eliminated duplicate prompt system in `merger.py` (~211 lines removed)
-2. **Model default budget-safe** — `suggested_model()` always returns gemini-2.5-flash (free tier); `best_model()` for Claude upgrades
-3. **content_type merged into profile** — single concept, single CLI flag (`--profile`)
-4. **Parallel PDF processing** — `pdf_concurrency` (default 2) processes multiple PDFs simultaneously
-5. **Research-backed prompts** — few-shot examples, XML tags, anti-truncation, character-level formatting instructions based on Anthropic/Google official docs
+1. **Script-aware model routing** — `_detect_script()` + `model_routing` dict per profile. CJK → Claude Haiku, everything else → Gemini.
+2. **Profiles as single source of truth** — `profiles.py` eliminated duplicate prompt system (211 lines removed from merger.py).
+3. **content_type merged into profile** — single concept, single `--profile` CLI flag.
+4. **Checkpoint v3** — Per-PDF files instead of monolithic JSON. Eliminates O(n²) I/O.
+5. **Research-backed prompts** — XML tags, few-shot examples, anti-truncation, character-level formatting.
+
+## Critical Finding: Script-Dependent Model Behavior
+
+| Script | Gemini 2.5 Flash | Claude Haiku 4-5 | Routed To |
+|---|---|---|---|
+| Latin + diacritics | ✅ Perfect | — | Gemini |
+| Cyrillic | ✅ Perfect | — | Gemini |
+| Greek (polytonic) | ✅ Perfect | — | Gemini |
+| CJK | ❌ Garbled | ✅ Perfect | Claude Haiku |
+| Arabic RTL | Engine-dep. | — | Tesseract/Surya2 |
+| LaTeX math | ✅ With prompts | — | Gemini |
 
 ## Known Gaps
 
-- **Script-aware model routing not implemented** — profiles recommend a single model, but multi-language testing shows catastrophic failures when the wrong model meets the wrong script
-- **Japanese (CJK) spacing on Gemini is unnatural** — characters are correct but spacing differs from native typesetting. Claude produces natural spacing. Claude is recommended for ALL CJK scripts (Chinese, Japanese, Korean).
-- Table detection is prompt-based (VLM) — no dedicated ML model
-- Image handling is placeholder-based — no embedded image extraction
-- Progress bar counts PDFs not pages (display limitation, total pages logged at start)
-- Marker's `languages` parameter removed — installed version doesn't support it; language hints go to VLM only
+- Table detection is prompt-based (VLM) — no dedicated ML model for cell-level extraction.
+- Image handling is placeholder-based (`[Figure: description]`) — no embedded image extraction.
+- No standard OCR format output (ALTO XML, hOCR) for digital library integration.
+- No full-pipeline integration test with a real PDF (local engines tested, VLM/mathpix require API keys).
 
-## Script Support Matrix (from testing)
+## Shipping Infrastructure
 
-| Script | Gemini 2.5 Flash | Claude Sonnet 5 | Claude Haiku 4-5 | Recommended |
-|---|---|---|---|---|
-| Latin (English) | ✅ Excellent | ✅ Good | Not tested | Gemini (free) |
-| Latin + diacritics (Spanish ñ, French éèê, German äöüß) | ✅ Excellent | Not tested | Not tested | Gemini (free) |
-| Cyrillic (Russian) | ✅ Perfect | ❌ Destroys data | Not tested | Gemini only |
-| Greek (polytonic) | ✅ Perfect | Not tested | Not tested | Gemini |
-| CJK (Chinese) | ❌ Garbled Latin | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
-| CJK (Japanese) | ⚠️ Correct chars, unnatural spacing | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
-| Arabic RTL | ✅ Works with Tesseract | Not tested | Not tested | Gemini + Tesseract |
-| LaTeX math | ✅ With improved prompts | ⚠️ Unicode not LaTeX | Not tested | Gemini |
-| Poetry line breaks | ✅ All 22 lines preserved | Not tested | Not tested | Gemini |
-
-## Recent Changes
-
-See `git log` for full history. Key commits:
-- `d08523f` — Tesseract integration — findings, fixes, pipeline changes
-- `c21ac71` — Tesseract engine + dehyphenation + accuracy metrics
-- `9881d5b` — Per-page metadata comments
-- `7b1d780` — VLM metadata engine fixes
-- `53781f6` — Fix Marker languages bug + 5 multilingual test fixtures
-- `87f9cd3` — Research-backed prompt improvements + 12 real test PDFs
-- `9793ac6` — 7→6 universal profiles, remove content_type, user-extensible profiles
-- `810ddec` — Cross-PDF concatenation, quality confidence scores, table+figure prompts
+| Item | Status |
+|---|---|
+| GitHub Actions CI | ✅ Lint + type check + test on push/PR |
+| Docker | ✅ Dockerfile + docker-compose (GROBID) |
+| Pre-commit hooks | ✅ ruff + mypy |
+| CHANGELOG.md | ✅ v0.2.0 |
+| SECURITY.md | ✅ Vulnerability reporting + API privacy |
+| py.typed (PEP 561) | ✅ |
+| License (MIT) | ✅ |
