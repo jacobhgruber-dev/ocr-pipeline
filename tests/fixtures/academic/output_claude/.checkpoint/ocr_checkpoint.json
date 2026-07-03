@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:51:40.826480+00:00",
+  "updated_at": "2026-07-02T23:51:55.415344+00:00",
+  "pdfs": {
+    "citations_body.pdf": {
+      "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50",
+      "short_sha": "465516bfd9b6",
+      "path": "citations_body.pdf",
+      "filename": "citations_body.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"id\":\"msg_013zVVR7PF3QTUMkTkCBco9U\",\"content\":[{\"citations\":null,\"text\":\"## 2 Approach\\n\\nOur training approach is similar to the methods described in previous work (Brown et al., 2020; Chowdhery et al., 2022), and is inspired by the Chinchilla scaling laws (Hoffmann et al., 2022). We train large transformers on a large quantity of textual data using a standard optimizer.\\n\\n### 2.1 Pre-training Data\\n\\nOur training dataset is a mixture of several sources, reported in Table 1, that cover a diverse set of domains. For the most part, we reuse data sources that have been leveraged to train other LLMs, with the restriction of only using data that is publicly available, and compatible with open sourcing. This leads to the following mixture of data and the percentage they represent in the training set:\\n\\n**English CommonCrawl [67%].** We preprocess five CommonCrawl dumps, ranging from 2017 to 2020, with the CCNet pipeline (Wenzek et al., 2020). This process deduplicates the data at the line level, performs language identification with a fastText linear classifier to remove non-English pages and filters low quality content with an n-gram language model. In addition, we trained a linear model to classify pages used as references in Wikipedia *v.s.* randomly sampled pages, and discarded pages not classified as references.\\n\\n**C4 [15%].** During exploratory experiments, we observed that using diverse pre-processed CommonCrawl datasets improves performance. We thus included the publicly available C4 dataset (Raffel et al., 2020) in our data. The preprocessing of C4 also contains deduplication and language identification steps: the main difference with CCNet is the quality filtering, which mostly relies on heuristics such as presence of punctuation marks or the number of words and sentences in a webpage.\\n\\n**Github [4.5%].** We use the public GitHub dataset available on Google BigQuery. We only kept projects that are distributed under the Apache, BSD and MIT licenses. Additionally, we filtered low quality files with heuristics based on the line length or proportion of alphanumeric characters, and removed boilerplate, such as headers, with regular expressions. Finally, we deduplicate the resulting dataset at the file level, with exact matches.\\n\\n**Wikipedia [4.5%].** We add Wikipedia dumps from the June-August 2022 period, covering 20\\n\\n| Dataset | Sampling prop. | Epochs | Disk size |\\n|---|---|---|---|\\n| CommonCrawl | 67.0% | 1.10 | 3.3 TB |\\n| C4 | 15.0% | 1.06 | 783 GB |\\n| Github | 4.5% | 0.64 | 328 GB |\\n| Wikipedia | 4.5% | 2.45 | 83 GB |\\n| Books | 4.5% | 2.23 | 85 GB |\\n| ArXiv | 2.5% | 1.06 | 92 GB |\\n| StackExchange | 2.0% | 1.03 | 78 GB |\\n\\nTable 1: **Pre-training data.** Data mixtures used for pre-training, for each subset we list the sampling proportion, number of epochs performed on the subset when training on 1.4T tokens, and disk size. The pre-training runs on 1T tokens have the same sampling proportion.\\n\\nlanguages, which use either the Latin or Cyrillic scripts: bg, ca, cs, da, de, en, es, fr, hr, hu, it, nl, pl, pt, ro, ru, sl, sr, sv, uk. We process the data to remove hyperlinks, comments and other formatting boilerplate.\\n\\n**Gutenberg and Books3 [4.5%].** We include two book corpora in our training dataset: the Gutenberg Project, which contains books that are in the public domain, and the Books3 section of ThePile (Gao et al., 2020), a publicly available dataset for training large language models. We perform deduplication at the book level, removing books with more than 90% content overlap.\\n\\n**ArXiv [2.5%].** We process arXiv Latex files to add scientific data to our dataset. Following Lewkowycz et al. (2022), we removed everything before the first section, as well as the bibliography. We also removed the comments from the .tex files, and inline-expanded definitions and macros written by users to increase consistency across papers.\\n\\n**Stack Exchange [2%].** We include a dump of Stack Exchange, a website of high quality questions and answers that covers a diverse set of domains, ranging from computer science to chemistry. We kept the data from the 28 largest websites, removed the HTML tags from text and sorted the answers by score (from highest to lowest).\\n\\n**Tokenizer.** We tokenize the data with the byte-pair encoding (BPE) algorithm (Sennrich et al., 2015), using the implementation from SentencePiece (Kudo and Richardson, 2018). Notably, we split all numbers into individual digits, and fallback to bytes to decompose unknown UTF-8 characters.\",\"type\":\"text\"}],\"model\":\"claude-sonnet-5\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":8140,\"output_tokens\":1619,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"stop_details\":null}",
+          "started_at": "2026-07-02T23:51:40.827039+00:00",
+          "completed_at": "2026-07-02T23:51:55.415075+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "claude-sonnet-5"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "citations_body.pdf",
+        "size_bytes": 89603,
+        "mtime_epoch": 1783032653.5315826,
+        "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50"
+      }
+    },
+    "title_abstract.pdf": {
+      "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40",
+      "short_sha": "d28ae549466c",
+      "path": "title_abstract.pdf",
+      "filename": "title_abstract.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"id\":\"msg_01TfMyczWmb7cQLzUK6qmTmB\",\"content\":[{\"citations\":null,\"text\":\"# Llama 2: Open Foundation and Fine-Tuned Chat Models\\n\\nHugo Touvron\\\\* Louis Martin† Kevin Stone†\\n\\nPeter Albert Amjad Almahairi Yasmine Babaei Nikolay Bashlykov Soumya Batra\\nPrajjwal Bhargava Shruti Bhosale Dan Bikel Lukas Blecher Cristian Canton Ferrer Moya Chen\\nGuillem Cucurull David Esiobu Jude Fernandes Jeremy Fu Wenyin Fu Brian Fuller\\nCynthia Gao Vedanuj Goswami Naman Goyal Anthony Hartshorn Saghar Hosseini Rui Hou\\nHakan Inan Marcin Kardas Viktor Kerkez Madian Khabsa Isabel Kloumann Artem Korenev\\nPunit Singh Koura Marie-Anne Lachaux Thibaut Lavril Jenya Lee Diana Liskovich\\nYinghai Lu Yuning Mao Xavier Martinet Todor Mihaylov Pushkar Mishra\\nIgor Molybog Yixin Nie Andrew Poulton Jeremy Reizenstein Rashi Rungta Kalyan Saladi\\nAlan Schelten Ruan Silva Eric Michael Smith Ranjan Subramanian Xiaoqing Ellen Tan Binh Tang\\nRoss Taylor Adina Williams Jian Xiang Kuan Puxin Xu Zheng Yan Iliyan Zarov Yuchen Zhang\\nAngela Fan Melanie Kambadur Sharan Narang Aurelien Rodriguez Robert Stojnic\\nSergey Edunov Thomas Scialom\\\\*\\n\\n**GenAI, Meta**\\n\\n### Abstract\\n\\nIn this work, we develop and release Llama 2, a collection of pretrained and fine-tuned\\nlarge language models (LLMs) ranging in scale from 7 billion to 70 billion parameters.\\nOur fine-tuned LLMs, called Llama 2-Chat, are optimized for dialogue use cases. Our\\nmodels outperform open-source chat models on most benchmarks we tested, and based on\\nour human evaluations for helpfulness and safety, may be a suitable substitute for closed-\\nsource models. We provide a detailed description of our approach to fine-tuning and safety\\nimprovements of Llama 2-Chat in order to enable the community to build on our work and\\ncontribute to the responsible development of LLMs.\\n\\n---\\n\\n\\\\*Equal contribution, corresponding authors: {tscialom, htouvron}@meta.com\\n†Second author\\n\\nContributions for all the authors can be found in Section A.1.\\n\\n[Header: arXiv:2307.09288v2 [cs.CL] 19 Jul 2023]\",\"type\":\"text\"}],\"model\":\"claude-sonnet-5\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":7440,\"output_tokens\":949,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"stop_details\":null}",
+          "started_at": "2026-07-02T23:51:40.842893+00:00",
+          "completed_at": "2026-07-02T23:51:48.824977+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "claude-sonnet-5"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "title_abstract.pdf",
+        "size_bytes": 172292,
+        "mtime_epoch": 1783032653.525098,
+        "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40"
+      }
+    }
+  }
+}

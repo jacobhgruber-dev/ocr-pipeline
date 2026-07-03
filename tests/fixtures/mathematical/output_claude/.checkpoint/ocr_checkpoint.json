@@ -1,0 +1,75 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:51:40.826514+00:00",
+  "updated_at": "2026-07-02T23:52:08.810720+00:00",
+  "pdfs": {
+    "lemma_proof.pdf": {
+      "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4",
+      "short_sha": "3c40f4f45188",
+      "path": "lemma_proof.pdf",
+      "filename": "lemma_proof.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-02T23:51:40.827225+00:00",
+          "completed_at": "2026-07-02T23:52:08.810275+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "lemma_proof.pdf",
+        "size_bytes": 176162,
+        "mtime_epoch": 1783032663.7422328,
+        "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4"
+      }
+    },
+    "theorem_proof.pdf": {
+      "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7",
+      "short_sha": "a4b5352e0b0d",
+      "path": "theorem_proof.pdf",
+      "filename": "theorem_proof.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"id\":\"msg_019u5kBJxY8x7gFNbfj9u5WW\",\"content\":[{\"citations\":null,\"text\":\"# 2.2 Wasserstein distance\\n\\nThe Wasserstein distance is a distance function between probability distributions defined on a given metric space. Let $\\\\sigma$ and $\\\\mu$ be two probability distributions on a metric space $M$ equipped with a ground distance $d$, such as the Euclidean distance.\\n\\n**Definition 1.** *The $L^p$-Wasserstein distance for $p \\\\in [1, \\\\infty)$ is defined as*\\n\\n$$W_p(\\\\sigma, \\\\mu) := \\\\left( \\\\inf_{\\\\gamma \\\\in \\\\Gamma(\\\\sigma,\\\\mu)} \\\\int_{M \\\\times M} d(x,y)^p \\\\, \\\\mathrm{d}\\\\gamma(x,y) \\\\right)^{\\\\frac{1}{p}}, \\\\tag{1}$$\\n\\n*where $\\\\Gamma(\\\\sigma, \\\\mu)$ is the set of all transportation plans $\\\\gamma \\\\in \\\\Gamma(\\\\sigma, \\\\mu)$ over $M \\\\times M$ with marginals $\\\\sigma$ and $\\\\mu$ on the first and second factors, respectively.*\\n\\nThe Wasserstein distance satisfies the axioms of a metric, provided that $d$ is a metric (see the monograph of Villani [44], chapter 6, for a proof). Throughout the paper, we will focus on the distance for $p = 1$ and we will refer to the $L^1$-Wasserstein distance when mentioning the Wasserstein distance, unless noted otherwise.\\n\\nThe Wasserstein distance is linked to the optimal transport problem [44], where the aim is to find the most \\\"inexpensive\\\" way, in terms of the ground distance, to transport all the probability mass from distribution $\\\\sigma$ to match distribution $\\\\mu$. An intuitive illustration can be made for the 1-dimensional case, where the two probability distributions can be imagined as piles of dirt or sand. The Wasserstein distance, sometimes also referred to as the earth mover's distance [34], can be interpreted as the minimum effort required to move the content of the first pile to reproduce the second pile.\\n\\nIn this paper, we deal with finite sets of node embeddings and not with continuous probability distributions. Therefore, we can reformulate the Wasserstein distance as a sum rather than an integral, and use the matrix notation commonly encountered in the optimal transport literature [34] to represent the transportation plan. Given two sets of vectors $X \\\\in \\\\mathbb{R}^{n \\\\times m}$ and $X' \\\\in \\\\mathbb{R}^{n' \\\\times m}$, we can equivalently define the Wasserstein distance between them as\\n\\n$$W_1(X, X') := \\\\min_{P \\\\in \\\\Gamma(X,X')} \\\\langle P, M \\\\rangle. \\\\tag{2}$$\\n\\nHere, $M$ is the distance matrix containing the distances $d(x, x')$ between each element $x$ of $X$ and $x'$ of $X'$, $P \\\\in \\\\Gamma$ is a transport matrix (or joint probability), and $\\\\langle \\\\cdot, \\\\cdot \\\\rangle$ is the Frobenius dot product. The transport matrix $P$ contains the fractions that indicate how to transport the values from $X$ to $X'$ with the minimal total transport effort. Because we assume that the total mass to be transported equals 1 and is evenly distributed across the elements of $X$ and $X'$, the row and column values of $P$ must sum up to $1/n$ and $1/n'$, respectively.\\n\\n## 3 Wasserstein distance on graphs\\n\\nThe unsatisfactory nature of the aggregation step of current $\\\\mathcal{R}$-Convolution graph kernels, which may mask important substructure differences by averaging, motivated us to have a finer distance measure between structures and their components. In parallel, recent advances in optimisation solutions for faster computation of the optimal transport problem inspired us to consider this framework for the problem of graph classification. Our method relies on the following steps: (1) transform each graph into a set of node embeddings, (2) measure the Wasserstein distance between each pair of graphs, and (3) compute a similarity matrix to be used in the learning algorithm. Figure 1 illustrates the first two steps, and Algorithm 1 summarises the whole procedure. We start by defining an embedding scheme and illustrate how we integrate embeddings in the Wasserstein distance.\\n\\n**Definition 2** (Graph Embedding Scheme). *Given a graph $G = (V, E)$, a graph embedding scheme $f: G \\\\to \\\\mathbb{R}^{|V| \\\\times m}$, $f(G) = X_G$ is a function that outputs a fixed-size vectorial representation for each node in the graph. For each $v_i \\\\in V$, the $i$-th row of $X_G$ is called the node embedding of $v_i$.*\\n\\nNote that Definition 2 permits treating node labels, which are categorical attributes, as one-dimensional attributes with $m = 1$.\\n\\n**Definition 3** (Graph Wasserstein Distance). *Given two graphs $G = (V, E)$ and $G' = (V', E')$, a graph embedding scheme $f: G \\\\to \\\\mathbb{R}^{|V| \\\\times m}$ and a ground distance $d: \\\\mathbb{R}^m \\\\times \\\\mathbb{R}^m \\\\to \\\\mathbb{R}$, we define the Graph Wasserstein Distance (GWD) as*\\n\\n$$D_W^f(G, G') := W_1(f(G), f(G')). \\\\tag{3}$$\\n\\n3\",\"type\":\"text\"}],\"model\":\"claude-sonnet-5\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":8039,\"output_tokens\":1794,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"stop_details\":null}",
+          "started_at": "2026-07-02T23:51:40.841193+00:00",
+          "completed_at": "2026-07-02T23:51:57.218202+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "claude-sonnet-5"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "theorem_proof.pdf",
+        "size_bytes": 198933,
+        "mtime_epoch": 1783032663.740298,
+        "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7"
+      }
+    }
+  }
+}

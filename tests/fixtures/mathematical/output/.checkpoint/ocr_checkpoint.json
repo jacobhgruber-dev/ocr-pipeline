@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:01:03.970271+00:00",
+  "updated_at": "2026-07-02T23:01:23.537602+00:00",
+  "pdfs": {
+    "theorem_proof.pdf": {
+      "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7",
+      "short_sha": "a4b5352e0b0d",
+      "path": "theorem_proof.pdf",
+      "filename": "theorem_proof.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2394, \"output_tokens\": 1136}",
+          "started_at": "2026-07-02T23:01:03.971024+00:00",
+          "completed_at": "2026-07-02T23:01:20.807566+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "theorem_proof.pdf",
+        "size_bytes": 198933,
+        "mtime_epoch": 1783032663.740298,
+        "sha256": "a4b5352e0b0d64af52c59282921b3f2a42d301f74caf0e5565cc0408c408e1d7"
+      }
+    },
+    "lemma_proof.pdf": {
+      "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4",
+      "short_sha": "3c40f4f45188",
+      "path": "lemma_proof.pdf",
+      "filename": "lemma_proof.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2267, \"output_tokens\": 938}",
+          "started_at": "2026-07-02T23:01:03.980994+00:00",
+          "completed_at": "2026-07-02T23:01:23.537332+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "lemma_proof.pdf",
+        "size_bytes": 176162,
+        "mtime_epoch": 1783032663.7422328,
+        "sha256": "3c40f4f45188973e8d790bc056f68c985f2d8d6fe05f199d227b1281f99fdac4"
+      }
+    }
+  }
+}

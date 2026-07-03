@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:20:21.386088+00:00",
+  "updated_at": "2026-07-03T00:20:27.338195+00:00",
+  "pdfs": {
+    "synthetic_poetry.pdf": {
+      "sha256": "f8c814aab20c1b35ae86acb42ffdbe6a142668c3d536d84632c61a2cad4b8846",
+      "short_sha": "f8c814aab20c",
+      "path": "synthetic_poetry.pdf",
+      "filename": "synthetic_poetry.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "f8c814aab20c1b35ae86acb42ffdbe6a142668c3d536d84632c61a2cad4b8846",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1393, \"output_tokens\": 162}",
+          "started_at": "2026-07-03T00:20:21.386503+00:00",
+          "completed_at": "2026-07-03T00:20:27.337989+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "synthetic_poetry.pdf",
+        "size_bytes": 48711,
+        "mtime_epoch": 1783037655.1859624,
+        "sha256": "f8c814aab20c1b35ae86acb42ffdbe6a142668c3d536d84632c61a2cad4b8846"
+      }
+    }
+  }
+}

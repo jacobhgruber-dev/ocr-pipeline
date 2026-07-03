@@ -366,6 +366,18 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 > handles most scripts perfectly but fails on Chinese/Japanese/Korean. Claude
 > handles CJK perfectly but replaces Cyrillic with Latin lookalikes. If your
 > document contains multiple scripts, run a test page first to verify output.
+> 
+> **Arabic/Persian/Urdu (RTL scripts):** Not currently supported by Marker or
+> Surya2 OCR engines. Requires Google Document AI with Arabic processor 
+> configuration (not included in default setup).
+
+### Script Support at a Glance
+
+| Script | Model to Use | Notes |
+|---|---|---|
+| Latin, Cyrillic, Greek | gemini-2.5-flash | Perfect — free tier available |
+| Chinese, Japanese, Korean | claude-sonnet-5 | Gemini produces garbled or awkward output |
+| Arabic, Persian, Urdu | Google Doc AI only | Marker/Surya don't support RTL; needs Google Cloud setup |
 
 ---
 

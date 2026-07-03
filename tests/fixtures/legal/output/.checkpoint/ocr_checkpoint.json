@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:01:37.553435+00:00",
+  "updated_at": "2026-07-02T23:01:50.006038+00:00",
+  "pdfs": {
+    "court_opinion.pdf": {
+      "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3",
+      "short_sha": "310b6cbe94a1",
+      "path": "court_opinion.pdf",
+      "filename": "court_opinion.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1623, \"output_tokens\": 277}",
+          "started_at": "2026-07-02T23:01:37.554680+00:00",
+          "completed_at": "2026-07-02T23:01:44.229426+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "court_opinion.pdf",
+        "size_bytes": 64236,
+        "mtime_epoch": 1783032560.4089324,
+        "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3"
+      }
+    },
+    "section_hierarchy.pdf": {
+      "sha256": "f7f0579e415af486d80f0d5aea37195e0d3d898a4bd4590555e348a14027a695",
+      "short_sha": "f7f0579e415a",
+      "path": "section_hierarchy.pdf",
+      "filename": "section_hierarchy.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "f7f0579e415af486d80f0d5aea37195e0d3d898a4bd4590555e348a14027a695",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1913, \"output_tokens\": 584}",
+          "started_at": "2026-07-02T23:01:37.562652+00:00",
+          "completed_at": "2026-07-02T23:01:50.005857+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "section_hierarchy.pdf",
+        "size_bytes": 54705,
+        "mtime_epoch": 1783032663.7445076,
+        "sha256": "f7f0579e415af486d80f0d5aea37195e0d3d898a4bd4590555e348a14027a695"
+      }
+    }
+  }
+}

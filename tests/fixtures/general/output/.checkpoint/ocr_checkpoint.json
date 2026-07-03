@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-02T23:01:37.553586+00:00",
+  "updated_at": "2026-07-02T23:03:11.384677+00:00",
+  "pdfs": {
+    "mixed_format.pdf": {
+      "sha256": "b5e22dce81a2e4860345f1fbb7f569dda33d53856b4519b1d264a4ec5b4586ab",
+      "short_sha": "b5e22dce81a2",
+      "path": "mixed_format.pdf",
+      "filename": "mixed_format.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "b5e22dce81a2e4860345f1fbb7f569dda33d53856b4519b1d264a4ec5b4586ab",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 3159, \"output_tokens\": 328}",
+          "started_at": "2026-07-02T23:01:37.554662+00:00",
+          "completed_at": "2026-07-02T23:03:07.437293+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "mixed_format.pdf",
+        "size_bytes": 127923,
+        "mtime_epoch": 1783032570.7382596,
+        "sha256": "b5e22dce81a2e4860345f1fbb7f569dda33d53856b4519b1d264a4ec5b4586ab"
+      }
+    },
+    "periodic_table.pdf": {
+      "sha256": "58a0ffa1826a53e3ffaf2b8fc47fcc057d6f21d5df887eecd4ab64ad0311863b",
+      "short_sha": "58a0ffa1826a",
+      "path": "periodic_table.pdf",
+      "filename": "periodic_table.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "58a0ffa1826a53e3ffaf2b8fc47fcc057d6f21d5df887eecd4ab64ad0311863b",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 3175, \"output_tokens\": 325}",
+          "started_at": "2026-07-02T23:01:37.566730+00:00",
+          "completed_at": "2026-07-02T23:03:11.384261+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "periodic_table.pdf",
+        "size_bytes": 214824,
+        "mtime_epoch": 1783032570.7320983,
+        "sha256": "58a0ffa1826a53e3ffaf2b8fc47fcc057d6f21d5df887eecd4ab64ad0311863b"
+      }
+    }
+  }
+}

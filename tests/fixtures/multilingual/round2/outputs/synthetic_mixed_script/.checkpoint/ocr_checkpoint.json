@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:20:19.647962+00:00",
+  "updated_at": "2026-07-03T00:20:26.750512+00:00",
+  "pdfs": {
+    "synthetic_mixed_script.pdf": {
+      "sha256": "9ffade4a103d49abb79d6e1a9160dbc72ced6ddcad77ac736ff583da99c4219d",
+      "short_sha": "9ffade4a103d",
+      "path": "synthetic_mixed_script.pdf",
+      "filename": "synthetic_mixed_script.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "9ffade4a103d49abb79d6e1a9160dbc72ced6ddcad77ac736ff583da99c4219d",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1477, \"output_tokens\": 335}",
+          "started_at": "2026-07-03T00:20:19.648609+00:00",
+          "completed_at": "2026-07-03T00:20:26.750251+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "synthetic_mixed_script.pdf",
+        "size_bytes": 55739,
+        "mtime_epoch": 1783037655.1833184,
+        "sha256": "9ffade4a103d49abb79d6e1a9160dbc72ced6ddcad77ac736ff583da99c4219d"
+      }
+    }
+  }
+}

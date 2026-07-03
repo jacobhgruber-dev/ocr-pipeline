@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:43:52.562119+00:00",
+  "updated_at": "2026-07-03T00:43:53.103412+00:00",
+  "pdfs": {
+    "ar_linguistics.pdf": {
+      "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+      "short_sha": "fb44a8f61248",
+      "path": "ar_linguistics.pdf",
+      "filename": "ar_linguistics.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "failed",
+          "engine_outputs": {
+            "google_doc_ai": {
+              "engine": "google_doc_ai",
+              "text": "",
+              "error": "403 Cloud Document AI API has not been used in project general-opencode before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry. [reason: \"SERVICE_DISABLED\"\ndomain: \"googleapis.com\"\nmetadata {\n  key: \"service\"\n  value: \"documentai.googleapis.com\"\n}\nmetadata {\n  key: \"serviceTitle\"\n  value: \"Cloud Document AI API\"\n}\nmetadata {\n  key: \"containerInfo\"\n  value: \"general-opencode\"\n}\nmetadata {\n  key: \"consumer\"\n  value: \"projects/general-opencode\"\n}\nmetadata {\n  key: \"activationUrl\"\n  value: \"https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode\"\n}\n, locale: \"en-US\"\nmessage: \"Cloud Document AI API has not been used in project general-opencode before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.\"\n, links {\n  description: \"Google developers console API activation\"\n  url: \"https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode\"\n}\n]",
+              "duration_sec": 0.41346404199430253,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T00:43:52.563853+00:00",
+          "completed_at": "2026-07-03T00:43:53.099377+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "failed",
+          "engine_outputs": {
+            "google_doc_ai": {
+              "engine": "google_doc_ai",
+              "text": "",
+              "error": "403 Cloud Document AI API has not been used in project general-opencode before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry. [reason: \"SERVICE_DISABLED\"\ndomain: \"googleapis.com\"\nmetadata {\n  key: \"service\"\n  value: \"documentai.googleapis.com\"\n}\nmetadata {\n  key: \"serviceTitle\"\n  value: \"Cloud Document AI API\"\n}\nmetadata {\n  key: \"containerInfo\"\n  value: \"general-opencode\"\n}\nmetadata {\n  key: \"consumer\"\n  value: \"projects/general-opencode\"\n}\nmetadata {\n  key: \"activationUrl\"\n  value: \"https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode\"\n}\n, locale: \"en-US\"\nmessage: \"Cloud Document AI API has not been used in project general-opencode before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode then retry. If you enabled this API recently, wait a few minutes for the action to propagate to our systems and retry.\"\n, links {\n  description: \"Google developers console API activation\"\n  url: \"https://console.developers.google.com/apis/api/documentai.googleapis.com/overview?project=general-opencode\"\n}\n]",
+              "duration_sec": 0.34107329200196546,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T00:43:52.563957+00:00",
+          "completed_at": "2026-07-03T00:43:53.103162+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "ar_linguistics.pdf",
+        "size_bytes": 30576,
+        "mtime_epoch": 1783037492.3983808,
+        "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34"
+      }
+    }
+  }
+}

@@ -99,17 +99,34 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 
 ## Known Gaps
 
+- **RTL scripts (Arabic, Persian, Urdu) not supported** — Marker/Surya2 OCR engines don't handle Arabic text on scanned images. Google Doc AI would work but requires Arabic processor configuration (not set up). Entire pipeline is blocked for RTL documents.
 - **Script-aware model routing not implemented** — profiles recommend a single model, but multi-language testing shows catastrophic failures when the wrong model meets the wrong script
+- **Japanese (CJK) spacing on Gemini is unnatural** — characters are correct but spacing differs from native typesetting. Claude produces natural spacing. Claude is recommended for ALL CJK scripts (Chinese, Japanese, Korean).
 - Table detection is prompt-based (VLM) — no dedicated ML model
 - Image handling is placeholder-based — no embedded image extraction
 - Progress bar counts PDFs not pages (display limitation, total pages logged at start)
 - Marker's `languages` parameter removed — installed version doesn't support it; language hints go to VLM only
 
+## Script Support Matrix (from testing)
+
+| Script | Gemini 2.5 Flash | Claude Sonnet 5 | Recommended |
+|---|---|---|---|
+| Latin (English) | ✅ Excellent | ✅ Good | Gemini (free) |
+| Latin + diacritics (Spanish ñ, French éèê, German äöüß) | ✅ Excellent | Not fully tested | Gemini (free) |
+| Cyrillic (Russian) | ✅ Perfect | ❌ Destroys data | Gemini only |
+| Greek (polytonic) | ✅ Perfect | Not tested | Gemini |
+| CJK (Chinese) | ❌ Garbled Latin | ✅ Perfect | Claude only |
+| CJK (Japanese) | ⚠️ Correct chars, unnatural spacing | ✅ Perfect | Claude only |
+| Arabic RTL | ❌ Engine failure | ❌ Engine failure | Neither — needs Google Doc AI |
+| LaTeX math | ✅ With improved prompts | ⚠️ Unicode not LaTeX | Gemini |
+| Poetry line breaks | ✅ All 22 lines preserved | Not tested | Gemini |
+
 ## Recent Changes
 
 See `git log` for full history. Key commits:
+- `61eeef1` — Record all testing lessons — script awareness, Google Doc AI, model guidance
 - `66af62a` — Restore Google Doc AI as optional suggestion (tested and verified)
-- `6daa80a` — Fix mathematical profile best_model to gemini-2.5-flash (test evidence)
+- `6daa80a` — Fix mathematical profile best_model to gemini-2.5-flash
 - `53781f6` — Fix Marker languages bug + 5 multilingual test fixtures
 - `87f9cd3` — Research-backed prompt improvements + 12 real test PDFs
 - `9793ac6` — 7→6 universal profiles, remove content_type, user-extensible profiles

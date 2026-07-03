@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:15:10.820956+00:00",
+  "updated_at": "2026-07-03T00:15:10.820963+00:00",
+  "pdfs": {
+    "ar_linguistics.pdf": {
+      "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+      "short_sha": "fb44a8f61248",
+      "path": "ar_linguistics.pdf",
+      "filename": "ar_linguistics.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "pending",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": null,
+          "completed_at": null,
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "pending",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": null,
+          "completed_at": null,
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "ar_linguistics.pdf",
+        "size_bytes": 30576,
+        "mtime_epoch": 1783037655.1776493,
+        "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34"
+      }
+    }
+  }
+}

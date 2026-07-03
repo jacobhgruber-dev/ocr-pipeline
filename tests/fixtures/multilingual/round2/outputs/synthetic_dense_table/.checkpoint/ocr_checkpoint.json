@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:20:19.337301+00:00",
+  "updated_at": "2026-07-03T00:20:32.769146+00:00",
+  "pdfs": {
+    "synthetic_dense_table.pdf": {
+      "sha256": "dec6c76e1c8aa8c9f6343dd83fe2ee8fa72e2525f5d3de1a7f478314b78c791f",
+      "short_sha": "dec6c76e1c8a",
+      "path": "synthetic_dense_table.pdf",
+      "filename": "synthetic_dense_table.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "dec6c76e1c8aa8c9f6343dd83fe2ee8fa72e2525f5d3de1a7f478314b78c791f",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1813, \"output_tokens\": 662}",
+          "started_at": "2026-07-03T00:20:19.337769+00:00",
+          "completed_at": "2026-07-03T00:20:32.768928+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "synthetic_dense_table.pdf",
+        "size_bytes": 57592,
+        "mtime_epoch": 1783037655.1813915,
+        "sha256": "dec6c76e1c8aa8c9f6343dd83fe2ee8fa72e2525f5d3de1a7f478314b78c791f"
+      }
+    }
+  }
+}

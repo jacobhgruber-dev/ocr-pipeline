@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:01:03.942024+00:00",
+  "updated_at": "2026-07-03T00:01:23.767126+00:00",
+  "pdfs": {
+    "datasheet_specs.pdf": {
+      "sha256": "94c7628f56b5f3621aaa30f5583d1ff5fc2bf3245331b55253ab7be84b32427c",
+      "short_sha": "94c7628f56b5",
+      "path": "datasheet_specs.pdf",
+      "filename": "datasheet_specs.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "94c7628f56b5f3621aaa30f5583d1ff5fc2bf3245331b55253ab7be84b32427c",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2018, \"output_tokens\": 939}",
+          "started_at": "2026-07-03T00:01:03.942490+00:00",
+          "completed_at": "2026-07-03T00:01:23.766800+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "datasheet_specs.pdf",
+        "size_bytes": 41258,
+        "mtime_epoch": 1783032567.2061048,
+        "sha256": "94c7628f56b5f3621aaa30f5583d1ff5fc2bf3245331b55253ab7be84b32427c"
+      }
+    },
+    "pin_config.pdf": {
+      "sha256": "c0d18778a95b6b61e0d1910d3f70c032839afec2cc72f9c99dc5282394f88e46",
+      "short_sha": "c0d18778a95b",
+      "path": "pin_config.pdf",
+      "filename": "pin_config.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "c0d18778a95b6b61e0d1910d3f70c032839afec2cc72f9c99dc5282394f88e46",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1517, \"output_tokens\": 409}",
+          "started_at": "2026-07-03T00:01:03.951877+00:00",
+          "completed_at": "2026-07-03T00:01:12.681979+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "pin_config.pdf",
+        "size_bytes": 44349,
+        "mtime_epoch": 1783032567.2079895,
+        "sha256": "c0d18778a95b6b61e0d1910d3f70c032839afec2cc72f9c99dc5282394f88e46"
+      }
+    }
+  }
+}

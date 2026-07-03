@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:15:09.111874+00:00",
+  "updated_at": "2026-07-03T00:15:43.361163+00:00",
+  "pdfs": {
+    "jp_kokoro.pdf": {
+      "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+      "short_sha": "0be0be493f00",
+      "path": "jp_kokoro.pdf",
+      "filename": "jp_kokoro.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1959, \"output_tokens\": 731}",
+          "started_at": "2026-07-03T00:15:09.112320+00:00",
+          "completed_at": "2026-07-03T00:15:43.360980+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        },
+        {
+          "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1907, \"output_tokens\": 342}",
+          "started_at": "2026-07-03T00:15:09.112388+00:00",
+          "completed_at": "2026-07-03T00:15:30.943273+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "jp_kokoro.pdf",
+        "size_bytes": 1774670,
+        "mtime_epoch": 1783037655.1726174,
+        "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727"
+      }
+    }
+  }
+}

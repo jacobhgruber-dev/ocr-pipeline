@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T00:15:09.110472+00:00",
+  "updated_at": "2026-07-03T00:15:25.303632+00:00",
+  "pdfs": {
+    "de_verwandlung.pdf": {
+      "sha256": "0e82c2d755e961471b12978e3ae723412cdbc383e7e8a4777f2324c89d075936",
+      "short_sha": "0e82c2d755e9",
+      "path": "de_verwandlung.pdf",
+      "filename": "de_verwandlung.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0e82c2d755e961471b12978e3ae723412cdbc383e7e8a4777f2324c89d075936",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1676, \"output_tokens\": 587}",
+          "started_at": "2026-07-03T00:15:09.111064+00:00",
+          "completed_at": "2026-07-03T00:15:25.301490+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        },
+        {
+          "sha256": "0e82c2d755e961471b12978e3ae723412cdbc383e7e8a4777f2324c89d075936",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1711, \"output_tokens\": 609}",
+          "started_at": "2026-07-03T00:15:09.111146+00:00",
+          "completed_at": "2026-07-03T00:15:20.251434+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "de_verwandlung.pdf",
+        "size_bytes": 71374,
+        "mtime_epoch": 1783037655.1697438,
+        "sha256": "0e82c2d755e961471b12978e3ae723412cdbc383e7e8a4777f2324c89d075936"
+      }
+    }
+  }
+}
