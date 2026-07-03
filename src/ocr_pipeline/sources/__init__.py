@@ -43,6 +43,7 @@ from .ebook import EbookSource
 from .email_source import EmailSource
 from .epub import EpubSource
 from .excel import ExcelSource
+from .fb2 import Fb2Source
 from .gis import GisSource
 from .html import HtmlSource
 from .image import ImageSource
@@ -53,10 +54,13 @@ from .markdown import MarkdownSource
 from .media import MediaSource
 from .notebook import NotebookSource
 from .odt import OdtSource
+from .pages import PagesSource
 from .pdf import PdfSource
 from .pptx import PptxSource
 from .rtf import RtfSource
 from .subtitle import SubtitleSource
+from .svg import SvgSource
+from .tei import TeiSource
 from .txt import TxtSource
 
 logger = logging.getLogger(__name__)
@@ -73,6 +77,7 @@ __all__ = [
     "EmailSource",
     "EpubSource",
     "ExcelSource",
+    "Fb2Source",
     "GisSource",
     "HtmlSource",
     "ImageSource",
@@ -83,10 +88,13 @@ __all__ = [
     "MediaSource",
     "NotebookSource",
     "OdtSource",
+    "PagesSource",
     "PdfSource",
     "PptxSource",
     "RtfSource",
     "SubtitleSource",
+    "SvgSource",
+    "TeiSource",
     "TxtSource",
     "detect_source",
 ]
@@ -165,6 +173,12 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".avi": MediaSource,
     ".mov": MediaSource,
     ".webm": MediaSource,
+    ".tei": TeiSource,
+    ".tei.xml": TeiSource,
+    ".svg": SvgSource,
+    ".svgz": SvgSource,
+    ".pages": PagesSource,
+    ".fb2": Fb2Source,
 }
 
 

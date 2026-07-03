@@ -43,6 +43,21 @@ def _check_calibre() -> bool:
     return shutil.which("ebook-convert") is not None
 
 
+def _check_dedrm() -> bool:
+    """Check if Calibre DeDRM plugin is installed."""
+    import os
+
+    calibre_plugins = os.path.expanduser("~/Library/Preferences/calibre/plugins")
+    # Linux path
+    calibre_config = os.path.expanduser("~/.config/calibre/plugins")
+    for path in (calibre_plugins, calibre_config):
+        if os.path.isdir(path):
+            contents = os.listdir(path)
+            if any("DeDRM" in f for f in contents):
+                return True
+    return False
+
+
 class EbookSource(DocumentSource):
     """Document source for proprietary e-book formats.
 
@@ -155,6 +170,7 @@ class EbookSource(DocumentSource):
         has_drm = self.has_drm()
         desc = _FORMAT_INFO.get(self.path.suffix.lower(), {}).get("desc", "E-book")
         calibre_available = _check_calibre()
+        dedrm_available = _check_dedrm()
         extractable = not has_drm and calibre_available
 
         return MetadataResult(
@@ -171,6 +187,7 @@ class EbookSource(DocumentSource):
                     "file_size_bytes": st.st_size,
                     "text_extractable": str(extractable),
                     "calibre_available": str(calibre_available),
+                    "dedrm_plugin": str(dedrm_available),
                 },
             ),
             rights=RightsInfo(
