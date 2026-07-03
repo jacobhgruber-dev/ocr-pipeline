@@ -17,6 +17,7 @@ from .languages import (
     ENGINE_NAMES,
     list_languages_for_engine,
 )
+from .models import MetadataResult
 from .pipeline import Pipeline
 from .profiles import (
     PROFILES,
@@ -365,13 +366,10 @@ async def ocr_languages(engine: str | None = None) -> dict[str, Any]:
 
 @mcp.tool()
 async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
-    """Extract structured metadata from a PDF using GROBID.
+    """Extract structured metadata from a PDF using VLM → GROBID fallback.
 
-    Runs GROBID independently of the OCR pipeline — useful for standalone
-    metadata extraction or pre-processing before OCR.
-
-    Requires a running GROBID server (default: ``http://localhost:8070``).
-    Start with: ``docker run -p 8070:8070 lfoppiano/grobid:0.8.1``
+    Tries VLM-based metadata extraction first (using the first 3 pages of the
+    PDF).  Falls back to GROBID if the VLM call fails or is unavailable.
 
     Args:
         pdf_path: Absolute path to the PDF file.
@@ -379,15 +377,14 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
     Returns:
         Dict with ``status`` ("ok" or "error"), ``title``, ``authors``,
         ``doi``, ``journal``, ``volume``, ``issue``, ``year``, ``keywords``,
-        ``abstract``, and ``pages``.
+        ``abstract``, ``pages``, ``document_type``, ``language``,
+        ``extraction_method``, and other metadata fields.
     """
-    from .engines.grobid import GrobidEngine
-
     pdf = Path(pdf_path).resolve()
     if not pdf.is_file():
         return {"status": "error", "message": f"PDF not found: {pdf_path}"}
 
-    # Load grobid_url from config or fall back to default
+    # Load config for credentials and settings
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
@@ -396,37 +393,83 @@ async def ocr_metadata(pdf_path: str) -> dict[str, Any]:
         except Exception:
             cfg = PipelineConfig(input_dir=pdf.parent, output_dir=Path("./ocr_output"))
         ConfigLoader.apply_env_credentials(cfg)
-    grobid_url: str = cfg.grobid_url
 
+    # 1. Try VLM first
+    vlm_result: MetadataResult | None = None
     try:
+        from .engines.metadata_vlm import VlmMetadataEngine
+
+        vlm = VlmMetadataEngine(
+            vlm_model=cfg.vlm_metadata_model,
+            api_key=cfg.gemini_api_key,
+            page_count=3,
+        )
+        vlm_result = await asyncio.to_thread(vlm.extract, pdf)
+        if vlm_result.extraction_method == "vlm" and (vlm_result.title or vlm_result.document_type):
+            return _metadata_to_response(vlm_result)
+    except Exception as exc:
+        logger.warning("VLM metadata extraction failed for %s: %s", pdf_path, exc)
+
+    # 2. Fall back to GROBID
+    try:
+        from .engines.grobid import GrobidEngine
+
+        grobid_url: str = cfg.grobid_url
         engine = GrobidEngine(grobid_url=grobid_url)
         if not engine.health_check():
             return {
                 "status": "error",
                 "message": (
+                    f"Neither VLM nor GROBID are available. "
                     f"GROBID server not reachable at {grobid_url}. "
                     "Start with: docker run -p 8070:8070 lfoppiano/grobid:0.8.1"
                 ),
             }
 
         metadata = await asyncio.to_thread(engine.extract_metadata, pdf, timeout_sec=120.0)
-
-        return {
-            "status": "ok",
-            "title": metadata.title,
-            "authors": metadata.authors,
-            "doi": metadata.doi,
-            "journal": metadata.journal,
-            "volume": metadata.volume,
-            "issue": metadata.issue,
-            "year": metadata.year,
-            "keywords": metadata.keywords,
-            "abstract": metadata.abstract[:500] if metadata.abstract else "",
-            "pages": metadata.pages,
-        }
+        metadata.extraction_method = "grobid"
+        return _metadata_to_response(metadata)
     except Exception as exc:
-        logger.exception("ocr_metadata failed for %s", pdf_path)
-        return {"status": "error", "message": str(exc)}
+        logger.warning("GROBID metadata extraction failed for %s: %s", pdf_path, exc)
+
+    # 3. Return what we have from VLM (even if low-confidence) or error
+    if vlm_result is not None:
+        return _metadata_to_response(vlm_result)
+
+    return {
+        "status": "error",
+        "message": "Metadata extraction failed (VLM and GROBID both unavailable)",
+    }
+
+
+def _metadata_to_response(metadata: MetadataResult) -> dict[str, Any]:
+    """Convert a MetadataResult to the ocr_metadata response dict."""
+    return {
+        "status": "ok",
+        "title": metadata.title,
+        "authors": metadata.authors,
+        "doi": metadata.doi,
+        "isbn": metadata.isbn,
+        "journal": metadata.journal,
+        "publisher": metadata.publisher,
+        "volume": metadata.volume,
+        "issue": metadata.issue,
+        "year": metadata.year,
+        "date": metadata.date,
+        "keywords": metadata.keywords,
+        "abstract": metadata.abstract[:500] if metadata.abstract else "",
+        "pages": metadata.pages,
+        "document_type": metadata.document_type,
+        "language": metadata.language,
+        "court": metadata.court,
+        "docket_number": metadata.docket_number,
+        "edition": metadata.edition,
+        "series": metadata.series,
+        "part_number": metadata.part_number,
+        "revision": metadata.revision,
+        "identifiers": metadata.identifiers,
+        "extraction_method": metadata.extraction_method,
+    }
 
 
 # ---------------------------------------------------------------------------

@@ -93,6 +93,26 @@ class MetadataResult:
     references: list[dict] = field(default_factory=list)
     raw_tei: str = ""  # raw GROBID TEI XML for debugging
 
+    # -- NEW: universal fields --
+    document_type: str = ""  # "academic_article", "legal_opinion", "book", "technical_spec", etc.
+    language: str = ""  # ISO 639-1
+    publisher: str = ""  # journal, court, publishing house, company, etc.
+    date: str = ""  # full date string (YYYY or YYYY-MM-DD)
+
+    # -- NEW: type-specific fields --
+    isbn: str = ""
+    docket_number: str = ""
+    court: str = ""
+    edition: str = ""
+    series: str = ""
+    part_number: str = ""
+    revision: str = ""
+
+    # -- NEW: extraction metadata --
+    identifiers: dict[str, str] = field(default_factory=dict)
+    extraction_method: str = ""  # "vlm", "grobid", "vlm_failed", "none"
+    extra: dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
@@ -107,6 +127,21 @@ class MetadataResult:
             "pages": self.pages,
             "references": self.references,
             "raw_tei": self.raw_tei,
+            # New fields
+            "document_type": self.document_type,
+            "language": self.language,
+            "publisher": self.publisher,
+            "date": self.date,
+            "isbn": self.isbn,
+            "docket_number": self.docket_number,
+            "court": self.court,
+            "edition": self.edition,
+            "series": self.series,
+            "part_number": self.part_number,
+            "revision": self.revision,
+            "identifiers": self.identifiers,
+            "extraction_method": self.extraction_method,
+            "extra": self.extra,
         }
 
     @classmethod
@@ -124,6 +159,21 @@ class MetadataResult:
             pages=str(d.get("pages", "")),
             references=[dict(r) for r in d.get("references", [])] if d.get("references") else [],
             raw_tei=str(d.get("raw_tei", "")),
+            # New fields (backward-compatible with old checkpoint files)
+            document_type=str(d.get("document_type", "")),
+            language=str(d.get("language", "")),
+            publisher=str(d.get("publisher", "")),
+            date=str(d.get("date", "")),
+            isbn=str(d.get("isbn", "")),
+            docket_number=str(d.get("docket_number", "")),
+            court=str(d.get("court", "")),
+            edition=str(d.get("edition", "")),
+            series=str(d.get("series", "")),
+            part_number=str(d.get("part_number", "")),
+            revision=str(d.get("revision", "")),
+            identifiers=d.get("identifiers", {}) or {},
+            extraction_method=str(d.get("extraction_method", "")),
+            extra=d.get("extra", {}) or {},
         )
 
 

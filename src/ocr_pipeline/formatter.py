@@ -78,20 +78,46 @@ class YamlFrontmatterFormatter:
                 frontmatter["title"] = metadata.title
             if metadata.authors:
                 frontmatter["authors"] = metadata.authors
+            if metadata.document_type:
+                frontmatter["document_type"] = metadata.document_type
+            if metadata.language:
+                frontmatter["language"] = metadata.language
             if metadata.doi:
                 frontmatter["doi"] = metadata.doi
+            if metadata.isbn:
+                frontmatter["isbn"] = metadata.isbn
             if metadata.journal:
                 frontmatter["journal"] = metadata.journal
+            if metadata.publisher:
+                frontmatter["publisher"] = metadata.publisher
             if metadata.volume:
                 frontmatter["volume"] = metadata.volume
             if metadata.issue:
                 frontmatter["issue"] = metadata.issue
             if metadata.year:
                 frontmatter["year"] = metadata.year
+            if metadata.date:
+                frontmatter["date"] = metadata.date
+            if metadata.court:
+                frontmatter["court"] = metadata.court
+            if metadata.docket_number:
+                frontmatter["docket_number"] = metadata.docket_number
+            if metadata.edition:
+                frontmatter["edition"] = metadata.edition
+            if metadata.series:
+                frontmatter["series"] = metadata.series
+            if metadata.part_number:
+                frontmatter["part_number"] = metadata.part_number
+            if metadata.revision:
+                frontmatter["revision"] = metadata.revision
             if metadata.abstract:
                 frontmatter["abstract"] = metadata.abstract[:500]
             if metadata.keywords:
                 frontmatter["keywords"] = metadata.keywords
+            if metadata.pages:
+                frontmatter["pages"] = metadata.pages
+            if metadata.identifiers:
+                frontmatter["identifiers"] = metadata.identifiers
 
         import yaml as yaml_lib
 

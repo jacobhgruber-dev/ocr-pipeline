@@ -93,6 +93,7 @@ class PipelineConfig:
     surya2_venv: str | None = None  # path to Surya 2's isolated venv (falls back to marker_venv)
     google_processor_id: str = ""  # Google Doc AI processor ID
     grobid_url: str = "http://localhost:8070"  # GROBID REST API URL
+    vlm_metadata_model: str = "gemini-2.5-flash"  # VLM model for metadata extraction
 
     def _resolve_marker_venv(self, config_dir: Path | None = None) -> None:
         """Resolve a relative ``marker_venv`` against *config_dir*.
@@ -157,6 +158,7 @@ class ConfigLoader:
         ("surya2_venv", "OCR_PIPELINE_SURYA2_VENV", str),
         ("google_processor_id", "OCR_PIPELINE_GOOGLE_PROCESSOR_ID", str),
         ("grobid_url", "GROBID_URL", str),
+        ("vlm_metadata_model", "OCR_PIPELINE_VLM_METADATA_MODEL", str),
         ("mathpix_app_id", "MATHPIX_APP_ID", str),
         ("mathpix_app_key", "MATHPIX_APP_KEY", str),
         ("anthropic_api_key", "ANTHROPIC_API_KEY", str),
@@ -334,6 +336,7 @@ class ConfigLoader:
             surya2_venv=raw.get("surya2_venv"),  # None if not configured
             google_processor_id=str(raw.get("google_processor_id", "")),
             grobid_url=str(raw.get("grobid_url", "http://localhost:8070")),
+            vlm_metadata_model=str(raw.get("vlm_metadata_model", "gemini-2.5-flash")),
             # Credentials
             mathpix_app_id=str(raw.get("mathpix_app_id", "")),
             mathpix_app_key=str(raw.get("mathpix_app_key", "")),

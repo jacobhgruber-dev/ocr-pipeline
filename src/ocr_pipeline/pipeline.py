@@ -175,15 +175,12 @@ class Pipeline:
         )
 
         pdf_workers = getattr(self.config, "pdf_concurrency", 2)
-        progress = PipelineProgress(
-            total_pages=total_pages, budget=self.budget
-        )
+        progress = PipelineProgress(total_pages=total_pages, budget=self.budget)
         stats_lock = threading.Lock()
 
         with ThreadPoolExecutor(max_workers=pdf_workers) as executor:
             future_to_path: dict[Future[dict[str, Any]], Path] = {
-                executor.submit(self.process_one, pdf_path): pdf_path
-                for pdf_path in pdf_paths
+                executor.submit(self.process_one, pdf_path): pdf_path for pdf_path in pdf_paths
             }
 
             for future in as_completed(future_to_path):
@@ -193,19 +190,11 @@ class Pipeline:
                     pdf_stats = future.result()
                     with stats_lock:
                         self._pdfs_processed += 1
-                        self._pages_processed += pdf_stats.get(
-                            "pages_processed", 0
-                        )
-                        self._pages_complete += pdf_stats.get(
-                            "pages_complete", 0
-                        )
-                        self._pages_failed += pdf_stats.get(
-                            "pages_failed", 0
-                        )
+                        self._pages_processed += pdf_stats.get("pages_processed", 0)
+                        self._pages_complete += pdf_stats.get("pages_complete", 0)
+                        self._pages_failed += pdf_stats.get("pages_failed", 0)
                 except Exception as exc:
-                    logger.error(
-                        "Failed to process %s: %s", pdf_path.name, exc
-                    )
+                    logger.error("Failed to process %s: %s", pdf_path.name, exc)
                     with stats_lock:
                         self._pdfs_failed += 1
 
@@ -310,7 +299,12 @@ class Pipeline:
 
         if not pending:
             logger.info("PDF %s: all %d pages already complete", short_sha, page_count)
-            return {"pages_processed": 0, "pages_complete": 0, "pages_failed": 0, "pages_confidence_sum": 0.0}
+            return {
+                "pages_processed": 0,
+                "pages_complete": 0,
+                "pages_failed": 0,
+                "pages_confidence_sum": 0.0,
+            }
 
         # Process pending pages with thread pool
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
@@ -377,8 +371,9 @@ class Pipeline:
         """Collect all per-page markdown and produce a concatenated document .md.
 
         Gathers ``page_NNNN_final.md`` files that already exist on disk (from
-        this run or a previous checkpointed run), extracts GROBID metadata, and
-        writes ``{short_sha}.md`` with YAML frontmatter in the output directory.
+        this run or a previous checkpointed run), extracts metadata via
+        VLM→GROBID→none fallback, and writes ``{short_sha}.md`` with YAML
+        frontmatter in the output directory.
         """
         # Collect existing per-page markdown
         md_pages: list[tuple[int, str]] = []
@@ -392,33 +387,53 @@ class Pipeline:
         if not md_pages:
             return
 
-        grobid_metadata = self._extract_grobid_metadata(pdf_path)
-        if grobid_metadata or md_pages:
-            self._save_document_output(output_dir, short_sha, md_pages, grobid_metadata)
+        metadata = self._extract_metadata(pdf_path)
+        if metadata or md_pages:
+            self._save_document_output(output_dir, short_sha, md_pages, metadata)
 
-    def _extract_grobid_metadata(self, pdf_path: Path) -> MetadataResult | None:
-        """Extract structured metadata from the PDF via GROBID, if available.
+    def _extract_metadata(self, pdf_path: Path) -> MetadataResult:
+        """Extract metadata using VLM → GROBID → empty fallback chain."""
+        from .engines.metadata_vlm import VlmMetadataEngine
 
-        Returns ``None`` when GROBID is unreachable, not installed, or the
-        extraction fails for any reason — the document-level output is still
-        produced without frontmatter in that case.
-        """
+        # 1. Try VLM first
+        try:
+            vlm = VlmMetadataEngine(
+                vlm_model=self.config.vlm_metadata_model,
+                api_key=self.config.gemini_api_key,
+                page_count=3,
+            )
+            result = vlm.extract(pdf_path)
+            if result.extraction_method == "vlm" and (result.title or result.document_type):
+                logger.info(
+                    "Metadata extracted via VLM: type=%s, title=%s",
+                    result.document_type,
+                    result.title[:60],
+                )
+                return result
+        except Exception as exc:
+            logger.warning("VLM metadata extraction failed: %s", exc)
+
+        # 2. Fall back to GROBID
         try:
             from .engines.grobid import GrobidEngine
 
             engine = GrobidEngine(grobid_url=self.config.grobid_url)
-            if engine.health_check():
-                return engine.extract_metadata(pdf_path, timeout_sec=60.0)
-        except Exception:
-            logger.debug("GROBID metadata extraction unavailable", exc_info=True)
-        return None
+            result = engine.extract_metadata(pdf_path, timeout_sec=30)
+            result.extraction_method = "grobid"
+            if result.title or result.doi:
+                logger.info("Metadata extracted via GROBID: title=%s", result.title[:60])
+                return result
+        except Exception as exc:
+            logger.warning("GROBID metadata extraction failed: %s", exc)
+
+        return MetadataResult(extraction_method="none")
 
     def _save_document_output(
         self,
         output_dir: Path,
         short_sha: str,
         md_pages: list[tuple[int, str]],
-        metadata: MetadataResult | None,
+        metadata: MetadataResult,
     ) -> None:
         """Write a per-PDF concatenated markdown file with YAML frontmatter.
 
@@ -437,7 +452,9 @@ class Pipeline:
             for i, text in sorted(md_pages)
         ]
         formatter = YamlFrontmatterFormatter()
-        content = formatter.format(metadata, pages)
+        content = formatter.format(
+            metadata if metadata.extraction_method != "none" else None, pages
+        )
         out_path = output_dir / f"{short_sha}.md"
         out_path.write_text(content, encoding="utf-8")
         logger.info("Saved document-level markdown for %s: %s", short_sha, out_path)
