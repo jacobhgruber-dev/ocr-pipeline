@@ -93,11 +93,11 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 
 ## Known Gaps
 
-- Table detection is prompt-based (VLM) — no dedicated ML model for cell-level extraction.
-- Image handling is placeholder-based (`[Figure: description]`) — no embedded image extraction.
-- Ground truth files exist (12 fixtures) but 11 are derived from pipeline output, not human-curated. Only `general_mixed_format.txt` has been manually curated from the Wikipedia source.
-- ALTO XML output uses block-level granularity — word-level bounding boxes would require engine changes (only Surya2 produces blocks, and only at layout level).
-- No hOCR output format (lower priority than ALTO; Tesseract can natively produce it if needed).
+- Table detection has both VLM-based (prompt) and ML-based (Surya 2 TableRecPredictor) paths — ML path requires surya-ocr >= 0.15.0.
+- Image extraction from PDFs is implemented (`extract_page_images()` in extractor.py). DOCX and EPUB image extraction deferred.
+- Ground truth files exist (12 fixtures) but 11 are derived from pipeline output, not human-curated. Only `general_mixed_format.txt` has been manually curated.
+- hOCR and ALTO XML output use block-level granularity — word-level bounding boxes would require engine changes (only Surya2 produces blocks, and only at layout level).
+- CLI `--input-extensions` flag works but defaults to `["pdf"]`. Users must opt-in to multi-format processing via `--input-extensions` or `input_extensions` in config.
 
 ## Recent Work (2026-07-03 session)
 
