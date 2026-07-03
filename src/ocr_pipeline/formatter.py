@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 import lxml.etree as ET
 
-from .models import MetadataResult, PageResult
+from .models import Block, MetadataResult, PageResult
 
 logger = logging.getLogger(__name__)
 
@@ -351,10 +351,288 @@ class AltoFormatter:
                     ET.SubElement(tl, "SP")
 
 
+class HocrFormatter:
+    """hOCR output format — XHTML with CSS classes for OCR results.
+
+    Follows the hOCR spec: https://github.com/kba/hocr-spec
+
+    Output is valid XHTML 1.0 Transitional with standard hOCR CSS
+    class names (``ocr_page``, ``ocr_carea``, ``ocr_par``, ``ocr_line``,
+    ``ocrx_word``, ``ocr_table``, ``ocr_image``).
+    """
+
+    # Block type -> hOCR CSS class mapping
+    _BLOCK_CLASS_MAP: dict[str, str] = {
+        "text": "ocr_carea",
+        "heading": "ocr_carea",
+        "header": "ocr_carea",
+        "footer": "ocr_carea",
+        "table": "ocr_table",
+        "figure": "ocr_image",
+        "equation": "ocr_carea",
+    }
+
+    def __init__(self):
+        self._id_counter = 0
+
+    def _next_id(self, prefix: str) -> str:
+        self._id_counter += 1
+        return f"{prefix}_{self._id_counter}"
+
+    def extension(self) -> str:
+        return ".html"
+
+    def format(self, page: PageResult) -> str:
+        # Page dimensions
+        page_width = int(page.metadata.get("page_width", 2550))
+        page_height = int(page.metadata.get("page_height", 3300))
+
+        # Build HTML document using lxml.etree
+        NS = "http://www.w3.org/1999/xhtml"
+        html = ET.Element(
+            "html",
+            nsmap={None: NS, "xml": "http://www.w3.org/XML/1998/namespace"},
+        )
+        html.set("{http://www.w3.org/XML/1998/namespace}lang", "en")
+        html.set("lang", "en")
+
+        head = ET.SubElement(html, "head")
+        title = ET.SubElement(head, "title")
+        title.text = f"OCR Output \u2014 {page.page_label}"
+
+        meta_system = ET.SubElement(head, "meta")
+        meta_system.set("name", "ocr-system")
+        meta_system.set("content", "ocr-pipeline v0.2.0")
+
+        meta_caps = ET.SubElement(head, "meta")
+        meta_caps.set("name", "ocr-capabilities")
+        meta_caps.set("content", "ocr_page ocr_carea ocr_par ocr_line ocrx_word")
+
+        body = ET.SubElement(html, "body")
+
+        # Build page div
+        page_title_attr = (
+            f"image {page.page_label}.png; bbox 0 0 {page_width} {page_height}; "
+            f"ppageno {page.page_index + 1}"
+        )
+        page_div = ET.SubElement(
+            body,
+            "div",
+            {
+                "class": "ocr_page",
+                "id": "page_1",
+                "title": page_title_attr,
+            },
+        )
+
+        # Get blocks from engine outputs (same priority as ALTO)
+        blocks = None
+        for engine_name in ("surya2", "marker", "google_doc_ai", "mathpix", "tesseract"):
+            eo = page.engine_outputs.get(engine_name)
+            if eo and eo.blocks:
+                blocks = eo.blocks
+                break
+
+        if blocks:
+            for block in blocks:
+                self._build_block(page_div, block, page_width, page_height)
+        else:
+            # No blocks -- create single ocr_carea with merged_markdown text
+            text = self._strip_markdown_formatting(page.merged_markdown).strip()
+            if text:
+                area_title = f"bbox 0 0 {page_width} {page_height}"
+                area_div = ET.SubElement(
+                    page_div,
+                    "div",
+                    {
+                        "class": "ocr_carea",
+                        "id": self._next_id("block"),
+                        "title": area_title,
+                    },
+                )
+                par = ET.SubElement(
+                    area_div,
+                    "p",
+                    {
+                        "class": "ocr_par",
+                        "id": self._next_id("par"),
+                        "title": area_title,
+                    },
+                )
+                line_span = ET.SubElement(
+                    par,
+                    "span",
+                    {
+                        "class": "ocr_line",
+                        "id": self._next_id("line"),
+                        "title": area_title,
+                    },
+                )
+                self._add_words(line_span, text, page_width, page_height, 0.0)
+
+        # Build XHTML document
+        doctype = (
+            '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"\n'
+            '  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
+        )
+        xml_str = ET.tostring(html, xml_declaration=True, encoding="UTF-8", pretty_print=True)
+        # lxml adds its own XML declaration; we want a custom DOCTYPE
+        result = xml_str.decode("utf-8")
+        # Replace lxml's default XML decl + remove it for a clean combination
+        # We'll build the full output: XML decl + DOCTYPE + HTML
+        result = (
+            '<?xml version="1.0" encoding="UTF-8"?>\n' + doctype + "\n" + result.split("\n", 1)[1]
+        )
+        return result
+
+    def _build_block(self, parent, block: Block, page_width: int, page_height: int) -> None:
+        """Build hOCR elements for a block, recursing into children."""
+        bbox = block.bbox if block.bbox else (0, 0, page_width, page_height)
+        x0, y0, x1, y1 = (int(v) for v in bbox)
+        bbox_title = f"bbox {x0} {y0} {x1} {y1}"
+
+        block_type = block.type.lower() if block.type else "text"
+        hocr_class = self._BLOCK_CLASS_MAP.get(block_type, "ocr_carea")
+
+        if block_type == "table":
+            # Table block: ocr_table div (like ocr_carea but for tables)
+            area_div = ET.SubElement(
+                parent,
+                "div",
+                {
+                    "class": hocr_class,
+                    "id": self._next_id("table"),
+                    "title": bbox_title,
+                },
+            )
+            if block.children:
+                for child in block.children:
+                    self._build_block(area_div, child, page_width, page_height)
+            else:
+                self._add_text_to_block(area_div, block, x0, y0, x1, y1)
+        elif block_type == "figure":
+            # Image block: ocr_image div (no text content)
+            ET.SubElement(
+                parent,
+                "div",
+                {
+                    "class": hocr_class,
+                    "id": self._next_id("image"),
+                    "title": bbox_title,
+                },
+            )
+            for child in block.children:
+                self._build_block(parent, child, page_width, page_height)
+        elif block_type in ("text", "heading", "header", "footer", "equation"):
+            # Standard content block
+            area_div = ET.SubElement(
+                parent,
+                "div",
+                {
+                    "class": hocr_class,
+                    "id": self._next_id("block"),
+                    "title": bbox_title,
+                },
+            )
+            self._add_text_to_block(area_div, block, x0, y0, x1, y1)
+            for child in block.children:
+                self._build_block(parent, child, page_width, page_height)
+        else:
+            # Unknown type -> ocr_carea fallback
+            area_div = ET.SubElement(
+                parent,
+                "div",
+                {
+                    "class": "ocr_carea",
+                    "id": self._next_id("block"),
+                    "title": bbox_title,
+                },
+            )
+            self._add_text_to_block(area_div, block, x0, y0, x1, y1)
+            for child in block.children:
+                self._build_block(parent, child, page_width, page_height)
+
+    def _add_text_to_block(
+        self, area_div, block: Block, x0: int, y0: int, x1: int, y1: int
+    ) -> None:
+        """Add paragraph, line, and word elements for a block's text."""
+        text = self._strip_markdown_formatting(block.text or "").strip()
+        if not text:
+            return
+
+        bbox_title = f"bbox {x0} {y0} {x1} {y1}"
+        confidence = getattr(block, "confidence", 0.0) or 0.0
+
+        par = ET.SubElement(
+            area_div,
+            "p",
+            {
+                "class": "ocr_par",
+                "id": self._next_id("par"),
+                "title": bbox_title,
+            },
+        )
+        line_span = ET.SubElement(
+            par,
+            "span",
+            {
+                "class": "ocr_line",
+                "id": self._next_id("line"),
+                "title": bbox_title,
+            },
+        )
+        self._add_words(line_span, text, x1, y1, confidence)
+
+    def _add_words(
+        self,
+        parent,
+        text: str,
+        width: int,
+        height: int,
+        confidence: float,
+    ) -> None:
+        """Add ocrx_word spans for each word in text, with space tails between."""
+        words = text.split()
+        if not words:
+            return
+
+        x_wconf = f"x_wconf {int(round(confidence * 100))}" if confidence > 0 else ""
+
+        for i, word in enumerate(words):
+            title_parts = [f"bbox 0 0 {width} {height}"]
+            if x_wconf:
+                title_parts.append(x_wconf)
+            word_title = "; ".join(title_parts)
+
+            span = ET.SubElement(
+                parent,
+                "span",
+                {
+                    "class": "ocrx_word",
+                    "id": self._next_id("word"),
+                    "title": word_title,
+                },
+            )
+            span.text = word
+
+            # Add space between words as tail text on the word element
+            if i < len(words) - 1:
+                span.tail = " "
+
+    @staticmethod
+    def _strip_markdown_formatting(text: str) -> str:
+        """Remove HTML comments and basic markdown formatting from text."""
+        import re
+
+        text = re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+        return text
+
+
 _FORMATTERS: dict[str, Any] = {
     "markdown": MarkdownFormatter(),
     "json": JsonFormatter(),
     "alto": AltoFormatter(),
+    "hocr": HocrFormatter(),
 }
 
 

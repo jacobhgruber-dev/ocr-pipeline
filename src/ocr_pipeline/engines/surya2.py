@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 
 from .base import with_api_retry
 from ..models import Block, EngineName, EngineOutput
+
+logger = logging.getLogger(__name__)
 
 # -- label mapping -----------------------------------------------------------
 
@@ -346,3 +350,134 @@ except Exception as e:
             return result.returncode == 0 and "ok" in result.stdout
         except Exception:
             return False
+
+
+def extract_tables_from_image(
+    image_path: Path,
+    detection_results: Any = None,
+) -> list[dict]:
+    """Extract table structure from a rendered page image using Surya 2.
+
+    Uses Surya's ``TableRecPredictor`` to detect and structurally parse
+    tables (rows, columns, cells) from a page image.
+
+    Args:
+        image_path: Path to the rendered page image (PNG or JPEG).
+        detection_results: Optional Surya layout detection results with
+            bounding boxes.  When provided, table regions are cropped from
+            the image before table recognition (faster and more accurate).
+            When ``None``, the entire image is processed.
+
+    Returns:
+        List of dicts, one per detected table, with keys:
+
+        * ``rows`` — list of row y-positions (floats)
+        * ``cols`` — list of column x-positions (floats)
+        * ``cells`` — list of cell dicts, each with ``text``, ``row``,
+          ``col``, ``rowspan``, ``colspan``, ``bbox`` (list of 4 floats)
+        * ``html_table`` — basic HTML ``<table>`` string
+
+    If ``TableRecPredictor`` is not available (older surya-ocr version or
+    import error), returns an empty list and logs a debug message.
+    """
+    try:
+        from surya.table_rec import TableRecPredictor  # noqa: PLC0415
+    except ImportError:
+        logger.debug("TableRecPredictor not available in this surya-ocr version")
+        return []
+
+    from PIL import Image  # noqa: PLC0415
+
+    img = Image.open(image_path).convert("RGB")
+    results: list[dict] = []
+
+    predictor = TableRecPredictor()
+
+    if detection_results is not None and hasattr(detection_results, "bboxes"):
+        # Crop each table bbox and run table recognition on the crop
+        table_bboxes = []
+        for bbox_info in detection_results.bboxes:
+            label = getattr(bbox_info, "label", "")
+            if label and label.lower() == "table":
+                bbox = getattr(bbox_info, "bbox", None)
+                if bbox and len(bbox) == 4:
+                    table_bboxes.append(bbox)
+
+        if table_bboxes:
+            cropped_images = []
+            for bbox in table_bboxes:
+                x0, y0, x1, y1 = (int(v) for v in bbox)
+                cropped = img.crop((x0, y0, x1, y1))
+                cropped_images.append(cropped)
+
+            table_results = predictor(cropped_images)
+
+            for t_result, t_bbox in zip(table_results, table_bboxes):
+                results.append(_format_table_result(t_result, t_bbox))
+            return results
+
+    # Fallback: run on full image
+    table_results = predictor([img])
+    for t_result in table_results:
+        results.append(_format_table_result(t_result, None))
+    return results
+
+
+def _format_table_result(t_result: Any, crop_bbox: list | None) -> dict:
+    """Convert a Surya TableRecResult into a plain dict."""
+    cells = []
+    for cell in getattr(t_result, "cells", []):
+        cell_bbox = getattr(cell, "bbox", None)
+        if cell_bbox is not None:
+            cell_bbox = list(cell_bbox)
+        cells.append(
+            {
+                "text": getattr(cell, "text", "") or "",
+                "row": getattr(cell, "row", 0),
+                "col": getattr(cell, "col", 0),
+                "rowspan": getattr(cell, "rowspan", 1),
+                "colspan": getattr(cell, "colspan", 1),
+                "bbox": cell_bbox,
+            }
+        )
+
+    rows = getattr(t_result, "rows", [])
+    if hasattr(rows, "tolist"):
+        rows = rows.tolist()
+    cols = getattr(t_result, "cols", [])
+    if hasattr(cols, "tolist"):
+        cols = cols.tolist()
+
+    html_table = _build_html_table(cells)
+
+    return {
+        "rows": list(rows) if rows else [],
+        "cols": list(cols) if cols else [],
+        "cells": cells,
+        "html_table": html_table,
+    }
+
+
+def _build_html_table(cells: list[dict]) -> str:
+    """Build a basic HTML table string from cell dicts."""
+    if not cells:
+        return "<table></table>"
+
+    max_row = max(c["row"] for c in cells)
+    max_col = max(c["col"] for c in cells)
+
+    # Build a 2D grid
+    grid: list[list[str]] = [["" for _ in range(max_col + 1)] for _ in range(max_row + 1)]
+    for cell in cells:
+        r, c = cell["row"], cell["col"]
+        if 0 <= r <= max_row and 0 <= c <= max_col:
+            grid[r][c] = cell["text"]
+
+    parts = ["<table>"]
+    for row in grid:
+        parts.append("<tr>")
+        for col_val in row:
+            parts.append(f"<td>{col_val}</td>")
+        parts.append("</tr>")
+    parts.append("</table>")
+    return "".join(parts)

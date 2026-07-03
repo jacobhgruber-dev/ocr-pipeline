@@ -52,6 +52,11 @@ _CLI_VALUE_MAP: list[tuple[str, str, Callable[[Any], Any] | None]] = [
     ("retry_max_delay", "retry_max_delay_sec", None),
     ("timeout", "api_timeout_sec", None),
     ("marker_venv", "marker_venv", None),
+    (
+        "input_extensions",
+        "input_extensions",
+        lambda v: [e.strip().lstrip(".") for e in v.split(",") if e.strip()],
+    ),
 ]
 
 logger = logging.getLogger("ocr_pipeline")
@@ -246,6 +251,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--no-postprocess",
         action="store_true",
         help="Skip post-processing cleanup",
+    )
+
+    parser.add_argument(
+        "--input-extensions",
+        default=None,
+        help="Comma-separated file extensions to process (default: pdf). "
+        "Examples: 'pdf,epub,docx' or 'jpg,png,tiff' for images.",
     )
 
     # -- Logging -------------------------------------------------------------
