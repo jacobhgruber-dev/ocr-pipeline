@@ -1,14 +1,23 @@
-"""E-book format detection and DRM awareness.
+"""E-book format detection, DRM awareness, and Calibre conversion.
 
 Detects proprietary e-book formats (.azw, .azw3, .kfx, .mobi) and
-flags DRM-protected files.  Text extraction is limited or unavailable
-for DRM-protected files — this source provides metadata awareness only.
+flags DRM-protected files.  For DRM-free files, attempts text extraction
+via Calibre's ``ebook-convert`` CLI tool.
+
+DRM detection strategies:
+- AZW/AZW3: check for EBOK/PDOC markers in file header (DRM-free = these appear)
+- MOBI: check header for TEXT record at offset (PalmDOC header)
+- EPUB: check ZIP container for encryption.xml (Adobe DRM)
+- KFX: always DRM-wrapped at the container level
 """
 
 from __future__ import annotations
 
 import logging
+import shutil
+import subprocess
 from pathlib import Path
+from zipfile import ZipFile
 
 from ocr_pipeline.models import MetadataResult, RightsInfo, SourceInfo
 
@@ -23,20 +32,25 @@ _FORMAT_INFO: dict[str, dict[str, str]] = {
     ".mobi": {"format": "mobi", "mime": "application/x-mobipocket-ebook", "desc": "Mobipocket"},
 }
 
-_HAS_DRM_MARKER = {
-    ".azw": True,
-    ".azw3": True,
-    ".kfx": True,
-    ".mobi": False,  # Some MOBI files are DRM-free
-}
+# Byte markers for DRM detection
+_MOBI_MAGIC = b"BOOKMOBI"
+_PALMDOC_MAGIC = b"TEXtREAd"
+_KF8_MAGIC = b"BLOCKS1\x00\x00\x00\x00"
+
+
+def _check_calibre() -> bool:
+    """Check if Calibre's ebook-convert is available."""
+    return shutil.which("ebook-convert") is not None
 
 
 class EbookSource(DocumentSource):
     """Document source for proprietary e-book formats.
 
-    Detects Kindle/Mobipocket formats and flags DRM status.
-    Text extraction is not supported for DRM-protected files.
+    Detects Kindle/Mobipocket formats and flags DRM status.  Uses
+    Calibre's ``ebook-convert`` for text extraction from DRM-free files.
     """
+
+    _drm_cache: bool | None = None
 
     @property
     def source_format(self) -> str:
@@ -52,26 +66,96 @@ class EbookSource(DocumentSource):
     def page_count(self) -> int:
         return 1
 
-    def _has_drm(self) -> bool:
-        """Heuristic DRM detection based on file format and content markers."""
+    def has_drm(self) -> bool:
+        """Check if the e-book file is DRM-protected."""
+        if self._drm_cache is not None:
+            return self._drm_cache
+
         ext = self.path.suffix.lower()
+
+        # KFX is always DRM-wrapped at the container level
         if ext == ".kfx":
-            return True  # KFX is always DRM-wrapped
-        if ext == ".azw":
-            # AZW may or may not have DRM — check for encryption markers
+            self._drm_cache = True
+            return True
+
+        # EPUB: check for encryption.xml in the ZIP container
+        if ext == ".epub":
             try:
-                header = self.path.read_bytes()[:100]
-                # DRM'd AZW files have an encryption header
-                if b"EBOK" not in header and b"PDOC" not in header:
-                    return _HAS_DRM_MARKER.get(ext, False)
+                with ZipFile(str(self.path), "r") as zf:
+                    has_enc = "META-INF/encryption.xml" in zf.namelist() or "encryption.xml" in zf.namelist()
+                self._drm_cache = has_enc
+                return has_enc
+            except Exception:
+                self._drm_cache = False
+                return False
+
+        # AZW/AZW3: check header markers
+        if ext in (".azw", ".azw3"):
+            try:
+                header = self.path.read_bytes()[:200]
+                # DRM-free AZW files have EBOK or PDOC markers visible
+                # DRM'd files have these markers encrypted/obscured
+                if b"EBOK" in header or b"PDOC" in header:
+                    self._drm_cache = False
+                    return False
+                # Check for MOBI header (some DRM-free AZW files)
+                if _MOBI_MAGIC in header:
+                    self._drm_cache = False
+                    return False
+                self._drm_cache = True
+                return True
             except Exception:
                 pass
-        return _HAS_DRM_MARKER.get(ext, False)
+
+        # MOBI: check for PalmDOC text record marker
+        if ext == ".mobi":
+            try:
+                header = self.path.read_bytes()[:200]
+                if _MOBI_MAGIC in header or _PALMDOC_MAGIC in header:
+                    self._drm_cache = False
+                    return False
+                # Absence of markers doesn't guarantee DRM for MOBI
+                self._drm_cache = False  # Default: assume DRM-free for MOBI
+                return False
+            except Exception:
+                pass
+
+        self._drm_cache = False
+        return False
+
+    def _extract_via_calibre(self, output_dir: Path) -> str:
+        """Convert e-book to plain text using Calibre's ebook-convert."""
+        txt_path = output_dir / "converted.txt"
+        try:
+            result = subprocess.run(
+                [
+                    "ebook-convert",
+                    str(self.path),
+                    str(txt_path),
+                    "--to",
+                    "txt",
+                    "--max-toc-links",
+                    "0",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0 and txt_path.exists():
+                return txt_path.read_text(encoding="utf-8", errors="replace")
+            logger.warning("ebook-convert failed: %s", result.stderr[:200])
+        except FileNotFoundError:
+            logger.debug("ebook-convert (Calibre) not installed — skipping text extraction")
+        except Exception as exc:
+            logger.warning("ebook-convert error: %s", exc)
+        return ""
 
     def extract_metadata(self) -> MetadataResult:
         st = self.path.stat()
-        has_drm = self._has_drm()
+        has_drm = self.has_drm()
         desc = _FORMAT_INFO.get(self.path.suffix.lower(), {}).get("desc", "E-book")
+        calibre_available = _check_calibre()
+        extractable = not has_drm and calibre_available
 
         return MetadataResult(
             title=self.path.stem,
@@ -85,11 +169,14 @@ class EbookSource(DocumentSource):
                     "has_drm": str(has_drm),
                     "format_description": desc,
                     "file_size_bytes": st.st_size,
-                    "text_extractable": str(not has_drm),
+                    "text_extractable": str(extractable),
+                    "calibre_available": str(calibre_available),
                 },
             ),
             rights=RightsInfo(
-                access_restrictions="DRM-protected — text extraction unavailable" if has_drm else ""
+                access_restrictions="DRM-protected — text extraction unavailable"
+                if has_drm
+                else ("" if calibre_available else "Calibre not installed — text extraction unavailable")
             ),
         )
 
@@ -99,6 +186,26 @@ class EbookSource(DocumentSource):
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None
     ) -> tuple[str, Path | None]:
-        if self._has_drm():
-            return f"[DRM-protected {self.source_format.upper()} — unable to extract text]", None
-        return f"[{self.source_format.upper()} e-book — use Calibre for text extraction]", None
+        output_dir.mkdir(parents=True, exist_ok=True)
+        out_path = output_dir / "page_0001_final.md"
+
+        if self.has_drm():
+            text = f"[DRM-protected {self.source_format.upper()} — unable to extract text]"
+            out_path.write_text(text, encoding="utf-8")
+            return text, out_path
+
+        # Try Calibre conversion for DRM-free files
+        text = self._extract_via_calibre(output_dir)
+        if text.strip():
+            out_path.write_text(text, encoding="utf-8")
+            return text, out_path
+
+        # No Calibre available — provide guidance
+        text = (
+            f"[{self.source_format.upper()} e-book — text extraction requires Calibre]\n\n"
+            "Install Calibre (https://calibre-ebook.com) to enable text extraction "
+            "from DRM-free e-book formats. Once installed, this pipeline will use "
+            "`ebook-convert` to extract text automatically."
+        )
+        out_path.write_text(text, encoding="utf-8")
+        return text, out_path

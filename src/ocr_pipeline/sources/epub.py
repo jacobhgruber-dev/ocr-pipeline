@@ -2,14 +2,19 @@
 
 Uses ``ebooklib`` to parse the EPUB, then writes each chapter/section as a
 rendered HTML block.  Text extraction walks the spine reading items in order.
+
+DRM detection: checks the EPUB ZIP container for ``META-INF/encryption.xml``
+(Adobe DRM) or ``META-INF/rights.xml`` (older DRM schemes).
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
+from zipfile import ZipFile
 
 from ocr_pipeline.errors import RenderError
+from ocr_pipeline.models import MetadataResult, RightsInfo, SourceInfo
 
 from .base import DocumentSource
 
@@ -20,11 +25,12 @@ class EpubSource(DocumentSource):
     """Document source for EPUB 2/3 ebooks.
 
     Each "chapter" or spine item is treated as a logical page.  Text
-    extraction strips HTML tags and returns plain text.  Rendering
-    converts HTML content to PNG via a lightweight approach.
+    extraction strips HTML tags and returns plain text.  DRM detection
+    checks for encryption.xml in the EPUB container.
     """
 
     _SPINE_ITEMS: list[tuple[str, str]] | None = None  # (item_id, href)
+    _drm_cache: bool | None = None
 
     @property
     def source_format(self) -> str:
@@ -33,6 +39,87 @@ class EpubSource(DocumentSource):
     @property
     def source_mimetype(self) -> str:
         return "application/epub+zip"
+
+    def has_drm(self) -> bool:
+        """Check for Adobe DRM (encryption.xml) in the EPUB container."""
+        if self._drm_cache is not None:
+            return self._drm_cache
+        try:
+            with ZipFile(str(self.path), "r") as zf:
+                names = zf.namelist()
+                has_enc = any(
+                    "encryption.xml" in n or "rights.xml" in n for n in names
+                )
+                self._drm_cache = has_enc
+                return has_enc
+        except Exception:
+            self._drm_cache = False
+            return False
+
+    def extract_metadata(self) -> MetadataResult:
+        """Extract EPUB OPF metadata, with DRM awareness."""
+        try:
+            from ebooklib import epub
+
+            book = epub.read_epub(str(self.path))
+        except Exception:
+            return MetadataResult(
+                title=self.path.stem,
+                document_type="ebook",
+                extraction_method="epub-detection",
+                source_info=SourceInfo(format="epub", page_count=self.page_count),
+            )
+
+        meta = MetadataResult(
+            title="",
+            authors=[],
+            language="",
+            publisher="",
+            date="",
+            document_type="ebook",
+            extraction_method="epub-opf",
+            source_info=SourceInfo(
+                format="epub",
+                page_count=self.page_count,
+                mimetype="application/epub+zip",
+            ),
+        )
+
+        # DC metadata
+        dc_titles = book.get_metadata("DC", "title")
+        if dc_titles:
+            meta.title = str(dc_titles[0][0])
+        dc_creators = book.get_metadata("DC", "creator")
+        if dc_creators:
+            meta.authors = [str(c[0]) for c in dc_creators]
+        dc_publisher = book.get_metadata("DC", "publisher")
+        if dc_publisher:
+            meta.publisher = str(dc_publisher[0][0])
+        dc_date = book.get_metadata("DC", "date")
+        if dc_date:
+            meta.date = str(dc_date[0][0])
+        dc_lang = book.get_metadata("DC", "language")
+        if dc_lang:
+            meta.language = str(dc_lang[0][0])
+        dc_ids = book.get_metadata("DC", "identifier")
+        for id_val in dc_ids:
+            val = str(id_val[0])
+            if val.startswith("urn:isbn:"):
+                meta.isbn = val.replace("urn:isbn:", "")
+            elif not meta.isbn and len(val) in (10, 13) and val.replace("-", "").isdigit():
+                meta.isbn = val
+
+        # DRM status
+        has_drm = self.has_drm()
+        if has_drm:
+            meta.rights = RightsInfo(
+                access_restrictions="Adobe DRM detected — text extraction may be limited"
+            )
+            meta.source_info.extra["has_drm"] = "true"
+        else:
+            meta.source_info.extra["has_drm"] = "false"
+
+        return meta
 
     def _load_spine(self) -> list[tuple[str, str]]:
         """Parse the EPUB spine once and cache the ordered items."""
