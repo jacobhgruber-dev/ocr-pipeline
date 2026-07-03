@@ -521,11 +521,13 @@ Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can a
 | Engine | Type | Cost | Best For | Notes |
 |---|---|---|---|---|
 | **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. |
+| **Tesseract** | Local | Free | Arabic/RTL, Cyrillic, fallback | The most widely deployed OCR engine. 6x faster than Marker for Cyrillic. Only working engine for Arabic. |
 | **Mathpix** | API | $0.005/page | Math-heavy PDFs | Best math/equation OCR available. Free tier: 1000 pages/month. |
 | **Google Document AI** | API | $0.0015/page | Enterprise, forms | Google Cloud processor setup required. Free tier: 500 pages/month. |
 | **Surya 2** | Local | Free | Multilingual documents, layout analysis | 91-language VLM OCR. Requires `uv sync --extra surya2`. |
+| **GROBID** | Local (Docker) | Free | Academic metadata extraction | Extracts title, authors, DOI, journal metadata. `docker run -p 8070:8070 lfoppiano/grobid:0.8.1` |
 
-Use Marker as your default. Add Mathpix for math-heavy documents. Use Google Document AI for forms or when you need Google's enterprise OCR quality.
+Use Marker as your default. Add Tesseract for Arabic/RTL scripts or as a fallback (recommended for general + books profiles). Add Mathpix for math-heavy documents.
 
 ---
 

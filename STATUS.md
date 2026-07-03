@@ -16,26 +16,29 @@ Last updated: 2026-07-02
 
 | Profile | Engines | Model | Rules | Description |
 |---|---|---|---|---|
-| `general` | marker | gemini-2.5-flash | 13 | Catch-all: tables, figures, multi-column, headers, lists, code |
+| `general` | marker, tesseract | gemini-2.5-flash | 13 | Catch-all: tables, figures, multi-column, headers, lists, code |
 | `academic` | marker, mathpix | gemini-2.5-flash | 15 | Citations (all styles), DOIs, abstracts, affiliations, LaTeX in papers |
 | `mathematical` | mathpix, marker | gemini-2.5-flash | 15 | LaTeX math, \mathbb/\mathcal, theorems, matrices, statistical tables |
 | `legal` | marker, google_doc_ai | gemini-2.5-flash | 15 | § symbols, case citations, paragraph hierarchy, signature blocks |
 | `technical` | marker, google_doc_ai | gemini-2.5-flash | 14 | Callout boxes, tolerances, BOMs, code blocks, revision tables |
-| `books` | marker | gemini-2.5-flash | 17 | Front/back matter, TOC/index, dialogue, scene breaks, Roman numerals |
+| `books` | marker, tesseract | gemini-2.5-flash | 17 | Front/back matter, TOC/index, dialogue, scene breaks, Roman numerals |
 
 All profiles include: few-shot examples, XML-structured prompts, anti-truncation rules, [Header:]/[Footer:] bracketed format, image text OCR.
 
 User-extensible: custom profiles load from `profiles/*.yaml` (3 examples provided).
 
-## Engines (5)
+## Engines (6)
 
 | Engine | Type | Free? | Best for |
 |---|---|---|---|
 | marker | Local Python venv | ✅ | General OCR, prose |
+| **tesseract** | **Local binary** | **✅** | **Arabic/RTL scripts, Cyrillic, universal fallback** |
 | mathpix | API (paid) | 1000 pg/mo free | LaTeX math, equations |
 | surya2 | Local Python venv | ✅ | 91 languages, layout |
 | google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
 | grobid | Local Docker | ✅ | Metadata extraction |
+
+**Tesseract:** The most widely deployed OCR engine — powers Google Books, bundled with Linux. Added after a 16-run comparison study confirmed: (1) Tesseract is the ONLY working engine for Arabic RTL (Marker fails entirely), (2) 6x faster than Marker for Cyrillic with equivalent quality, (3) within 4% of Marker quality for Latin scripts, serving as reliable fallback. Pipeline auto-adds Tesseract when RTL languages detected.
 
 ## Language Support
 
@@ -124,9 +127,10 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 ## Recent Changes
 
 See `git log` for full history. Key commits:
-- `61eeef1` — Record all testing lessons — script awareness, Google Doc AI, model guidance
-- `66af62a` — Restore Google Doc AI as optional suggestion (tested and verified)
-- `6daa80a` — Fix mathematical profile best_model to gemini-2.5-flash
+- `d08523f` — Tesseract integration — findings, fixes, pipeline changes
+- `c21ac71` — Tesseract engine + dehyphenation + accuracy metrics
+- `9881d5b` — Per-page metadata comments
+- `7b1d780` — VLM metadata engine fixes
 - `53781f6` — Fix Marker languages bug + 5 multilingual test fixtures
 - `87f9cd3` — Research-backed prompt improvements + 12 real test PDFs
 - `9793ac6` — 7→6 universal profiles, remove content_type, user-extensible profiles
