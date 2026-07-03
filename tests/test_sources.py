@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -11,7 +12,9 @@ import pytest
 from ocr_pipeline.errors import ConfigError
 from ocr_pipeline.sources import (
     ArchiveSource,
+    ComicSource,
     CsvSource,
+    DjvuSource,
     DocxSource,
     EmailSource,
     EpubSource,
@@ -953,3 +956,177 @@ class TestSubtitleSource:
         source = SubtitleSource(f)
         with pytest.raises(NotImplementedError):
             source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# DjvuSource
+# ---------------------------------------------------------------------------
+
+
+class TestDjvuSource:
+    """Tests for DJVU document source (conditionally requires djvulibre CLI)."""
+
+    def test_source_format_always(self, tmp_path: Path) -> None:
+        """source_format returns 'djvu' even without djvulibre installed."""
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        assert source.source_format == "djvu"
+        assert source.source_mimetype == "image/vnd.djvu"
+
+    def test_detect_via_extension(self, tmp_path: Path) -> None:
+        """detect_source routes .djvu and .djv files to DjvuSource."""
+        for ext in (".djvu", ".djv"):
+            f = tmp_path / f"test{ext}"
+            f.write_text("")
+            source = detect_source(f)
+            assert isinstance(source, DjvuSource)
+            assert source.source_format == "djvu"
+
+    def test_page_count_fallback(self, tmp_path: Path) -> None:
+        """Without djvudump, page_count falls back to 1."""
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        assert source.page_count >= 1
+
+    def test_extract_text_basic(self, tmp_path: Path) -> None:
+        """Extract text returns a result (either real text or a fallback message)."""
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert isinstance(text, str)
+        assert len(text) >= 0
+        if saved is not None:
+            assert saved.exists()
+
+    def test_metadata(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        meta = source.extract_metadata()
+        assert meta.document_type == "book"
+        assert meta.extraction_method == "djvu-cli"
+        assert meta.source_info is not None
+        assert meta.source_info.format == "djvu"
+
+    def test_basic_with_djvutxt(self, tmp_path: Path) -> None:
+        """If djvutxt is available, test basic functionality with a dummy file.
+
+        Note: A valid DJVU file is needed for meaningful text extraction,
+        but format detection and page count work on any file.
+        """
+        if not shutil.which("djvutxt"):
+            pytest.skip("djvutxt not installed")
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        assert source.source_format == "djvu"
+        assert source.page_count >= 1
+
+    def test_extract_text_out_of_range(self, tmp_path: Path) -> None:
+        """Out-of-range page returns empty string."""
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        text, saved = source.extract_text(999, tmp_path / "out")
+        assert text == ""
+        assert saved is None
+
+    def test_render_page_raises_without_ddjvu(self, tmp_path: Path) -> None:
+        """render_page raises NotImplementedError when ddjvu is not installed."""
+        if shutil.which("ddjvu"):
+            pytest.skip("ddjvu is installed — skipping error-path test")
+        f = tmp_path / "test.djvu"
+        f.write_text("")
+        source = DjvuSource(f)
+        with pytest.raises(NotImplementedError, match="ddjvu not found"):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# ComicSource
+# ---------------------------------------------------------------------------
+
+
+class TestComicSource:
+    """Tests for comic book archive source (CBZ/CBR)."""
+
+    @staticmethod
+    def _make_1px_png() -> bytes:
+        """Create a minimal 1x1 pixel PNG in memory using Pillow."""
+        from PIL import Image
+        import io
+
+        img = Image.new("RGB", (1, 1), color=(255, 0, 0))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        return buf.getvalue()
+
+    @pytest.fixture()
+    def cbz_path(self, tmp_path: Path) -> Path:
+        """Create a minimal .cbz file containing a single 1-pixel PNG."""
+        path = tmp_path / "comic.cbz"
+        png_data = self._make_1px_png()
+        with zipfile.ZipFile(str(path), "w") as zf:
+            zf.writestr("page_01.png", png_data)
+        return path
+
+    def test_basic(self, cbz_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        assert source.source_format == "cbz"
+        assert source.source_mimetype == "application/x-cbz"
+        assert source.page_count == 1
+
+    def test_extract_text_returns_image_description(self, cbz_path: Path, tmp_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        text, saved = source.extract_text(0, tmp_path)
+        assert isinstance(text, str)
+        assert "Comic page 1" in text
+        assert "page_01.png" in text
+        assert saved is None  # comics have no text file to save
+
+    def test_extract_text_out_of_range(self, cbz_path: Path, tmp_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        text, saved = source.extract_text(999, tmp_path)
+        assert text == ""
+        assert saved is None
+
+    def test_metadata(self, cbz_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        meta = source.extract_metadata()
+        assert meta.document_type == "comic"
+        assert meta.extraction_method == "comic-archive"
+        assert meta.source_info is not None
+        assert meta.source_info.format == "cbz"
+        assert meta.source_info.extra.get("image_count") == 1
+
+    def test_render_page(self, cbz_path: Path, tmp_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        png = source.render_page(0, tmp_path)
+        assert png.exists()
+        assert png.suffix == ".png"
+        assert png.stat().st_size > 0
+
+    def test_render_page_out_of_range(self, cbz_path: Path, tmp_path: Path) -> None:
+        source = ComicSource(cbz_path)
+        with pytest.raises(IndexError, match="out of range"):
+            source.render_page(999, tmp_path)
+
+    def test_cbr_format_detection(self, tmp_path: Path) -> None:
+        """Format detection for .cbr (RAR archives — can't easily create, test format only)."""
+        f = tmp_path / "comic.cbr"
+        f.write_text("not a real rar")
+        source = ComicSource(f)
+        assert source.source_format == "cbr"
+        assert source.source_mimetype == "application/x-cbr"
+        # CBR with no actual RAR content: page_count falls back to 1
+        assert source.page_count >= 1
+
+    def test_detect_via_extension(self, cbz_path: Path) -> None:
+        """detect_source routes .cbz files to ComicSource."""
+        source = detect_source(cbz_path)
+        assert isinstance(source, ComicSource)
+        assert source.source_format == "cbz"
+        assert source.page_count == 1

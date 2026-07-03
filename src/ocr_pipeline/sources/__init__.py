@@ -34,7 +34,9 @@ from ocr_pipeline.errors import ConfigError
 
 from .base import DocumentSource
 from .archive import ArchiveSource
+from .comic import ComicSource
 from .csv_source import CsvSource
+from .djvu import DjvuSource
 from .docx import DocxSource
 from .email_source import EmailSource
 from .epub import EpubSource
@@ -56,7 +58,9 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "ArchiveSource",
+    "ComicSource",
     "CsvSource",
+    "DjvuSource",
     "DocumentSource",
     "DocxSource",
     "EmailSource",
@@ -127,6 +131,10 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".srt": SubtitleSource,
     ".vtt": SubtitleSource,
     ".sbv": SubtitleSource,
+    ".djvu": DjvuSource,
+    ".djv": DjvuSource,
+    ".cbz": ComicSource,
+    ".cbr": ComicSource,
 }
 
 

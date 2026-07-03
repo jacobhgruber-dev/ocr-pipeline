@@ -48,6 +48,8 @@ dependencies = [
     "striprtf>=0.0.32",
     "odfpy>=1.4.1",
     "py7zr>=1.1.3",
+    "rarfile>=4.2",
+    "langdetect>=1.0.9",
 ]
 
 [project.optional-dependencies]
