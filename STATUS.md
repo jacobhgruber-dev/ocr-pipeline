@@ -6,7 +6,7 @@ Last updated: 2026-07-03
 
 | Metric | Value |
 |---|---|
-| Tests | 298 passing (unit + integration + e2e + sources) |
+| Tests | 327 passing (unit + integration + e2e + sources) |
 | Lint | ruff clean (56 source + test files) |
 | Format | ruff format clean (56 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
@@ -41,7 +41,7 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
 | grobid | Local Docker | ✅ | Academic metadata extraction |
 
-## Supported Input Formats (11)
+## Supported Input Formats (18)
 
 | Format | Source class | Extract text? | Render to image? | Metadata | Notes |
 |---|---|---|---|---|---|
@@ -53,6 +53,13 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | Markdown | `MarkdownSource` | ✅ charset-normalizer | ❌ | YAML frontmatter | Title, author, date, license |
 | HTML | `HtmlSource` | ✅ lxml | ❌ | JSON-LD / meta tags | schema.org, citation_*, dc.* |
 | LaTeX | `LatexSource` | ✅ regex | ❌ | \\title, \\author, \\abstract | Command stripping |
+| JSON | `JsonSource` | ✅ built-in | ❌ | JSON-LD detection | .json, .jsonl support |
+| RTF | `RtfSource` | ✅ striprtf | ❌ | file stats | Legacy legal docs |
+| ODT | `OdtSource` | ✅ lxml/ZIP | ❌ | dc:* in meta.xml | OpenDocument, EU standard |
+| Notebook | `NotebookSource` | ✅ built-in JSON | ❌ | kernel, lang, title | .ipynb cells + outputs |
+| Archive | `ArchiveSource` | ✅ listing | ❌ | file count | ZIP/TAR/GZ/7z, readme extraction |
+| Email | `EmailSource` | ✅ stdlib email | ❌ | From, To, Subject, Date | .eml + .mbox (multi-message) |
+| Subtitles | `SubtitleSource` | ✅ text | ❌ | line count | .srt, .vtt — timestamp stripping |
 | CSV/TSV | `CsvSource` | ✅ clevercsv | ❌ | dialect detection | Markdown table output |
 | Excel | `ExcelSource` | ✅ calamine | ❌ | openpyxl props | One sheet = one page; .xlsx/.xls |
 | PPTX | `PptxSource` | ✅ python-pptx | ❌ | core_properties | One slide = one page; speaker notes |
