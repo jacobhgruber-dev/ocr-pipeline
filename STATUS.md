@@ -7,13 +7,15 @@ Last updated: 2026-07-03
 | Metric | Value |
 |---|---|
 | Tests | 258 passing (unit + integration + e2e) |
-| Lint | ruff clean (30 source files) |
-| Types | mypy clean |
+| Lint | ruff clean (47 source + test files) |
+| Format | ruff format clean (47 files) |
+| Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
 | Python | 3.10+ (CI: 3.10, 3.12) |
 | Version | 0.2.0 |
 | License | MIT |
 | CI | GitHub Actions (lint, type check, test on push/PR) |
 | Docker | Dockerfile + docker-compose (GROBID) |
+| Git | 29 commits, direct to main |
 
 ## Profiles (6)
 
@@ -62,7 +64,19 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 
 - Table detection is prompt-based (VLM) — no dedicated ML model for cell-level extraction.
 - Image handling is placeholder-based (`[Figure: description]`) — no embedded image extraction.
-- Ground truth files exist (12 fixtures) but are derived from pipeline output — no human-curated references.
+- Ground truth files exist (12 fixtures) but 11 are derived from pipeline output, not human-curated. Only `general_mixed_format.txt` has been manually curated from the Wikipedia source.
+- ALTO XML output uses block-level granularity — word-level bounding boxes would require engine changes (only Surya2 produces blocks, and only at layout level).
+- No hOCR output format (lower priority than ALTO; Tesseract can natively produce it if needed).
+
+## Recent Work (2026-07-03 session)
+
+3 commits from this session:
+
+| Commit | What |
+|---|---|
+| `eb452ad` | E2E integration tests (stub + real VLM), 12 ground truth files, benchmark script |
+| `28c0f2a` | ALTO XML v4.4 output format (AltoFormatter, page dimension capture, lxml) |
+| `a0fab5b` | Bug fixes: Pillow resource leak, negative bbox clamp, None text guard, extractable-text dimensions, ruff format pass, curated ground truth fix |
 
 ## Shipping Infrastructure
 
@@ -79,3 +93,5 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | Benchmark (12 fixtures) | ✅ `scripts/benchmark.py` — CER/WER against ground truth |
 | Ground truth files (12) | ✅ `tests/fixtures/ground_truth/` — baselines from marker+gemini output |
 | ALTO XML output | ✅ `output_formats: ["markdown", "json", "alto"]` — v4.4 schema, lxml-valid, word-level confidence |
+| Ruff formatting | ✅ 47/47 files clean (`ruff format` pass) |
+| Code review | ✅ Passed — 4 bugs found and fixed, zero regressions |
