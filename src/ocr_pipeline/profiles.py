@@ -44,11 +44,20 @@ class DocumentProfile:
     suggested_languages: list[str] = field(default_factory=lambda: ["en"])
     """Recommended language codes for this document type."""
 
-    suggested_model: str = "gemini-2.5-flash"
-    """Recommended VLM model (free tier available)."""
+    model_routing: dict[str, str] = field(default_factory=dict)
+    """Per-script model routing. Keys are script families (latin, cyrillic,
+    cjk, arabic, greek). Values are VLM model names. Falls back to
+    config.vlm_model for unmapped scripts."""
 
-    best_model: str = "gemini-2.5-flash"
-    """Best-quality VLM model for this profile (may be paid)."""
+    @property
+    def suggested_model(self) -> str:
+        """DEPRECATED: Use model_routing instead. Returns latin model as fallback."""
+        return self.model_routing.get("latin", "gemini-2.5-flash")
+
+    @property
+    def best_model(self) -> str:
+        """DEPRECATED: Returns the model_routing value for latin."""
+        return self.model_routing.get("latin", "gemini-2.5-flash")
 
 
 # ── Profile prompt definitions ─────────────────────────────────────────────
@@ -587,8 +596,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["marker", "tesseract"],
         optional_engines=["mathpix", "google_doc_ai"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="gemini-2.5-flash",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
     "academic": DocumentProfile(
         name="academic",
@@ -600,8 +614,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["marker", "mathpix"],
         optional_engines=["tesseract"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="claude-sonnet-5",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
     "mathematical": DocumentProfile(
         name="mathematical",
@@ -614,8 +633,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["mathpix", "marker", "tesseract"],
         optional_engines=["tesseract"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="gemini-2.5-flash",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
     "legal": DocumentProfile(
         name="legal",
@@ -629,8 +653,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["marker", "mathpix", "google_doc_ai"],
         optional_engines=["tesseract", "google_doc_ai"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="claude-sonnet-5",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
     "technical": DocumentProfile(
         name="technical",
@@ -644,8 +673,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["marker", "mathpix", "google_doc_ai"],
         optional_engines=["tesseract", "google_doc_ai"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="gemini-2.5-flash",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
     "books": DocumentProfile(
         name="books",
@@ -658,8 +692,13 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_engines=["marker", "tesseract"],
         optional_engines=["tesseract"],
         suggested_languages=["en"],
-        suggested_model="gemini-2.5-flash",
-        best_model="gemini-2.5-flash",
+        model_routing={
+            "latin": "gemini-2.5-flash",
+            "cyrillic": "gemini-2.5-flash",
+            "cjk": "claude-haiku-4-5",
+            "arabic": "gemini-2.5-flash",
+            "greek": "gemini-2.5-flash",
+        },
     ),
 }
 
@@ -698,8 +737,7 @@ def load_user_profiles(profiles_dir: Path) -> dict[str, DocumentProfile]:
                 suggested_engines=data.get("suggested_engines", ["marker"]),
                 optional_engines=data.get("optional_engines", ["tesseract"]),
                 suggested_languages=data.get("suggested_languages", ["en"]),
-                suggested_model=data.get("suggested_model", "gemini-2.5-flash"),
-                best_model=data.get("best_model", "gemini-2.5-flash"),
+                model_routing=data.get("model_routing", {}),
             )
             loaded[profile.name] = profile
             logger.info("Loaded user profile '%s' from %s", profile.name, yaml_file)

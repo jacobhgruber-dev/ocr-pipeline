@@ -1,13 +1,15 @@
-"""Checkpoint management for the OCR pipeline — v2 (path-keyed).
+"""Checkpoint management for the OCR pipeline — v3 (per-PDF files).
 
-Keys on ``(relative_path, size_bytes, mtime_epoch)`` via ``FileIdentity``
-instead of SHA256.  SHA256 is metadata that is updated lazily when available.
+Each PDF gets its own checkpoint file under ``base_dir/{short_sha}.json``
+instead of a monolithic file.  This eliminates O(n²) I/O on large batches
+by scoping reads/writes to individual PDFs.
 
 Atomic saves: writes to a ``.tmp`` file, then ``os.replace`` to the target.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from datetime import datetime, timezone
@@ -22,7 +24,7 @@ from .models import (
     PdfProgress,
 )
 
-_CHECKPOINT_VERSION = 2
+_CHECKPOINT_VERSION = 3
 
 
 def _now_iso() -> str:
@@ -30,77 +32,70 @@ def _now_iso() -> str:
 
 
 class CheckpointManager:
-    """Read/write the OCR checkpoint file (v2 — path-keyed) with atomic saves.
+    """Read/write per-PDF checkpoint files with atomic saves (v3).
 
-    The on-disk JSON format uses ``relative_path`` as the key inside the
-    ``"pdfs"`` object.  Each value is the serialized ``PdfProgress``.
+    Each PDF is stored as ``{sha256_short}.json`` under *base_dir*.
+    This scopes reads and writes to individual PDFs — a 500-page PDF
+    only reads and writes its own file, not the entire corpus.
     """
 
-    def __init__(self, path: Path) -> None:
-        self._path = Path(path)
+    def __init__(self, base_dir: Path) -> None:
+        self.base_dir = Path(base_dir)
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+
+    def _pdf_path(self, rel_path: str) -> Path:
+        """Map a relative path to a stable filename under base_dir."""
+        h = hashlib.sha256(rel_path.encode()).hexdigest()[:16]
+        return self.base_dir / f"{h}.json"
 
     # ------------------------------------------------------------------
     # public API
     # ------------------------------------------------------------------
 
     def load(self) -> dict[str, PdfProgress]:
-        """Load the checkpoint from disk.
+        """Load all PDF progress entries from per-PDF files.
 
-        Returns:
-            Dict mapping ``relative_path`` → ``PdfProgress``.  Empty dict
-            if the file does not exist or cannot be parsed.
+        Iterates all ``.json`` files under *base_dir*, parses each,
+        and returns a dict keyed by ``relative_path``.
         """
-        if not self._path.exists():
+        if not self.base_dir.is_dir():
             return {}
 
-        try:
-            raw = json.loads(self._path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            raise CheckpointError(f"Failed to parse checkpoint file: {self._path}") from exc
-
         pdfs: dict[str, PdfProgress] = {}
-        for rel_path, entry in raw.get("pdfs", {}).items():
+        for json_file in sorted(self.base_dir.glob("*.json")):
             try:
-                pdfs[rel_path] = PdfProgress.from_dict(entry)
-            except (KeyError, TypeError, ValueError) as exc:
-                raise CheckpointError(
-                    f"Corrupt entry in checkpoint for relative_path={rel_path}"
-                ) from exc
+                data = json.loads(json_file.read_text(encoding="utf-8"))
+                pp = PdfProgress.from_dict(data["pdf"])
+                pdfs[pp.path] = pp
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                continue  # skip corrupt / in-progress files
 
         return pdfs
 
     def save(self, pdfs: dict[str, PdfProgress]) -> None:
-        """Atomically write the checkpoint to disk.
+        """Write each PDF progress to its own file.
 
-        Writes to a temporary file first, then atomically replaces the
-        target path via ``os.replace``.
+        Each entry is written to ``_pdf_path(rel_path)`` atomically.
         """
-        existing_started_at: str | None = None
-        if self._path.exists():
+        started_at = _now_iso()
+        for rel_path, pp in pdfs.items():
+            fp = self._pdf_path(rel_path)
+            payload: dict[str, Any] = {
+                "version": _CHECKPOINT_VERSION,
+                "started_at": started_at,
+                "updated_at": _now_iso(),
+                "rel_path": rel_path,
+                "pdf": pp.to_dict(),
+            }
+            tmp_path: Path = fp.with_suffix(".tmp")
             try:
-                existing = json.loads(self._path.read_text(encoding="utf-8"))
-                existing_started_at = existing.get("started_at")
-            except (json.JSONDecodeError, OSError):
-                pass
-
-        payload: dict[str, Any] = {
-            "version": _CHECKPOINT_VERSION,
-            "started_at": existing_started_at or _now_iso(),
-            "updated_at": _now_iso(),
-            "pdfs": {rel_path: p.to_dict() for rel_path, p in pdfs.items()},
-        }
-
-        self._path.parent.mkdir(parents=True, exist_ok=True)
-
-        tmp_path = self._path.with_suffix(".tmp")
-        try:
-            tmp_path.write_text(
-                json.dumps(payload, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            os.replace(tmp_path, self._path)
-        except OSError as exc:
-            raise CheckpointError(f"Failed to write checkpoint: {self._path}") from exc
+                tmp_path.write_text(
+                    json.dumps(payload, indent=2, ensure_ascii=False),
+                    encoding="utf-8",
+                )
+                os.replace(str(tmp_path), str(fp))
+            except OSError as exc:
+                raise CheckpointError(f"Failed to write checkpoint: {fp}") from exc
 
     def get_or_create(
         self,
@@ -109,31 +104,27 @@ class CheckpointManager:
         has_extractable_text: bool,
         metadata: dict[str, Any] | None = None,
     ) -> PdfProgress:
-        """Return existing ``PdfProgress`` or create a new one with PENDING pages.
-
-        Args:
-            file_id: Identity of the PDF file (path, size, mtime, optional sha256).
-            page_count: Total number of pages in the PDF.
-            has_extractable_text: Whether text is extractable via PyMuPDF fast path.
-            metadata: Arbitrary metadata to store with the progress entry
-                      (e.g. tags, source info, etc.).
-
-        Returns:
-            Existing or newly created ``PdfProgress`` instance.
-        """
-        pdfs = self.load()
+        """Return existing ``PdfProgress`` or create a new one with PENDING pages."""
         rel_path = file_id.relative_path
+        fp = self._pdf_path(rel_path)
 
-        if rel_path in pdfs:
-            # Update sha256 metadata lazily if now available.
-            existing = pdfs[rel_path]
-            if file_id.sha256 and (
-                not hasattr(existing, "file_identity")
-                or existing.file_identity.sha256 != file_id.sha256  # type: ignore[union-attr]
-            ):
-                existing.file_identity.sha256 = file_id.sha256  # type: ignore[union-attr]
-                self.save(pdfs)
-            return existing
+        if fp.exists():
+            try:
+                data = json.loads(fp.read_text(encoding="utf-8"))
+                existing = PdfProgress.from_dict(data["pdf"])
+                # Update sha256 lazily if now available
+                if file_id.sha256 and (
+                    not hasattr(existing, "file_identity")
+                    or existing.file_identity is None
+                    or existing.file_identity.sha256 != file_id.sha256
+                ):
+                    if existing.file_identity is not None:
+                        existing.file_identity.sha256 = file_id.sha256
+                    existing.sha256 = file_id.sha256
+                    self.save({rel_path: existing})
+                return existing
+            except (json.JSONDecodeError, KeyError, TypeError, ValueError):
+                pass  # fall through to create new
 
         pp = PdfProgress(
             sha256=file_id.sha256 or "",
@@ -154,24 +145,30 @@ class CheckpointManager:
                 for i in range(page_count)
             ],
         )
-        pdfs[rel_path] = pp
-        self.save(pdfs)
+        self.save({rel_path: pp})
         return pp
 
     def update_page(self, relative_path: str, page: PageResult) -> None:
-        """Update a single page in the checkpoint and persist.
+        """Update a single page and atomically persist only its PDF's file.
 
         Raises:
-            CheckpointError: If *relative_path* is not found.
-            CheckpointError: If *page.page_index* is out of range.
+            CheckpointError: If *relative_path* is not found or the page
+                             index is out of range.
         """
-        pdfs = self.load()
-        if relative_path not in pdfs:
+        fp = self._pdf_path(relative_path)
+        if not fp.exists():
             raise CheckpointError(
                 f"Cannot update page for unknown PDF: relative_path={relative_path}"
             )
 
-        pp = pdfs[relative_path]
+        try:
+            data = json.loads(fp.read_text(encoding="utf-8"))
+            pp = PdfProgress.from_dict(data["pdf"])
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError) as exc:
+            raise CheckpointError(
+                f"Corrupt checkpoint file for relative_path={relative_path}"
+            ) from exc
+
         if page.page_index < 0 or page.page_index >= len(pp.pages):
             raise CheckpointError(
                 f"Page index {page.page_index} out of range "
@@ -179,7 +176,23 @@ class CheckpointManager:
             )
 
         pp.pages[page.page_index] = page
-        self.save(pdfs)
+
+        payload: dict[str, Any] = {
+            "version": _CHECKPOINT_VERSION,
+            "started_at": data.get("started_at", _now_iso()),
+            "updated_at": _now_iso(),
+            "rel_path": relative_path,
+            "pdf": pp.to_dict(),
+        }
+        tmp_path: Path = fp.with_suffix(".tmp")
+        try:
+            tmp_path.write_text(
+                json.dumps(payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            os.replace(str(tmp_path), str(fp))
+        except OSError as exc:
+            raise CheckpointError(f"Failed to write checkpoint: {fp}") from exc
 
     def stats(self) -> dict[str, int | float]:
         """Return aggregate statistics across all PDFs in the checkpoint."""
@@ -221,9 +234,13 @@ class CheckpointManager:
 
     def completed_pages(self, relative_path: str) -> set[int]:
         """Return the set of 0-based page indices that are COMPLETE or EXTRACTED."""
-        pdfs = self.load()
-        pp = pdfs.get(relative_path)
-        if pp is None:
+        fp = self._pdf_path(relative_path)
+        if not fp.exists():
+            return set()
+        try:
+            data = json.loads(fp.read_text(encoding="utf-8"))
+            pp = PdfProgress.from_dict(data["pdf"])
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             return set()
         return {
             p.page_index
@@ -232,20 +249,18 @@ class CheckpointManager:
         }
 
     # ------------------------------------------------------------------
-    # new v2 methods
+    # v3 methods
     # ------------------------------------------------------------------
 
     def is_file_unchanged(self, file_id: FileIdentity) -> bool:
-        """Check whether a file matches the existing checkpoint entry.
-
-        Returns ``True`` if the checkpoint has an entry for
-        ``file_id.relative_path`` and the stored identity has the same
-        ``size_bytes`` and ``mtime_epoch``.  Returns ``False`` if the file
-        is new, has changed, or the checkpoint entry does not exist.
-        """
-        pdfs = self.load()
-        pp = pdfs.get(file_id.relative_path)
-        if pp is None:
+        """Check whether a file matches the existing checkpoint entry."""
+        fp = self._pdf_path(file_id.relative_path)
+        if not fp.exists():
+            return False
+        try:
+            data = json.loads(fp.read_text(encoding="utf-8"))
+            pp = PdfProgress.from_dict(data["pdf"])
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             return False
         if pp.file_identity is None:
             return False
@@ -256,18 +271,19 @@ class CheckpointManager:
         )
 
     def invalidate_file(self, relative_path: str) -> None:
-        """Mark all pages of a file as PENDING so they will be re-processed.
-
-        Does nothing if the file is not in the checkpoint.
-        """
-        pdfs = self.load()
-        pp = pdfs.get(relative_path)
-        if pp is None:
+        """Mark all pages of a file as PENDING so they will be re-processed."""
+        fp = self._pdf_path(relative_path)
+        if not fp.exists():
+            return
+        try:
+            data = json.loads(fp.read_text(encoding="utf-8"))
+            pp = PdfProgress.from_dict(data["pdf"])
+        except (json.JSONDecodeError, KeyError, TypeError, ValueError):
             return
         for page in pp.pages:
             page.status = PageStatus.PENDING
             page.error = None
-        self.save(pdfs)
+        self.save({relative_path: pp})
 
     # ------------------------------------------------------------------
     # migration
@@ -275,21 +291,7 @@ class CheckpointManager:
 
     @staticmethod
     def migrate_from_v1(old_checkpoint_path: Path, input_dir: Path) -> int:
-        """Migrate a v1 (SHA256-keyed) checkpoint to v2 (path-keyed) format.
-
-        Reads the old checkpoint, scans ``input_dir`` to find each file by
-        its stored ``path`` field, computes ``size_bytes`` and
-        ``mtime_epoch``, and writes a new v2 checkpoint alongside the old
-        one (same directory, ``.v2.json`` suffix).
-
-        Args:
-            old_checkpoint_path: Path to the v1 checkpoint JSON file.
-            input_dir: Root directory containing the PDF files referenced
-                       by ``path`` fields in the old checkpoint.
-
-        Returns:
-            Number of PDF entries migrated.
-        """
+        """Migrate a v1 (SHA256-keyed) checkpoint to v2 (path-keyed) format."""
         if not old_checkpoint_path.exists():
             raise CheckpointError(f"v1 checkpoint not found: {old_checkpoint_path}")
 
@@ -298,7 +300,6 @@ class CheckpointManager:
         except (json.JSONDecodeError, OSError) as exc:
             raise CheckpointError(f"Failed to parse v1 checkpoint: {old_checkpoint_path}") from exc
 
-        # Build a lookup: relative_path → (size, mtime) for all files under input_dir.
         path_to_stat: dict[str, tuple[int, float]] = {}
         for pdf_path in input_dir.rglob("*.pdf"):
             try:
@@ -316,18 +317,16 @@ class CheckpointManager:
             if not old_path:
                 continue
 
-            # Try to find a matching file by relative path.
             stat_info = path_to_stat.get(old_path)
             if stat_info is None:
-                # Try case-insensitive match as a fallback.
                 for candidate, stat_tuple in path_to_stat.items():
                     if candidate.lower() == old_path.lower():
                         stat_info = stat_tuple
-                        old_path = candidate  # use canonical casing
+                        old_path = candidate
                         break
 
             if stat_info is None:
-                continue  # file not found in input_dir — skip
+                continue
 
             size_bytes, mtime_epoch = stat_info
 
@@ -338,19 +337,16 @@ class CheckpointManager:
                 sha256=old_sha256,
             )
 
-            # Build PdfProgress from the old entry, adapting fields.
             try:
                 pp = PdfProgress.from_dict(entry)
             except (KeyError, TypeError, ValueError):
-                continue  # skip corrupt entries
+                continue
 
-            # Overwrite the file_identity with our newly computed one.
             pp.file_identity = file_id  # type: ignore[union-attr]
 
             new_pdfs[old_path] = pp
             migrated += 1
 
-        # Write the new checkpoint.
         new_path = old_checkpoint_path.with_suffix(".v2.json")
         payload: dict[str, Any] = {
             "version": _CHECKPOINT_VERSION,
@@ -360,13 +356,13 @@ class CheckpointManager:
         }
 
         new_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = new_path.with_suffix(".tmp")
+        tmp_path: Path = new_path.with_suffix(".tmp")
         try:
             tmp_path.write_text(
                 json.dumps(payload, indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
-            os.replace(tmp_path, new_path)
+            os.replace(str(tmp_path), str(new_path))
         except OSError as exc:
             raise CheckpointError(f"Failed to write migrated checkpoint: {new_path}") from exc
 

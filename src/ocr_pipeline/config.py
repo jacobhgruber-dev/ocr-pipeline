@@ -21,7 +21,7 @@ class PipelineConfig:
 
     # -- Engine selection ----------------------------------------------------
     engines: list[str] = field(default_factory=lambda: ["marker"])
-    # Valid: "google_doc_ai", "mathpix", "marker", "surya2", "olmocr", "tesseract"
+    # Valid: "google_doc_ai", "mathpix", "marker", "surya2", "tesseract"
 
     # -- VLM merge -----------------------------------------------------------
     vlm_enabled: bool = True
@@ -31,7 +31,7 @@ class PipelineConfig:
     vlm_agreement_threshold: float = 0.97  # skip VLM when engines agree >= this
     vlm_max_tokens: int = 8192
     vlm_cost_per_call: float = (
-        0.005  # conservative estimate per VLM call (default ~$0.00013 actual)
+        0.00015  # Gemini 2.5 Flash per-page estimate (~$0.00013 actual)
     )
 
     # -- Rendering -----------------------------------------------------------
@@ -60,7 +60,6 @@ class PipelineConfig:
             "mathpix": 0.005,
             "marker": 0.0,
             "surya2": 0.0,
-            "olmocr": 0.0,
             "tesseract": 0.0,
         }
     )
@@ -294,7 +293,7 @@ class ConfigLoader:
             vlm_system_prompt=str(raw.get("vlm_system_prompt", "")),
             vlm_agreement_threshold=float(raw.get("vlm_agreement_threshold", 0.97)),
             vlm_max_tokens=int(raw.get("vlm_max_tokens", 8192)),
-            vlm_cost_per_call=float(raw.get("vlm_cost_per_call", 0.005)),
+            vlm_cost_per_call=float(raw.get("vlm_cost_per_call", 0.00015)),
             # Rendering
             render_dpi=int(raw.get("render_dpi", 300)),
             text_extraction_flags=raw.get("text_extraction_flags"),  # None = use PyMuPDF defaults

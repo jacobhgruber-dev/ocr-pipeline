@@ -31,6 +31,37 @@ from .renderer import render_page
 logger = logging.getLogger("ocr_pipeline")
 
 
+def _detect_script(text: str) -> str:
+    """Detect the dominant Unicode script from OCR output text.
+
+    Returns one of: latin, cyrillic, cjk, arabic, greek, devanagari, other.
+    """
+    counts: dict[str, int] = {}
+    for ch in text:
+        cp = ord(ch)
+        if 0x0400 <= cp <= 0x04FF:
+            counts["cyrillic"] = counts.get("cyrillic", 0) + 1
+        elif 0x4E00 <= cp <= 0x9FFF:
+            counts["cjk"] = counts.get("cjk", 0) + 1
+        elif 0x3040 <= cp <= 0x30FF:
+            counts["cjk"] = counts.get("cjk", 0) + 1  # kana
+        elif 0xAC00 <= cp <= 0xD7AF:
+            counts["cjk"] = counts.get("cjk", 0) + 1  # hangul
+        elif 0x0600 <= cp <= 0x06FF:
+            counts["arabic"] = counts.get("arabic", 0) + 1
+        elif 0x0370 <= cp <= 0x03FF:
+            counts["greek"] = counts.get("greek", 0) + 1
+        elif 0x0900 <= cp <= 0x097F:
+            counts["devanagari"] = counts.get("devanagari", 0) + 1
+        elif 0x0041 <= cp <= 0x007A:
+            counts["latin"] = counts.get("latin", 0) + 1  # A-Z a-z
+        elif 0x00C0 <= cp <= 0x024F:
+            counts["latin"] = counts.get("latin", 0) + 1  # Latin extended
+    if not counts:
+        return "latin"
+    return max(counts, key=counts.get)  # type: ignore[arg-type]
+
+
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
@@ -275,21 +306,35 @@ class PageProcessor:
                 languages=self.config.languages,
                 custom_prompt=self.config.vlm_system_prompt,
             )
+
+            # Detect script and route to appropriate model
+            all_text = " ".join(eo.text for eo in ctx.engine_outputs if eo.text)
+            detected_script = _detect_script(all_text)
+            from .profiles import get_profile as _get_profile
+
+            profile = _get_profile(self.config.profile)
+            vlm_model = profile.model_routing.get(detected_script, self.config.vlm_model)
+            if vlm_model != self.config.vlm_model:
+                logger.info(
+                    "Script detected: %s → routing to %s (default: %s)",
+                    detected_script, vlm_model, self.config.vlm_model,
+                )
+
             assert ctx.png_path is not None, "png_path must be set before VLM merge"
-            merged_md, vlm_raw, vlm_model, merge_cost = self.vlm_merger.merge(
+            merged_md, vlm_raw, vlm_model_used, merge_cost = self.vlm_merger.merge(
                 image_path=ctx.png_path,
                 engine_outputs=ctx.engine_outputs,
                 page_index=ctx.page.page_index,
                 pdf_identifier=ctx.page.page_label,
                 system_prompt=system_prompt,
-                model=self.config.vlm_model,
+                model=vlm_model,
                 fallback_model=self.config.vlm_fallback_model,
                 max_tokens=self.config.vlm_max_tokens,
                 timeout_sec=self.config.api_timeout_sec,
             )
             ctx.merged_markdown = merged_md
             ctx.vlm_raw = vlm_raw
-            ctx.vlm_model = vlm_model
+            ctx.vlm_model = vlm_model_used
             self.budget.record_spend(merge_cost)
             ctx.cost += merge_cost
         except MergeError:
@@ -420,21 +465,34 @@ class PageProcessor:
                 languages=self.config.languages,
                 custom_prompt=self.config.vlm_system_prompt,
             )
+
+            # Detect script and route to appropriate model
+            detected_script = _detect_script(ctx.page.merged_markdown)
+            from .profiles import get_profile as _get_profile
+
+            profile = _get_profile(self.config.profile)
+            vlm_model = profile.model_routing.get(detected_script, self.config.vlm_model)
+            if vlm_model != self.config.vlm_model:
+                logger.info(
+                    "Script detected: %s → routing to %s (default: %s)",
+                    detected_script, vlm_model, self.config.vlm_model,
+                )
+
             assert ctx.png_path is not None, "png_path must be set before VLM merge"
-            merged_md, vlm_raw, vlm_model, merge_cost = self.vlm_merger.merge(
+            merged_md, vlm_raw, vlm_model_used, merge_cost = self.vlm_merger.merge(
                 image_path=ctx.png_path,
                 engine_outputs=[eo],
                 page_index=ctx.page.page_index,
                 pdf_identifier=ctx.page.page_label,
                 system_prompt=system_prompt,
-                model=self.config.vlm_model,
+                model=vlm_model,
                 fallback_model=self.config.vlm_fallback_model,
                 max_tokens=self.config.vlm_max_tokens,
                 timeout_sec=self.config.api_timeout_sec,
             )
             ctx.page.merged_markdown = merged_md
             ctx.page.vlm_raw_response = vlm_raw
-            ctx.page.metadata["vlm_model"] = vlm_model
+            ctx.page.metadata["vlm_model"] = vlm_model_used
             self.budget.record_spend(merge_cost)
             ctx.cost += merge_cost
         except Exception:

@@ -107,27 +107,6 @@ class StubVlmMerger:
         return self.canned_text, '{"stub": true}', model or "stub", 0.0
 
 
-# ── System prompt templates ────────────────────────────────────────────────
-
-DEFAULT_SYSTEM_PROMPT = (
-    "You are an OCR auditor for a scanned document.\n"
-    "You receive a scanned page image and multiple OCR transcriptions.\n"
-    "Your job is to produce the authoritative markdown for this page.\n"
-    "\n"
-    "Rules:\n"
-    "1. Compare all transcriptions against the image. Where they agree, "
-    "keep the consensus.\n"
-    "2. Where they disagree, use the image to determine the correct text.\n"
-    "3. Preserve ALL text — do not summarize or omit anything. The output "
-    "must be a complete transcription.\n"
-    "4. Mark any text you cannot read with [illegible].\n"
-    "5. Format as clean markdown. Use **bold** for headlines, *italic* for "
-    "titles.\n"
-    "6. Do NOT add interpretive notes, commentary, or translation.\n"
-    "7. Return ONLY the merged markdown — no preamble, no explanation."
-)
-
-
 def _build_system_prompt(
     profile_name: str = "general",
     column_layout: str = "auto",
@@ -490,9 +469,6 @@ def merge_with_vlm(
     Raises:
         MergeError: If the merge fails after retries and fallback.
     """
-    if not system_prompt:
-        system_prompt = DEFAULT_SYSTEM_PROMPT
-
     # Build the user message dynamically from active engines
     active = [eo for eo in engine_outputs if eo.error is None and eo.text.strip()]
     engine_sections: list[str] = []

@@ -70,9 +70,9 @@ vlm:
   # Maximum tokens for the VLM response.
   max_tokens: 8192
 
-  # Conservative cost estimate per VLM call (default $0.005; actual ~$0.00013).
+  # Conservative cost estimate per VLM call (default $0.00015; actual ~$0.00013).
   # Used for budget tracking.
-  vlm_cost_per_call: 0.005
+  vlm_cost_per_call: 0.00015
 
   # Custom system prompt (path to a .md file, or inline text).
   # When empty, a built-in prompt is used based on content_type (see below).
@@ -146,6 +146,8 @@ engine_cost_per_page:
   google_doc_ai: 0.0015
   mathpix: 0.005
   marker: 0.0
+  surya2: 0.0
+  tesseract: 0.0
 
 # ---------------------------------------------------------------------------
 # Output Formats
@@ -216,7 +218,7 @@ marker_venv: ""
 
 # Google Document AI processor ID. Defaults to Google's pre-built OCR processor.
 # Create your own at https://console.cloud.google.com/ai/document-ai
-google_processor_id: "8081d1d423002a96"
+# google_processor_id: "8081d1d423002a96"
 
 # GROBID metadata extraction (requires Docker: docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.8.1)
 grobid_url: "http://localhost:8070"

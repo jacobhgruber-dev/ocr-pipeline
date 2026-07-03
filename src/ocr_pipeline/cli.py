@@ -373,23 +373,20 @@ def _print_profiles() -> None:
         print(f"  {profile.name}")
         print(f"    Description: {profile.description}")
         engines = ", ".join(profile.suggested_engines)
-        default_model = profile.suggested_model
-        best = profile.best_model
         langs = ", ".join(profile.suggested_languages)
+        routing = profile.model_routing
         print(f"    Suggested engines: {engines}")
-        if best != default_model:
-            print(f"    Default model: {default_model} (free tier)")
-            print(f"    Best quality: {best} (paid -- add --vlm-model {best})")
-        else:
-            print(f"    Model: {default_model} (free tier)")
+        if routing:
+            models = ", ".join(f"{s}={m}" for s, m in sorted(routing.items()))
+            print(f"    Model routing: {models}")
         print(f"    Suggested languages: {langs}")
         print("  Quick command:")
         print(f"    uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile {profile.name}")
         print()
     print(
-        "The --profile flag auto-fills engines, model, and languages.\n"
-        "VLM model defaults to gemini-2.5-flash (free tier available).\n"
-        "You can override any value: --profile academic --engines mathpix --vlm-model claude-sonnet-5"
+        "The --profile flag auto-fills engines and languages.\n"
+        "VLM model auto-selects based on detected script "
+        "(CJK → Claude, everything else → Gemini)."
     )
 
 

@@ -197,6 +197,14 @@ ENGINE_DESCRIPTIONS: dict[str, str] = {
 # Public API
 # ---------------------------------------------------------------------------
 
+# Languages that use right-to-left scripts
+_RTL_LANGUAGES = {"ar", "fa", "ur", "he", "ps", "sd", "ug", "ku"}
+
+
+def is_rtl(lang_code: str) -> bool:
+    """Return True if the language code uses right-to-left script."""
+    return lang_code in _RTL_LANGUAGES
+
 
 def get_language_name(code: str) -> str:
     """Return the human-readable name for *code*, or *code* itself if unknown."""

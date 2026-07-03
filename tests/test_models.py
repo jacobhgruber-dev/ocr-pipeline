@@ -20,7 +20,7 @@ from ocr_pipeline.models import (
 
 class TestEngineName:
     def test_all_members_exist(self):
-        expected = {"google_doc_ai", "mathpix", "marker", "surya2", "olmocr", "grobid", "tesseract"}
+        expected = {"google_doc_ai", "mathpix", "marker", "surya2", "grobid", "tesseract"}
         actual = {e.value for e in EngineName}
         assert actual == expected
 

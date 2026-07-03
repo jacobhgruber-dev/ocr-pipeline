@@ -83,7 +83,7 @@ class Pipeline:
 
         # Checkpoint
         checkpoint_dir = config.checkpoint_dir or (config.output_dir / ".checkpoint")
-        self.checkpoint = CheckpointManager(checkpoint_dir / "ocr_checkpoint.json")
+        self.checkpoint = CheckpointManager(checkpoint_dir)
 
         # Post-processor
         self.postprocessor = PostProcessor(
@@ -137,9 +137,10 @@ class Pipeline:
 
         # Auto-add Tesseract for RTL scripts (Marker/Surya2 don't support them).
         # Tesseract is the only working engine for Arabic, Persian, and Urdu.
-        _RTL_CODES = {"ar", "fa", "ur", "he", "ps", "sd", "ug", "ku"}
+        from .languages import is_rtl
+
         if self.config.languages and any(
-            lang in _RTL_CODES for lang in self.config.languages
+            is_rtl(lang) for lang in self.config.languages
         ):
             if "tesseract" not in self.engines:
                 try:

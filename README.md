@@ -316,7 +316,7 @@ print(pipeline.stats)
 | `checkpoint_dir` | path | `output_dir/.checkpoint/` | Checkpoint storage for resume |
 | `engines` | list[str] | `["marker"]` | OCR engines to run |
 | `vlm.enabled` | bool | `true` | Enable VLM merge step |
-| `vlm.model` | str | `gemini-2.0-flash-001` | VLM model ID |
+| `vlm.model` | str | `gemini-2.5-flash` | VLM model ID |
 | `vlm.fallback_model` | str | `claude-sonnet-5` | Fallback if primary fails |
 | `vlm.agreement_threshold` | float | `0.97` | Skip VLM when engines agree |
 | `vlm.max_tokens` | int | `8192` | Max tokens for VLM response |

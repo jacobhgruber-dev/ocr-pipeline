@@ -21,8 +21,8 @@ from ocr_pipeline.models import (
 
 @pytest.fixture
 def tmp_checkpoint_path(tmp_path):
-    """A checkpoint path inside a temp directory (no pre-existing file)."""
-    path = tmp_path / "checkpoint.json"
+    """A checkpoint directory inside a temp directory (no pre-existing files)."""
+    path = tmp_path / ".checkpoint"
     return path
 
 
@@ -66,16 +66,16 @@ class TestSaveLoad:
         assert sample_file_id.relative_path in loaded
         assert loaded[sample_file_id.relative_path].page_count == 2
 
-    def test_load_returns_empty_for_nonexistent_file(self, tmp_path):
-        cm = CheckpointManager(tmp_path / "nonexistent.json")
+    def test_load_returns_empty_for_nonexistent_dir(self, tmp_path):
+        cm = CheckpointManager(tmp_path / "nonexistent_dir")
         result = cm.load()
         assert result == {}
 
-    def test_save_creates_parent_directories(self, tmp_path):
-        path = tmp_path / "sub" / "dir" / "checkpoint.json"
+    def test_save_creates_base_directory(self, tmp_path):
+        path = tmp_path / "sub" / "dir" / ".checkpoint"
         cm = CheckpointManager(path)
         cm.save({})
-        assert path.exists()
+        assert path.is_dir()
 
 
 # ---------------------------------------------------------------------------
@@ -381,13 +381,12 @@ class TestInvalidateFile:
 
 
 class TestAtomicSave:
-    def test_tmp_file_cleanup(self, cm):
-        path = cm._path
+    def test_no_stray_tmp_files_after_save(self, cm):
         cm.save({})
-        # The .tmp file should be gone (replaced by os.replace)
-        tmp = path.with_suffix(".tmp")
-        assert not tmp.exists()
-        assert path.exists()
+        # The base dir should exist with no stray .tmp files
+        assert cm.base_dir.is_dir()
+        tmps = list(cm.base_dir.glob("*.tmp"))
+        assert len(tmps) == 0
 
     def test_existing_started_at_preserved(self, cm):
         # First save sets started_at

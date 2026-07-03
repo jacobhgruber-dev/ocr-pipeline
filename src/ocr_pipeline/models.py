@@ -32,7 +32,6 @@ class EngineName(str, Enum):
     MATHPIX = "mathpix"
     MARKER = "marker"
     SURYA2 = "surya2"
-    OLMOCR = "olmocr"
     GROBID = "grobid"  # metadata extraction, not page-level OCR
     TESSERACT = "tesseract"
 
