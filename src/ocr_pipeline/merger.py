@@ -494,17 +494,24 @@ def merge_with_vlm(
         system_prompt = DEFAULT_SYSTEM_PROMPT
 
     # Build the user message dynamically from active engines
-    active = [eo for eo in engine_outputs if eo.error is None]
+    active = [eo for eo in engine_outputs if eo.error is None and eo.text.strip()]
     engine_sections: list[str] = []
     for eo in active:
-        text = eo.text or "(empty output)"
-        engine_sections.append(f"--- {eo.engine.upper()} ---\n{text}")
-    user_message = (
-        f"Below are {len(active)} OCR transcription(s) of the same page image.\n"
-        "The image is attached for reference. Merge them into the single "
-        "most accurate markdown transcription.\n\n"
-        + ("\n\n".join(engine_sections) if engine_sections else "(no engine output available)")
-    )
+        engine_sections.append(f"--- {eo.engine.upper()} ---\n{eo.text}")
+    
+    if not active:
+        # If no engines produced usable text, we can still ask the VLM to try from the image alone
+        user_message = (
+            "The OCR engines failed to extract any text from this page. "
+            "Please read the attached image and transcribe the text directly following the system prompt rules."
+        )
+    else:
+        user_message = (
+            f"Below are {len(active)} OCR transcription(s) of the same page image.\n"
+            "The image is attached for reference. Merge them into the single "
+            "most accurate markdown transcription.\n\n"
+            + ("\n\n".join(engine_sections))
+        )
 
     # Keep the old _find_text-style references for backward compatibility
     # in _check_output_quality which needs marker_text specifically.

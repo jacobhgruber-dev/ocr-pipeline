@@ -246,7 +246,7 @@ Usage: ocr-pipeline [OPTIONS]
   --config PATH          Path to config.yaml (default: config.yaml)
   --input PATH           PDF input directory
   --output PATH          Output directory
-  --engines LIST         Comma-separated: marker,mathpix,surya2,google_doc_ai
+  --engines LIST         Comma-separated: marker,tesseract,mathpix,surya2,google_doc_ai
   --vlm-model MODEL      VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.)
   --no-vlm               Disable VLM merge
   --vlm-agreement FLOAT  Agreement threshold to skip VLM (default: 0.97)

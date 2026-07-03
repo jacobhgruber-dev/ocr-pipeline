@@ -147,7 +147,7 @@ async def ocr_pdf(
     Args:
         pdf_path: Absolute path to the PDF file.
         output_dir: Directory for output files (default: ./ocr_output/).
-        engines: Comma-separated engine names (marker, mathpix, surya2, google_doc_ai).
+        engines: Comma-separated engine names (marker, tesseract, mathpix, surya2, google_doc_ai).
         vlm_model: VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.).
         vlm_enabled: Whether to use VLM to merge engine outputs.
         languages: Comma-separated language codes (en, de, fr, la, grc, he, etc.).
@@ -212,7 +212,7 @@ async def ocr_page(
 
     Args:
         image_path: Absolute path to a PNG or JPEG image of a document page.
-        engine: OCR engine to use (marker, mathpix, surya2, google_doc_ai).
+        engine: OCR engine to use (marker, tesseract, mathpix, surya2, google_doc_ai).
         languages: Comma-separated language codes (e.g., "en,de,fr").
     """
     img = Path(image_path).resolve()
@@ -298,7 +298,7 @@ async def ocr_profiles() -> dict[str, Any]:
 @mcp.tool()
 async def ocr_status() -> dict[str, Any]:
     """Check which OCR engines are available and their health status."""
-    engine_names = ["marker", "mathpix", "surya2", "google_doc_ai", "grobid"]
+    engine_names = ["marker", "tesseract", "mathpix", "surya2", "google_doc_ai", "grobid"]
     statuses: dict[str, bool | str] = {}
 
     # Load config to pick up any env-configured engine settings

@@ -38,6 +38,9 @@ class DocumentProfile:
     suggested_engines: list[str] = field(default_factory=lambda: ["marker"])
     """Recommended OCR engines for this profile, in priority order."""
 
+    optional_engines: list[str] = field(default_factory=lambda: ["tesseract"])
+    """Optional engines that provide fallback or secondary support."""
+
     suggested_languages: list[str] = field(default_factory=lambda: ["en"])
     """Recommended language codes for this document type."""
 
@@ -582,6 +585,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "multi-column, headers/footers, lists, and code blocks."
         ),
         suggested_engines=["marker", "tesseract"],
+        optional_engines=["mathpix", "google_doc_ai"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
@@ -594,6 +598,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "author affiliations, footnotes, tables with notes, and equations."
         ),
         suggested_engines=["marker", "mathpix"],
+        optional_engines=["tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="claude-sonnet-5",
@@ -606,7 +611,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "blackboard bold, calligraphic letters, theorem/proof blocks, "
             "and equation numbers."
         ),
-        suggested_engines=["mathpix", "marker"],
+        suggested_engines=["mathpix", "marker", "tesseract"],
+        optional_engines=["tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
@@ -621,6 +627,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "(requires Google Cloud credentials)."
         ),
         suggested_engines=["marker", "google_doc_ai"],
+        optional_engines=["tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="claude-sonnet-5",
@@ -635,6 +642,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "structured datasheets and form-heavy specs (requires Google Cloud)."
         ),
         suggested_engines=["marker", "google_doc_ai"],
+        optional_engines=["tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
@@ -648,6 +656,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "cross-references, and multi-column layout."
         ),
         suggested_engines=["marker", "tesseract"],
+        optional_engines=["tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
@@ -687,6 +696,7 @@ def load_user_profiles(profiles_dir: Path) -> dict[str, DocumentProfile]:
                 system_prompt=data["system_prompt"],
                 description=data.get("description", ""),
                 suggested_engines=data.get("suggested_engines", ["marker"]),
+                optional_engines=data.get("optional_engines", ["tesseract"]),
                 suggested_languages=data.get("suggested_languages", ["en"]),
                 suggested_model=data.get("suggested_model", "gemini-2.5-flash"),
                 best_model=data.get("best_model", "gemini-2.5-flash"),

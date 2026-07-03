@@ -29,6 +29,7 @@ checkpoint_dir: ""  # defaults to output_dir/.checkpoint/
 # Which OCR engines to run. Engines run in parallel on each page.
 # Available:
 #   marker        — local, free, general-purpose (recommended default)
+#   tesseract     — local, free, Arabic/RTL, Cyrillic, fallback
 #   mathpix       — API, best for math-heavy PDFs. Get key at https://mathpix.com
 #   google_doc_ai — API, Google Cloud Document AI. See https://cloud.google.com/document-ai
 #   surya2        — future (not yet implemented)

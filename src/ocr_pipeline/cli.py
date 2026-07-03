@@ -431,9 +431,9 @@ _ENGINE_INFO: dict[str, dict[str, str]] = {
     },
     "tesseract": {
         "header": "Local, free. The most widely deployed OCR engine.",
-        "best_for": "Scanned typewritten documents, structured forms. Universal fallback.",
+        "best_for": "Arabic/RTL scripts, Cyrillic, and as a universal fallback.",
         "requires": "tesseract binary on PATH (brew install tesseract)",
-        "install": "brew install tesseract && uv add pytesseract",
+        "install": "brew install tesseract (macOS) or apt install tesseract-ocr (Linux)",
         "cost": "free",
     },
 }

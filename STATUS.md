@@ -102,7 +102,6 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 
 ## Known Gaps
 
-- **RTL scripts (Arabic, Persian, Urdu) not supported** — Marker/Surya2 OCR engines don't handle Arabic text on scanned images. Google Doc AI would work but requires Arabic processor configuration (not set up). Entire pipeline is blocked for RTL documents.
 - **Script-aware model routing not implemented** — profiles recommend a single model, but multi-language testing shows catastrophic failures when the wrong model meets the wrong script
 - **Japanese (CJK) spacing on Gemini is unnatural** — characters are correct but spacing differs from native typesetting. Claude produces natural spacing. Claude is recommended for ALL CJK scripts (Chinese, Japanese, Korean).
 - Table detection is prompt-based (VLM) — no dedicated ML model
@@ -113,14 +112,14 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 ## Script Support Matrix (from testing)
 
 | Script | Gemini 2.5 Flash | Claude Sonnet 5 | Claude Haiku 4-5 | Recommended |
-|---|---|---|---|---|---|
+|---|---|---|---|---|
 | Latin (English) | ✅ Excellent | ✅ Good | Not tested | Gemini (free) |
 | Latin + diacritics (Spanish ñ, French éèê, German äöüß) | ✅ Excellent | Not tested | Not tested | Gemini (free) |
 | Cyrillic (Russian) | ✅ Perfect | ❌ Destroys data | Not tested | Gemini only |
 | Greek (polytonic) | ✅ Perfect | Not tested | Not tested | Gemini |
 | CJK (Chinese) | ❌ Garbled Latin | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
 | CJK (Japanese) | ⚠️ Correct chars, unnatural spacing | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
-| Arabic RTL | ❌ Engine failure | ❌ Engine failure | Not tested | Neither — needs Google Doc AI |
+| Arabic RTL | ✅ Works with Tesseract | Not tested | Not tested | Gemini + Tesseract |
 | LaTeX math | ✅ With improved prompts | ⚠️ Unicode not LaTeX | Not tested | Gemini |
 | Poetry line breaks | ✅ All 22 lines preserved | Not tested | Not tested | Gemini |
 
