@@ -38,14 +38,19 @@ from .comic import ComicSource
 from .csv_source import CsvSource
 from .djvu import DjvuSource
 from .docx import DocxSource
+from .dxf import DxfSource
+from .ebook import EbookSource
 from .email_source import EmailSource
 from .epub import EpubSource
 from .excel import ExcelSource
+from .gis import GisSource
 from .html import HtmlSource
 from .image import ImageSource
 from .json_source import JsonSource
 from .latex import LatexSource
+from .marc import MarcSource
 from .markdown import MarkdownSource
+from .media import MediaSource
 from .notebook import NotebookSource
 from .odt import OdtSource
 from .pdf import PdfSource
@@ -63,14 +68,19 @@ __all__ = [
     "DjvuSource",
     "DocumentSource",
     "DocxSource",
+    "DxfSource",
+    "EbookSource",
     "EmailSource",
     "EpubSource",
     "ExcelSource",
+    "GisSource",
     "HtmlSource",
     "ImageSource",
     "JsonSource",
     "LatexSource",
+    "MarcSource",
     "MarkdownSource",
+    "MediaSource",
     "NotebookSource",
     "OdtSource",
     "PdfSource",
@@ -135,6 +145,26 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".djv": DjvuSource,
     ".cbz": ComicSource,
     ".cbr": ComicSource,
+    ".azw": EbookSource,
+    ".azw3": EbookSource,
+    ".kfx": EbookSource,
+    ".mobi": EbookSource,
+    ".mrc": MarcSource,
+    ".geojson": GisSource,
+    ".shp": GisSource,
+    ".dxf": DxfSource,
+    ".mp3": MediaSource,
+    ".wav": MediaSource,
+    ".flac": MediaSource,
+    ".ogg": MediaSource,
+    ".aac": MediaSource,
+    ".m4a": MediaSource,
+    ".opus": MediaSource,
+    ".mp4": MediaSource,
+    ".mkv": MediaSource,
+    ".avi": MediaSource,
+    ".mov": MediaSource,
+    ".webm": MediaSource,
 }
 
 
