@@ -64,7 +64,10 @@ class TestGetProfileKnown:
         assert len(profile.description) > 5
         assert len(profile.suggested_engines) > 0
         # Books profile should mention front matter or chapter titles
-        assert "chapter" in profile.system_prompt.lower() or "front matter" in profile.system_prompt.lower()
+        assert (
+            "chapter" in profile.system_prompt.lower()
+            or "front matter" in profile.system_prompt.lower()
+        )
 
     def test_all_profiles_have_required_fields(self):
         for name in PROFILES:
@@ -150,7 +153,10 @@ class TestHeadersFootersAndImageText:
 
     def test_technical_has_image_text_ocr(self):
         profile = get_profile("technical")
-        assert "readable text" in profile.system_prompt.lower() or "visible text" in profile.system_prompt.lower()
+        assert (
+            "readable text" in profile.system_prompt.lower()
+            or "visible text" in profile.system_prompt.lower()
+        )
 
 
 class TestDocumentProfileIsFrozen:

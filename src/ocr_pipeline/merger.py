@@ -488,7 +488,7 @@ def merge_with_vlm(
     engine_sections: list[str] = []
     for eo in active:
         engine_sections.append(f"--- {eo.engine.upper()} ---\n{eo.text}")
-    
+
     if not active:
         # If no engines produced usable text, we can still ask the VLM to try from the image alone
         user_message = (
@@ -499,8 +499,7 @@ def merge_with_vlm(
         user_message = (
             f"Below are {len(active)} OCR transcription(s) of the same page image.\n"
             "The image is attached for reference. Merge them into the single "
-            "most accurate markdown transcription.\n\n"
-            + ("\n\n".join(engine_sections))
+            "most accurate markdown transcription.\n\n" + ("\n\n".join(engine_sections))
         )
 
     # Keep the old _find_text-style references for backward compatibility

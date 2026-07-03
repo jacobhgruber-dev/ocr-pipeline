@@ -30,9 +30,7 @@ class PipelineConfig:
     vlm_system_prompt: str = ""  # empty = use built-in default
     vlm_agreement_threshold: float = 0.97  # skip VLM when engines agree >= this
     vlm_max_tokens: int = 8192
-    vlm_cost_per_call: float = (
-        0.00015  # Gemini 2.5 Flash per-page estimate (~$0.00013 actual)
-    )
+    vlm_cost_per_call: float = 0.00015  # Gemini 2.5 Flash per-page estimate (~$0.00013 actual)
 
     # -- Rendering -----------------------------------------------------------
     render_dpi: int = 300

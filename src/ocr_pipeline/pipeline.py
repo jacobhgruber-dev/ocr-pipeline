@@ -139,17 +139,13 @@ class Pipeline:
         # Tesseract is the only working engine for Arabic, Persian, and Urdu.
         from .languages import is_rtl
 
-        if self.config.languages and any(
-            is_rtl(lang) for lang in self.config.languages
-        ):
+        if self.config.languages and any(is_rtl(lang) for lang in self.config.languages):
             if "tesseract" not in self.engines:
                 try:
                     engine = create_engine("tesseract", self.config)
                     if engine.health_check():
                         self.engines["tesseract"] = engine
-                        logger.info(
-                            "Auto-added Tesseract — required for RTL script support"
-                        )
+                        logger.info("Auto-added Tesseract — required for RTL script support")
                 except Exception as exc:
                     logger.warning("Tesseract unavailable for RTL: %s", exc)
 

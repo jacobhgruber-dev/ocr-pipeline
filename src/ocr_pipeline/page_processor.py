@@ -173,9 +173,10 @@ class PageProcessor:
             # Capture rendered image dimensions for ALTO output
             if ctx.png_path:
                 from PIL import Image
-                img = Image.open(str(ctx.png_path))
-                ctx.page.metadata["page_width"] = img.width
-                ctx.page.metadata["page_height"] = img.height
+
+                with Image.open(str(ctx.png_path)) as img:
+                    ctx.page.metadata["page_width"] = img.width
+                    ctx.page.metadata["page_height"] = img.height
 
             # Phase 3: run OCR engines
             self._run_ocr(ctx)
@@ -233,6 +234,20 @@ class PageProcessor:
                 ctx.page.completed_at = now_iso()
                 ctx.page.estimated_cost = 0.0
                 ctx.cost = 0.0
+
+                # Capture page dimensions from PyMuPDF for ALTO output
+                # (no PNG rendering on the fast path, but ALTO needs WIDTH/HEIGHT)
+                try:
+                    import fitz
+
+                    doc = fitz.open(str(ctx.pdf_path))
+                    page = doc[ctx.page.page_index]
+                    rect = page.mediabox
+                    ctx.page.metadata["page_width"] = int(rect.width)
+                    ctx.page.metadata["page_height"] = int(rect.height)
+                    doc.close()
+                except Exception:
+                    pass
 
                 # Save via configured formatters
                 for fmt_name in self.config.output_formats:

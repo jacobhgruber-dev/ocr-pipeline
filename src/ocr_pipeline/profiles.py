@@ -383,8 +383,8 @@ _LEGAL_PROMPT = (
     "or permitting segregation according to race. This segregation was alleged to\n"
     "deprive the plaintiffs of the equal protection of the laws under the Fourteenth\n"
     "Amendment. In each of the cases except the Delaware case, a three-judge federal\n"
-    "district court denied relief to the plaintiffs on the so-called \"separate but\n"
-    "equal\" doctrine announced by this Court in *Plessy v. Ferguson*, 163 U.S. 537.\n"
+    'district court denied relief to the plaintiffs on the so-called "separate but\n'
+    'equal" doctrine announced by this Court in *Plessy v. Ferguson*, 163 U.S. 537.\n'
     "\n"
     "[^1]: See *Sweatt v. Painter*, 339 U.S. 629 (1950).\n"
     "\n"
@@ -541,10 +541,10 @@ _BOOKS_PROMPT = (
     "--- Example book page with epigraph and attribution ---\n"
     "[Header: PART I -- THE BEGINNING]\n"
     "\n"
-    "> \"Light is the shadow of God.\"\n"
+    '> "Light is the shadow of God."\n'
     "> --Plato\n"
     "\n"
-    "> \"All men by nature desire to know.\"\n"
+    '> "All men by nature desire to know."\n'
     "> --Aristotle, *Metaphysics*\n"
     "\n"
     "* * *\n"
@@ -555,10 +555,10 @@ _BOOKS_PROMPT = (
     "made her way toward the library. She had spent the morning poring\n"
     "over the manuscripts, each one more cryptic than the last.\n"
     "\n"
-    "\"Have you found anything?\" Marco asked, falling into step beside her.\n"
+    '"Have you found anything?" Marco asked, falling into step beside her.\n'
     "\n"
-    "\"Nothing conclusive,\" she said. \"But there is a pattern in the\n"
-    "marginalia that I cannot ignore.\"\n"
+    '"Nothing conclusive," she said. "But there is a pattern in the\n'
+    'marginalia that I cannot ignore."\n'
     "\n"
     "[^1]: The Codex Aurelius, folio 47v, contains a similar marginal notation.\n"
     "\n"
@@ -574,7 +574,7 @@ _BOOKS_PROMPT = (
     "\n"
     "<attribution>\n"
     "CRITICAL -- Attribution preservation: Preserve ALL attribution and credit lines.\n"
-    "Epigraph attributions, quote attributions (\"--Plato\", \"--Aristotle\"), chapter\n"
+    'Epigraph attributions, quote attributions ("--Plato", "--Aristotle"), chapter\n'
     "epigraph sources, illustration credits, and footnotes must be transcribed in full.\n"
     "Attribution text is content, not decoration. Every visible character matters.\n"
     "</attribution>\n"
@@ -769,7 +769,11 @@ def get_profile(name: str) -> DocumentProfile:
             name,
             ", ".join(sorted(PROFILES.keys())),
         )
-    return PROFILES.get(name, PROFILES["general"]) if name not in _USER_PROFILES else _USER_PROFILES[name]
+    return (
+        PROFILES.get(name, PROFILES["general"])
+        if name not in _USER_PROFILES
+        else _USER_PROFILES[name]
+    )
 
 
 def list_profiles() -> list[str]:

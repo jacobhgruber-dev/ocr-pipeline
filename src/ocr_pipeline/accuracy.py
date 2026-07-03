@@ -29,9 +29,7 @@ def _edit_distance(s1: str, s2: str) -> int:
     for i, c1 in enumerate(s1, 1):
         curr = [i]
         for j, c2 in enumerate(s2, 1):
-            curr.append(
-                min(curr[-1] + 1, prev[j] + 1, prev[j - 1] + (c1 != c2))
-            )
+            curr.append(min(curr[-1] + 1, prev[j] + 1, prev[j - 1] + (c1 != c2)))
         prev = curr
 
     return prev[-1]
@@ -46,9 +44,7 @@ def _word_edit_distance(w1: list[str], w2: list[str]) -> int:
     for i, r1 in enumerate(w1, 1):
         curr = [i]
         for j, r2 in enumerate(w2, 1):
-            curr.append(
-                min(curr[-1] + 1, prev[j] + 1, prev[j - 1] + (r1 != r2))
-            )
+            curr.append(min(curr[-1] + 1, prev[j] + 1, prev[j - 1] + (r1 != r2)))
         prev = curr
 
     return prev[-1]

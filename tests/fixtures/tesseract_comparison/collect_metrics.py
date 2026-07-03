@@ -1,4 +1,5 @@
 """Collect metrics from tesseract comparison study runs."""
+
 from __future__ import annotations
 
 import csv
@@ -70,12 +71,14 @@ def cer(ref: str, hyp: str) -> float:
     """Character Error Rate using edit distance."""
     try:
         import editdistance
+
         d = editdistance.eval(ref, hyp)
         return d / max(len(ref), len(hyp), 1)
     except ImportError:
         # Fallback: simple Levenshtein-like check
         # Use a rough heuristic
         import difflib
+
         s = difflib.SequenceMatcher(None, ref, hyp)
         return 1.0 - s.ratio()
 
@@ -107,8 +110,16 @@ def main() -> None:
     rows = []
 
     for config in ["T-G", "MT-G"]:
-        for profile in ["academic", "books", "legal", "technical",
-                         "french", "russian", "chinese", "arabic"]:
+        for profile in [
+            "academic",
+            "books",
+            "legal",
+            "technical",
+            "french",
+            "russian",
+            "chinese",
+            "arabic",
+        ]:
             out_dir = COMP / config / profile
             if not out_dir.exists():
                 continue
@@ -126,7 +137,7 @@ def main() -> None:
                 if md_body.startswith("<!--"):
                     end = md_body.find("-->")
                     if end > 0:
-                        md_body = md_body[end + 3:].strip()
+                        md_body = md_body[end + 3 :].strip()
 
                 char_count = len(md_body)
                 word_count = len(md_body.split()) if md_body.strip() else 0
@@ -165,47 +176,58 @@ def main() -> None:
                         if base_body.startswith("<!--"):
                             end = base_body.find("-->")
                             if end > 0:
-                                base_body = base_body[end + 3:].strip()
+                                base_body = base_body[end + 3 :].strip()
                         norm_ref = normalize_for_cer(base_body)
                         norm_hyp = normalize_for_cer(md_body)
                         baseline_cer = round(cer(norm_ref, norm_hyp), 4)
 
-                rows.append({
-                    "config": config,
-                    "profile": profile,
-                    "script": script,
-                    "pdf_hash": pdf_hash,
-                    "page": page_name,
-                    "char_count": char_count,
-                    "word_count": word_count,
-                    "non_latin_ratio": nl_ratio,
-                    "cyrillic_found": cyrillic,
-                    "cjk_found": cjk,
-                    "arabic_found": arabic,
-                    "diacritics_found": diacritics,
-                    "engines_agreement": round(agreement, 4),
-                    "engine_count": engine_count,
-                    "cross_cer_vs_baseline": baseline_cer,
-                })
+                rows.append(
+                    {
+                        "config": config,
+                        "profile": profile,
+                        "script": script,
+                        "pdf_hash": pdf_hash,
+                        "page": page_name,
+                        "char_count": char_count,
+                        "word_count": word_count,
+                        "non_latin_ratio": nl_ratio,
+                        "cyrillic_found": cyrillic,
+                        "cjk_found": cjk,
+                        "arabic_found": arabic,
+                        "diacritics_found": diacritics,
+                        "engines_agreement": round(agreement, 4),
+                        "engine_count": engine_count,
+                        "cross_cer_vs_baseline": baseline_cer,
+                    }
+                )
 
     # Print summary table
     print("\n=== PER-PAGE METRICS ===")
-    print(f"{'Config':<6} {'Profile':<12} {'Script':<20} {'Page':<16} {'Chars':>8} {'Words':>8} {'NonLatin':>8} {'Cyr':>4} {'CJK':>4} {'Ar':>3} {'Dia':>4} {'Agree':>6} {'CERvsBL':>8}")
+    print(
+        f"{'Config':<6} {'Profile':<12} {'Script':<20} {'Page':<16} {'Chars':>8} {'Words':>8} {'NonLatin':>8} {'Cyr':>4} {'CJK':>4} {'Ar':>3} {'Dia':>4} {'Agree':>6} {'CERvsBL':>8}"
+    )
     print("-" * 130)
     for r in rows:
         cyr = "✅" if r["cyrillic_found"] else "  "
         cj = "✅" if r["cjk_found"] else "  "
         ar = "✅" if r["arabic_found"] else "  "
         dia = "✅" if r["diacritics_found"] else "  "
-        cer_str = f"{r['cross_cer_vs_baseline']:.2%}" if r["cross_cer_vs_baseline"] is not None else "N/A"
-        print(f"{r['config']:<6} {r['profile']:<12} {r['script']:<20} {r['page']:<16} {r['char_count']:>8} {r['word_count']:>8} {r['non_latin_ratio']:>8.2%} {cyr:>4} {cj:>4} {ar:>3} {dia:>4} {r['engines_agreement']:>6.1%} {cer_str:>8}")
+        cer_str = (
+            f"{r['cross_cer_vs_baseline']:.2%}" if r["cross_cer_vs_baseline"] is not None else "N/A"
+        )
+        print(
+            f"{r['config']:<6} {r['profile']:<12} {r['script']:<20} {r['page']:<16} {r['char_count']:>8} {r['word_count']:>8} {r['non_latin_ratio']:>8.2%} {cyr:>4} {cj:>4} {ar:>3} {dia:>4} {r['engines_agreement']:>6.1%} {cer_str:>8}"
+        )
 
     # Aggregate by script + config
     print("\n\n=== PER-SCRIPT SUMMARY ===")
-    print(f"{'Script':<22} {'Config':<6} {'Pages':>6} {'Avg Chars':>10} {'Avg Words':>9} {'Avg NonLatin':>10}")
+    print(
+        f"{'Script':<22} {'Config':<6} {'Pages':>6} {'Avg Chars':>10} {'Avg Words':>9} {'Avg NonLatin':>10}"
+    )
     print("-" * 70)
 
     from collections import defaultdict
+
     agg = defaultdict(lambda: {"chars": 0, "words": 0, "non_latin": 0, "pages": 0, "cers": []})
     for r in rows:
         key = (r["script"], r["config"])
@@ -220,7 +242,9 @@ def main() -> None:
         n = vals["pages"]
         avg_cer = sum(vals["cers"]) / len(vals["cers"]) if vals["cers"] else None
         cer_str = f"{avg_cer:.2%}" if avg_cer is not None else "N/A"
-        print(f"{script:<22} {config:<6} {n:>6} {vals['chars']/n:>10.0f} {vals['words']/n:>9.0f} {vals['non_latin']/n:>9.1%}  CER={cer_str}")
+        print(
+            f"{script:<22} {config:<6} {n:>6} {vals['chars'] / n:>10.0f} {vals['words'] / n:>9.0f} {vals['non_latin'] / n:>9.1%}  CER={cer_str}"
+        )
 
     # Write CSV
     csv_path = COMP / "metrics.csv"

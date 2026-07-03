@@ -1,12 +1,7 @@
-Starting from the `ocr_output` provided, I need to generate the authoritative markdown.
+The order in which atomic orbitals are filled follows the Aufbau principle, also known as the Madelung rule or the (n + l) rule. Orbitals are filled in order of increasing n + l, and where two orbitals have the same value of n + l, the one with lower n is filled first.
 
-Here's a list of discrepancies and required formatting changes identified during the thought process:
+The sequence is: 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, 5f, 6d, 7p.
 
-1.  **Figure and Caption:** The OCR missed the figure and its caption. I need to add a placeholder `[Figure: Idealized order of subshell filling]` and the caption `Idealized order of subshell filling according to the Madelung rule`.
-2.  **Italicization:**
-    *   *n* and *l* in "increasing *n* + *l*" and "value of *n* + *l*" and "lower *n*" and "next *n* + *l*" group.
-    *   *s* in "s orbitals" and "new s orbital".
-    *   *d* in "d orbitals".
-    *   *s* in "*s*-block" and "*s* orbitals".
-    *   *p* in "*p*-block" and "*p* orbitals".
-3.  **Superscripts:** Convert `1s1`, `1s2`, `2s1`, `2s2`, `2p1`, `2p2`, `2p3`, `2p4`, `2p5`, `2p6`, `3s1`, `3s2`, `3p1` through `3p6`, `4s1`, `4s2`, `3d1`, `3d5`, `4s1`, `3d4`,
+The s-block includes the first two groups (alkali metals and alkaline earth metals), the p-block includes the last six groups (groups 13 to 18), the d-block includes groups 3 to 12, and the f-block comprises the lanthanides and actinides.
+
+NOTE: This ground truth file was manually curated from the Wikipedia source (CC BY-SA 4.0). It approximates the content of the mixed_format.pdf fixture page on subshell filling rules.

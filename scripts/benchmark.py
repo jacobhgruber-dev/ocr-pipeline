@@ -56,14 +56,16 @@ def collect_results() -> list[dict]:
 
         metrics = evaluate(gt_path, hyp_path, normalized=True)
         fixture_name = gt_name.replace(".txt", "")
-        results.append({
-            "profile": profile,
-            "fixture": fixture_name,
-            "cer": metrics["cer"],
-            "wer": metrics["wer"],
-            "ref_chars": metrics["ref_chars"],
-            "hyp_chars": metrics["hyp_chars"],
-        })
+        results.append(
+            {
+                "profile": profile,
+                "fixture": fixture_name,
+                "cer": metrics["cer"],
+                "wer": metrics["wer"],
+                "ref_chars": metrics["ref_chars"],
+                "hyp_chars": metrics["hyp_chars"],
+            }
+        )
     return results
 
 
@@ -77,14 +79,16 @@ def print_table(results: list[dict]) -> None:
     print("-" * 86)
 
     for r in results:
-        print(row_fmt.format(
-            r["profile"],
-            r["fixture"],
-            r["cer"],
-            r["wer"],
-            r["ref_chars"],
-            r["hyp_chars"],
-        ))
+        print(
+            row_fmt.format(
+                r["profile"],
+                r["fixture"],
+                r["cer"],
+                r["wer"],
+                r["ref_chars"],
+                r["hyp_chars"],
+            )
+        )
 
     # Summary per profile
     print("\n=== PER-PROFILE SUMMARY ===\n")
@@ -93,6 +97,7 @@ def print_table(results: list[dict]) -> None:
     print("-" * 41)
 
     from collections import defaultdict
+
     by_profile: dict[str, list[dict]] = defaultdict(list)
     for r in results:
         by_profile[r["profile"]].append(r)
@@ -109,12 +114,14 @@ def print_table(results: list[dict]) -> None:
 
     if all_cers:
         print("-" * 41)
-        print(summary_fmt.format(
-            "OVERALL",
-            len(all_cers),
-            f"{sum(all_cers) / len(all_cers):.2%}",
-            f"{sum(all_wers) / len(all_wers):.2%}",
-        ))
+        print(
+            summary_fmt.format(
+                "OVERALL",
+                len(all_cers),
+                f"{sum(all_cers) / len(all_cers):.2%}",
+                f"{sum(all_wers) / len(all_wers):.2%}",
+            )
+        )
 
     print()
 

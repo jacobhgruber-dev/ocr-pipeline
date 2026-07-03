@@ -77,20 +77,15 @@ def test_pipeline_e2e_stub_vlm(tmp_path: Path) -> None:
     md_files = sorted(output_dir.rglob("*_final.md"))
     if result.get("pages_processed", 0) > 0:
         assert len(md_files) >= 1, (
-            "Expected at least one *_final.md output file "
-            f"but found none under {output_dir}"
+            f"Expected at least one *_final.md output file but found none under {output_dir}"
         )
         # At least one markdown file should be non-empty.
         non_empty = [f for f in md_files if f.stat().st_size > 0]
-        assert len(non_empty) >= 1, (
-            f"All {len(md_files)} markdown output files are empty"
-        )
+        assert len(non_empty) >= 1, f"All {len(md_files)} markdown output files are empty"
 
     # 3. Checkpoint directory was created during Pipeline.__init__
     checkpoint_dir = output_dir / ".checkpoint"
-    assert checkpoint_dir.exists(), (
-        f"Checkpoint directory not found at {checkpoint_dir}"
-    )
+    assert checkpoint_dir.exists(), f"Checkpoint directory not found at {checkpoint_dir}"
 
     # 4. StubVlmMerger was actually called (sanity check that the VLM
     #    path was exercised).
@@ -116,8 +111,7 @@ def test_pipeline_e2e_real_vlm(tmp_path: Path) -> None:
 
     if not gemini_key and not anthropic_key:
         pytest.skip(
-            "No GEMINI_API_KEY or ANTHROPIC_API_KEY in environment — "
-            "skipping real VLM test"
+            "No GEMINI_API_KEY or ANTHROPIC_API_KEY in environment — skipping real VLM test"
         )
 
     assert FIXTURE_PDF.exists(), f"Fixture PDF missing: {FIXTURE_PDF}"
@@ -150,15 +144,11 @@ def test_pipeline_e2e_real_vlm(tmp_path: Path) -> None:
     # ------------------------------------------------------------------
 
     assert isinstance(result, dict)
-    assert result["pages_processed"] >= 1, (
-        f"Expected at least 1 page processed, got {result}"
-    )
+    assert result["pages_processed"] >= 1, f"Expected at least 1 page processed, got {result}"
 
     # Output *_final.md files must exist and be non-trivial.
     md_files = sorted(output_dir.rglob("*_final.md"))
-    assert len(md_files) >= 1, (
-        "Expected at least one *_final.md output file, found none"
-    )
+    assert len(md_files) >= 1, "Expected at least one *_final.md output file, found none"
     for md_file in md_files:
         content = md_file.read_text(encoding="utf-8")
         assert len(content) > 50, (

@@ -132,7 +132,9 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         return GrobidEngine(grobid_url=grobid_url)
 
     if name == EngineName.TESSERACT:
-        tesseract_cmd = getattr(config, "tesseract_cmd", "tesseract") if config is not None else "tesseract"
+        tesseract_cmd = (
+            getattr(config, "tesseract_cmd", "tesseract") if config is not None else "tesseract"
+        )
         timeout = getattr(config, "api_timeout_sec", 120.0) if config is not None else 120.0
         return TesseractEngine(tesseract_cmd=tesseract_cmd, timeout_sec=timeout)
 

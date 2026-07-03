@@ -257,8 +257,8 @@ class AltoFormatter:
         return {
             "HPOS": str(int(x0)),
             "VPOS": str(int(y0)),
-            "WIDTH": str(int(x1 - x0)),
-            "HEIGHT": str(int(y1 - y0)),
+            "WIDTH": str(max(0, int(x1 - x0))),
+            "HEIGHT": str(max(0, int(y1 - y0))),
         }
 
     @staticmethod
@@ -310,7 +310,7 @@ class AltoFormatter:
     @staticmethod
     def _add_text_content(tb, block, page_width, page_height):
         """Add TextLine content to a TextBlock element."""
-        text = AltoFormatter._strip_html_comments(block.text).strip()
+        text = AltoFormatter._strip_html_comments(block.text or "").strip()
         if not text:
             return
         # Default attrs if no bbox

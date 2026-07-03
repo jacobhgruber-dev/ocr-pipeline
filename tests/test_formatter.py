@@ -335,7 +335,9 @@ class TestAltoFormatter:
         root = ET.fromstring(output.encode("utf-8"))
 
         # Should contain a TextBlock for the heading
-        ps = root.find(f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace")
+        ps = root.find(
+            f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace"
+        )
         assert ps is not None
         text_blocks = ps.findall(f"{{{self.ALTO_NS}}}TextBlock")
         assert len(text_blocks) >= 1
@@ -399,7 +401,9 @@ class TestAltoFormatter:
         assert root.tag == f"{{{self.ALTO_NS}}}alto"
 
         # No TextBlock when there's no text
-        ps = root.find(f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace")
+        ps = root.find(
+            f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace"
+        )
         assert ps is not None
         tb = ps.find(f"{{{self.ALTO_NS}}}TextBlock")
         assert tb is None  # No text content = no TextBlock
@@ -474,7 +478,9 @@ class TestAltoFormatter:
         output = fmt.format(page)
 
         root = ET.fromstring(output.encode("utf-8"))
-        ps = root.find(f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace")
+        ps = root.find(
+            f"{{{self.ALTO_NS}}}Layout/{{{self.ALTO_NS}}}Page/{{{self.ALTO_NS}}}PrintSpace"
+        )
         assert ps is not None
         tb = ps.find(f"{{{self.ALTO_NS}}}TextBlock")
         assert tb is not None
