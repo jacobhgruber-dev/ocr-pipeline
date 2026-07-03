@@ -28,6 +28,8 @@ class MarkdownSource(DocumentSource):
     as extractable text.  A single file is a 1-page document.
     """
 
+    has_native_metadata: bool = True
+
     _text_cache: str | None = None
     _frontmatter: dict[str, object] | None = None
 

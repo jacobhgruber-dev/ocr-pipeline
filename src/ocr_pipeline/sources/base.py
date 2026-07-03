@@ -15,6 +15,10 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ocr_pipeline.models import MetadataResult
 
 
 class DocumentSource(ABC):
@@ -79,3 +83,32 @@ class DocumentSource(ABC):
             or ``None`` if text extraction is not supported for this format.
         """
         ...
+
+    def extract_metadata(self) -> "MetadataResult":
+        """Extract format-native metadata (default: empty).
+
+        Concrete implementations SHOULD override this to provide
+        format-specific metadata extraction.  The default returns
+        an empty ``MetadataResult`` with ``source_format`` populated.
+
+        Returns:
+            A ``MetadataResult``, never ``None``.
+        """
+        from ocr_pipeline.models import MetadataResult
+
+        return MetadataResult(
+            extraction_method="none",
+            source_info={"format": self.source_format},
+        )
+
+    # ── capability flags ──────────────────────────────────────────
+    # Set to ``True`` in subclasses to declare optional features.
+
+    has_text_extraction: bool = True
+    """Set ``False`` if the format has no extractable text (e.g. images)."""
+
+    has_rendering: bool = False
+    """Set ``True`` if the format supports ``render_page``."""
+
+    has_native_metadata: bool = False
+    """Set ``True`` if the format's ``extract_metadata`` returns real data."""

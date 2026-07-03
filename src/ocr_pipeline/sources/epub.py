@@ -29,6 +29,8 @@ class EpubSource(DocumentSource):
     checks for encryption.xml in the EPUB container.
     """
 
+    has_native_metadata: bool = True
+
     _SPINE_ITEMS: list[tuple[str, str]] | None = None  # (item_id, href)
     _drm_cache: bool | None = None
     _book: object | None = None
@@ -145,7 +147,10 @@ class EpubSource(DocumentSource):
 
     @property
     def page_count(self) -> int:
-        return len(self._load_spine())
+        try:
+            return len(self._load_spine())
+        except Exception:
+            return 0
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
         """Render an EPUB spine item to a PNG via a headless browser.

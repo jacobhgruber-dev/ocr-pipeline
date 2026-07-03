@@ -389,12 +389,11 @@ class Pipeline:
                     with self._checkpoint_lock:
                         self.checkpoint.update_page(rel_path, page)
 
-        # Produce document-level concatenated output (PDF-only for now)
-        if file_type == "pdf":
-            try:
-                self._produce_document_output(file_path, output_dir, short_sha, page_count, source)
-            except Exception:
-                logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
+        # Produce document-level concatenated output for all formats
+        try:
+            self._produce_document_output(file_path, output_dir, short_sha, page_count, source)
+        except Exception:
+            logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
 
         return {
             "pages_processed": pages_processed,
@@ -499,9 +498,11 @@ class Pipeline:
                         source.source_format,
                         str(native.title)[:60],
                     )
-                    return native
+                    return self._enrich_metadata(native, pdf_path)
             except Exception as exc:
                 logger.debug("Format-native metadata failed for %s: %s", source.source_format, exc)
+
+        result: MetadataResult = MetadataResult(extraction_method="none")
 
         # 1. Try VLM first
         try:
@@ -517,7 +518,7 @@ class Pipeline:
                     result.document_type,
                     result.title[:60],
                 )
-                return result
+                return self._enrich_metadata(result, pdf_path)
         except Exception as exc:
             logger.warning("VLM metadata extraction failed: %s", exc)
 
@@ -530,11 +531,34 @@ class Pipeline:
             result.extraction_method = "grobid"
             if result.title or result.doi:
                 logger.info("Metadata extracted via GROBID: title=%s", result.title[:60])
-                return result
+                return self._enrich_metadata(result, pdf_path)
         except Exception as exc:
             logger.warning("GROBID metadata extraction failed: %s", exc)
 
-        return MetadataResult(extraction_method="none")
+        return self._enrich_metadata(result, pdf_path)
+
+    @staticmethod
+    def _enrich_metadata(meta: MetadataResult, file_path: Path) -> MetadataResult:
+        """Post-extraction enrichment: sidecar metadata + identifier resolution.
+
+        Runs after every extraction method.  Sidecar only fills empty
+        fields; identifier resolution adds data from external APIs.
+        """
+        try:
+            from .sidecar import merge_sidecar_metadata
+
+            meta = merge_sidecar_metadata(meta, file_path)
+        except Exception:
+            pass
+
+        try:
+            from .identifier import enrich_metadata
+
+            meta = enrich_metadata(meta)
+        except Exception:
+            pass
+
+        return meta
 
     def _save_document_output(
         self,

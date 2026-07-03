@@ -23,6 +23,9 @@ class ImageSource(DocumentSource):
     files are treated as multi-page documents (one page per frame).
     """
 
+    has_text_extraction: bool = False
+    has_rendering: bool = True
+
     _format: str | None = None
 
     @property

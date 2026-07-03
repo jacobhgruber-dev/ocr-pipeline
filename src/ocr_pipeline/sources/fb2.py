@@ -26,6 +26,8 @@ class Fb2Source(DocumentSource):
     publish-info) for metadata, body sections for text.
     """
 
+    has_native_metadata: bool = True
+
     _text_cache: str | None = None
     _meta_cache: dict[str, str] | None = None
 

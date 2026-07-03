@@ -23,8 +23,7 @@ class ExcelSource(DocumentSource):
     cells and produces a markdown table.  Rendering is not supported.
     """
 
-    _sheet_names: list[str] | None = None
-    _sheets_data: dict[str, list[list[str]]] | None = None
+    _sheets: list[tuple[str, list[list[str]]]] | None = None
 
     @property
     def source_format(self) -> str:
@@ -37,10 +36,14 @@ class ExcelSource(DocumentSource):
             return "application/vnd.ms-excel"
         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-    def _load_sheets(self) -> tuple[list[str], dict[str, list[list[str]]]]:
-        """Parse the Excel file, caching sheet names and data."""
-        if self._sheet_names is not None and self._sheets_data is not None:
-            return self._sheet_names, self._sheets_data
+    def _load_sheets(self) -> list[tuple[str, list[list[str]]]]:
+        """Parse the Excel file, caching sheet names and data together.
+
+        Returns a single list of ``(sheet_name, rows)`` tuples so names
+        and data cannot get out of sync across calls.
+        """
+        if self._sheets is not None:
+            return self._sheets
 
         from python_calamine import CalamineWorkbook
 
@@ -48,23 +51,25 @@ class ExcelSource(DocumentSource):
             wb = CalamineWorkbook.from_path(str(self.path))
         except Exception as exc:
             raise RenderError(f"Failed to open Excel file: {self.path}") from exc
-        self._sheet_names = list(wb.sheet_names)
-        self._sheets_data = {}
 
-        for name in self._sheet_names:
+        result: list[tuple[str, list[list[str]]]] = []
+        for name in wb.sheet_names:
             rows = wb.get_sheet_by_name(name).to_python()
             # Convert all cells to strings
-            str_rows = []
+            str_rows: list[list[str]] = []
             for row in rows:
                 str_rows.append([str(cell) if cell is not None else "" for cell in row])
-            self._sheets_data[name] = str_rows
+            result.append((name, str_rows))
 
-        return self._sheet_names, self._sheets_data
+        self._sheets = result
+        return result
 
     @property
     def page_count(self) -> int:
-        names, _data = self._load_sheets()
-        return len(names)
+        try:
+            return len(self._load_sheets())
+        except Exception:
+            return 0
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
         raise NotImplementedError(
@@ -74,12 +79,11 @@ class ExcelSource(DocumentSource):
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None
     ) -> tuple[str, Path | None]:
-        names, data = self._load_sheets()
-        if page_index < 0 or page_index >= len(names):
-            raise RenderError(f"Excel sheet index {page_index} out of range ({len(names)} sheets)")
+        sheets = self._load_sheets()
+        if page_index < 0 or page_index >= len(sheets):
+            raise RenderError(f"Excel sheet index {page_index} out of range ({len(sheets)} sheets)")
 
-        sheet_name = names[page_index]
-        rows = data[sheet_name]
+        sheet_name, rows = sheets[page_index]
 
         if not rows:
             return f"# {sheet_name}\n\n(empty sheet)", None

@@ -24,6 +24,8 @@ class JsonSource(DocumentSource):
     extracts title, author, date metadata where present.
     """
 
+    has_native_metadata: bool = True
+
     _data: object | None = None
 
     @property

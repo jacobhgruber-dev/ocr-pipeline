@@ -33,6 +33,8 @@ class LatexSource(DocumentSource):
     metadata (title, author, abstract).  A single file is a 1-page document.
     """
 
+    has_native_metadata: bool = True
+
     _text_cache: str | None = None
     _meta_cache: dict[str, str] | None = None
 

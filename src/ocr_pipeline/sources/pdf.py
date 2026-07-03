@@ -15,6 +15,8 @@ class PdfSource(DocumentSource):
     path remains zero-regression.
     """
 
+    has_rendering: bool = True
+
     @property
     def source_format(self) -> str:
         return "pdf"

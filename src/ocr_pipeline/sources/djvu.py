@@ -30,6 +30,8 @@ class DjvuSource(DocumentSource):
     ``djvutxt`` CLI tool.  Metadata includes page dimensions.
     """
 
+    has_rendering: bool = True
+
     _page_count: int | None = None
 
     @property

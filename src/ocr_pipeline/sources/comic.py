@@ -28,6 +28,8 @@ class ComicSource(DocumentSource):
     to PNG for downstream OCR processing.
     """
 
+    has_text_extraction: bool = False
+
     _image_names: list[str] | None = None
 
     @property

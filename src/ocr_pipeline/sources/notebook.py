@@ -24,6 +24,8 @@ class NotebookSource(DocumentSource):
     Notebook-level metadata provides title, authors, and kernel info.
     """
 
+    has_native_metadata: bool = True
+
     _text_cache: str | None = None
     _meta_cache: dict[str, str] | None = None
 

@@ -72,7 +72,10 @@ class PptxSource(DocumentSource):
 
     @property
     def page_count(self) -> int:
-        return len(self._load_slides())
+        try:
+            return len(self._load_slides())
+        except Exception:
+            return 0
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
         raise NotImplementedError(

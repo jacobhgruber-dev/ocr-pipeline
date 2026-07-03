@@ -23,6 +23,8 @@ class MarcSource(DocumentSource):
     MARCXML files are parsed as multi-record documents.
     """
 
+    has_native_metadata: bool = True
+
     _records: list[dict] | None = None
 
     @property

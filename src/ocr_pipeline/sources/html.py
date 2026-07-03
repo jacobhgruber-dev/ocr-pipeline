@@ -32,6 +32,8 @@ class HtmlSource(DocumentSource):
     (schema.org JSON-LD, meta tags).  A single file is a 1-page document.
     """
 
+    has_native_metadata: bool = True
+
     _text_cache: str | None = None
     _meta_cache: dict[str, str] | None = None
 

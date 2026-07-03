@@ -61,7 +61,10 @@ class DocxSource(DocumentSource):
 
     @property
     def page_count(self) -> int:
-        paragraphs = self._load_paragraphs()
+        try:
+            paragraphs = self._load_paragraphs()
+        except Exception:
+            return 0
         # Count explicit page breaks
         count = 1
         for text in paragraphs:
