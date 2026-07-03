@@ -207,6 +207,7 @@ class GrobidEngine:
             resp = requests.post(
                 url,
                 files={"input": (filename, pdf_bytes, "application/pdf")},
+                headers={"Accept": "application/xml"},
                 timeout=timeout_sec,
             )
         except requests.ConnectionError as exc:
