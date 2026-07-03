@@ -17,14 +17,6 @@ from .base import DocumentSource
 
 logger = logging.getLogger(__name__)
 
-_SRT_BLOCK = re.compile(
-    r"(\d+)\n(\d{2}:\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}[.,]\d{3})\n(.+?)(?=\n\n|\Z)",
-    re.DOTALL,
-)
-_VTT_CUE = re.compile(
-    r"(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})(?:.*?)\n(.+?)(?=\n\n|\Z)",
-    re.DOTALL,
-)
 _VTT_TAG = re.compile(r"<[^>]+>")
 
 

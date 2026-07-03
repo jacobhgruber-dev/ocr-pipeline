@@ -392,7 +392,7 @@ class Pipeline:
         # Produce document-level concatenated output (PDF-only for now)
         if file_type == "pdf":
             try:
-                self._produce_document_output(file_path, output_dir, short_sha, page_count)
+                self._produce_document_output(file_path, output_dir, short_sha, page_count, source)
             except Exception:
                 logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
 
@@ -425,6 +425,7 @@ class Pipeline:
         output_dir: Path,
         short_sha: str,
         page_count: int,
+        source: Any = None,
     ) -> None:
         """Collect all per-page markdown and produce a concatenated document .md.
 
@@ -445,7 +446,7 @@ class Pipeline:
         if not md_pages:
             return
 
-        metadata = self._extract_metadata(pdf_path)
+        metadata = self._extract_metadata(pdf_path, source=source)
         if metadata or md_pages:
             # Inject per-page metadata comment when enabled
             if self.config.include_metadata_per_page and metadata:
@@ -484,9 +485,23 @@ class Pipeline:
             )
             md_path.write_text(comment + existing, encoding="utf-8")
 
-    def _extract_metadata(self, pdf_path: Path) -> MetadataResult:
-        """Extract metadata using VLM → GROBID → empty fallback chain."""
+    def _extract_metadata(self, pdf_path: Path, source: Any = None) -> MetadataResult:
+        """Extract metadata chain: format-native → VLM → GROBID → empty."""
         from .engines.metadata_vlm import VlmMetadataEngine
+
+        # 0. Format-native metadata (non-PDF sources)
+        if source is not None and source.source_format != "pdf":
+            try:
+                native = source.extract_metadata()
+                if native.title or native.authors or native.source_info.format:
+                    logger.info(
+                        "Metadata extracted from %s source: title=%s",
+                        source.source_format,
+                        str(native.title)[:60],
+                    )
+                    return native
+            except Exception as exc:
+                logger.debug("Format-native metadata failed for %s: %s", source.source_format, exc)
 
         # 1. Try VLM first
         try:

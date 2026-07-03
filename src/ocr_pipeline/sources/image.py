@@ -57,7 +57,7 @@ class ImageSource(DocumentSource):
 
     @property
     def page_count(self) -> int:
-        fmt = self.source_format
+        fmt = self._detect_format()
         if fmt == "tiff":
             return self._tiff_page_count()
         return 1
@@ -92,7 +92,7 @@ class ImageSource(DocumentSource):
             img = Image.open(str(self.path))
 
             # Seek to frame for multi-page TIFF
-            if self.source_format == "tiff" and page_index > 0:
+            if self._detect_format() == "tiff" and page_index > 0:
                 try:
                     img.seek(page_index)
                 except EOFError:

@@ -10,6 +10,7 @@ import email
 import email.parser
 import email.policy
 import logging
+import mailbox
 from email.message import Message
 from pathlib import Path
 
@@ -51,17 +52,25 @@ class EmailSource(DocumentSource):
 
         if ext == ".mbox":
             msgs: list[Message] = []
-            parser = email.parser.BytesParser(policy=email.policy.default)
-            for raw_msg in raw.split(b"\nFrom "):
-                raw_msg = raw_msg.strip()
-                if raw_msg:
-                    if not raw_msg.startswith(b"From "):
-                        raw_msg = b"From " + raw_msg
-                    try:
-                        msg = parser.parsebytes(raw_msg)
+            try:
+                mbox = mailbox.mbox(str(self.path))
+                for key in mbox.keys():
+                    msg = mbox[key]
+                    if isinstance(msg, Message):
                         msgs.append(msg)
-                    except Exception:
-                        pass
+            except Exception:
+                # Fallback to manual parsing for malformed mbox files
+                parser = email.parser.BytesParser(policy=email.policy.default)
+                for raw_msg in raw.split(b"\nFrom "):
+                    raw_msg = raw_msg.strip()
+                    if raw_msg:
+                        if not raw_msg.startswith(b"From "):
+                            raw_msg = b"From " + raw_msg
+                        try:
+                            msg = parser.parsebytes(raw_msg)
+                            msgs.append(msg)
+                        except Exception:
+                            pass
             self._messages = msgs
         else:
             try:
