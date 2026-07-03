@@ -356,8 +356,8 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 | `gemini-2.5-flash` | Google | $0.15 / $0.60 | Default — best for Latin, Cyrillic, Greek, and LaTeX math |
 | `gemini-2.0-flash` | Google | $0.10 / $0.40 | Cheapest option |
 | `gemini-2.5-pro` | Google | $1.25 / $10.00 | Higher quality, larger context |
-| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | CJK (Chinese/Japanese/Korean) — Gemini fails on these scripts |
-| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | Fast Claude option |
+| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | CJK and high-precision citations (see note below) |
+| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | **Recommended for CJK** — 3x cheaper than Sonnet, equal quality |
 | `claude-3.5-haiku` | Anthropic | $1.00 / $5.00 | Older fast Claude |
 | `claude-3.5-sonnet` | Anthropic | $3.00 / $15.00 | Older quality Claude |
 
@@ -376,7 +376,7 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 | Script | Model to Use | Notes |
 |---|---|---|
 | Latin, Cyrillic, Greek | gemini-2.5-flash | Perfect — free tier available |
-| Chinese, Japanese, Korean | claude-sonnet-5 | Gemini produces garbled or awkward output |
+| Chinese, Japanese, Korean | claude-haiku-4-5 | Gemini produces garbled or awkward output. Haiku is 3x cheaper than Sonnet with equal CJK quality |
 | Arabic, Persian, Urdu | Google Doc AI only | Marker/Surya don't support RTL; needs Google Cloud setup |
 
 ---

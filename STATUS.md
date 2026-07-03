@@ -109,17 +109,17 @@ Multi-language testing revealed that **no single VLM model handles all scripts**
 
 ## Script Support Matrix (from testing)
 
-| Script | Gemini 2.5 Flash | Claude Sonnet 5 | Recommended |
-|---|---|---|---|
-| Latin (English) | ✅ Excellent | ✅ Good | Gemini (free) |
-| Latin + diacritics (Spanish ñ, French éèê, German äöüß) | ✅ Excellent | Not fully tested | Gemini (free) |
-| Cyrillic (Russian) | ✅ Perfect | ❌ Destroys data | Gemini only |
-| Greek (polytonic) | ✅ Perfect | Not tested | Gemini |
-| CJK (Chinese) | ❌ Garbled Latin | ✅ Perfect | Claude only |
-| CJK (Japanese) | ⚠️ Correct chars, unnatural spacing | ✅ Perfect | Claude only |
-| Arabic RTL | ❌ Engine failure | ❌ Engine failure | Neither — needs Google Doc AI |
-| LaTeX math | ✅ With improved prompts | ⚠️ Unicode not LaTeX | Gemini |
-| Poetry line breaks | ✅ All 22 lines preserved | Not tested | Gemini |
+| Script | Gemini 2.5 Flash | Claude Sonnet 5 | Claude Haiku 4-5 | Recommended |
+|---|---|---|---|---|---|
+| Latin (English) | ✅ Excellent | ✅ Good | Not tested | Gemini (free) |
+| Latin + diacritics (Spanish ñ, French éèê, German äöüß) | ✅ Excellent | Not tested | Not tested | Gemini (free) |
+| Cyrillic (Russian) | ✅ Perfect | ❌ Destroys data | Not tested | Gemini only |
+| Greek (polytonic) | ✅ Perfect | Not tested | Not tested | Gemini |
+| CJK (Chinese) | ❌ Garbled Latin | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
+| CJK (Japanese) | ⚠️ Correct chars, unnatural spacing | ✅ Perfect | ✅ Perfect — 3x cheaper | Claude Haiku |
+| Arabic RTL | ❌ Engine failure | ❌ Engine failure | Not tested | Neither — needs Google Doc AI |
+| LaTeX math | ✅ With improved prompts | ⚠️ Unicode not LaTeX | Not tested | Gemini |
+| Poetry line breaks | ✅ All 22 lines preserved | Not tested | Not tested | Gemini |
 
 ## Recent Changes
 
