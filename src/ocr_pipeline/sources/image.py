@@ -26,6 +26,17 @@ class ImageSource(DocumentSource):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self._format: str | None = None
+        self._register_heif()
+
+    @staticmethod
+    def _register_heif() -> None:
+        """Register HEIC/HEIF support with Pillow if pillow-heif is installed."""
+        try:
+            from pillow_heif import register_heif_opener
+
+            register_heif_opener()
+        except ImportError:
+            pass
 
     @property
     def source_format(self) -> str:
