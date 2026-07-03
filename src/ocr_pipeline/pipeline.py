@@ -135,6 +135,23 @@ class Pipeline:
         if not self.engines:
             logger.warning("No OCR engines available — processing will be limited")
 
+        # Auto-add Tesseract for RTL scripts (Marker/Surya2 don't support them).
+        # Tesseract is the only working engine for Arabic, Persian, and Urdu.
+        _RTL_CODES = {"ar", "fa", "ur", "he", "ps", "sd", "ug", "ku"}
+        if self.config.languages and any(
+            lang in _RTL_CODES for lang in self.config.languages
+        ):
+            if "tesseract" not in self.engines:
+                try:
+                    engine = create_engine("tesseract", self.config)
+                    if engine.health_check():
+                        self.engines["tesseract"] = engine
+                        logger.info(
+                            "Auto-added Tesseract — required for RTL script support"
+                        )
+                except Exception as exc:
+                    logger.warning("Tesseract unavailable for RTL: %s", exc)
+
     # ------------------------------------------------------------------
     # public API
     # ------------------------------------------------------------------

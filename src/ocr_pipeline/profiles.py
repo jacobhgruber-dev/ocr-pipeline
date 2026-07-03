@@ -581,7 +581,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "Generic document. Catch-all with 15 rules covering tables, figures, "
             "multi-column, headers/footers, lists, and code blocks."
         ),
-        suggested_engines=["marker"],
+        suggested_engines=["marker", "tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",
@@ -647,7 +647,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "dialogue formatting, scene breaks, illustrations with captions, "
             "cross-references, and multi-column layout."
         ),
-        suggested_engines=["marker"],
+        suggested_engines=["marker", "tesseract"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",

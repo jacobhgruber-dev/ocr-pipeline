@@ -28,6 +28,22 @@ class TesseractEngine:
 
     ENGINE_NAME = EngineName.TESSERACT
 
+    # ISO 639-1 (2-letter) → ISO 639-2/T (3-letter) — Tesseract requires 3-letter codes.
+    # Without this mapping, Tesseract silently falls back to English for non-English text.
+    _LANG_MAP: dict[str, str] = {
+        "en": "eng", "fr": "fra", "de": "deu", "es": "spa", "it": "ita",
+        "pt": "por", "nl": "nld", "ru": "rus", "zh": "chi_sim", "ja": "jpn",
+        "ko": "kor", "ar": "ara", "he": "heb", "el": "ell", "grc": "grc",
+        "la": "lat", "gle": "gle", "gd": "gla", "cy": "cym",
+        "sv": "swe", "no": "nor", "da": "dan", "fi": "fin",
+        "pl": "pol", "cs": "ces", "sk": "slk", "hu": "hun",
+        "ro": "ron", "bg": "bul", "uk": "ukr", "sr": "srp", "hr": "hrv",
+        "tr": "tur", "fa": "fas", "hi": "hin", "bn": "ben", "ta": "tam",
+        "te": "tel", "th": "tha", "vi": "vie", "id": "ind", "ms": "msa",
+        "tl": "tgl", "sw": "swa", "am": "amh", "yo": "yor", "zu": "zul",
+        "ca": "cat", "eu": "eus", "gl": "glg", "oc": "oci", "eo": "epo",
+    }
+
     def __init__(
         self,
         tesseract_cmd: str = "tesseract",
@@ -76,7 +92,9 @@ class TesseractEngine:
 
         if languages is None:
             languages = ["eng"]
-        lang_str = "+".join(languages)
+        # Map ISO 639-1 (2-letter) codes to Tesseract's ISO 639-2/T (3-letter) codes
+        mapped = [self._LANG_MAP.get(lang, lang) for lang in languages]
+        lang_str = "+".join(mapped)
 
         try:
             text = pytesseract.image_to_string(

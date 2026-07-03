@@ -1,0 +1,71 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T02:15:13.171393+00:00",
+  "updated_at": "2026-07-03T02:21:17.983660+00:00",
+  "pdfs": {
+    "ar_linguistics.pdf": {
+      "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+      "short_sha": "fb44a8f61248",
+      "path": "ar_linguistics.pdf",
+      "filename": "ar_linguistics.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "pending",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": null,
+          "completed_at": null,
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "tesseract": {
+              "engine": "tesseract",
+              "text": "قال تعالى : « يَكَدوْئكَ عَنِ لمر لْحرَا م فِتَالٍ د هل َال ضِهِ كب وَصَدُ عن ميل أ\nوَكُفْرابو وَاَلْمَسْحِرٍ السام مَِحْرَاجُ أَمْلوء مِنْهُ أكْبْرٌ» [البقرة: ‎.]7١1/‏\n\nوقال: « وِِظلِ مِنَ الت كَادوا رما عَلمَ طِبَتٍ أيلتَ َم وص هِمْ عن سيل أ\nكديا 4 [النساء: ‎»]1١‏ فاستعمل المصدر (صدا) لما كان فعلهُ متعدياً أي: يصدون\nغيرهم .\n\nوقال في موطن آخخر: 8 وَإِدًا َبِلَ َتُمَ تَصَالوَأ إل مآ أنَرَّلَ اله وَإِكَ اليسُولٍ رَأيتَ\nلْمُتَنَفِقِينَ يَصُدٌّونَ عنلك صٌدُودًا4 [النساء: ‎»]7١‏ فاستعمل المصدر (صدوداً) لما لم\nيكن متعدياً فالأول بمعنى المنع والثاني بمعنى الإعراض .\n\nوالعرب تقول: وقفت بالمكان وقوفاً. أي خلاف الجلوس ولكنها تقول: وقفت\nالدابة وَقن1\".\n\nهذا هو الغالب وقد جاء السماع بغير ذلك في قسم من المصادر نحو: لَزِمَهُ لزوماً\nوورده وروداً وجحدته جحود””\n\" - فعالة :\n\nما دلَّ على حرفة أو ولاية فقياسه الفعالة بكسر الفاء”\" كالحياكة والخياطة. قال\nسيبويه: «وأما الوكالة والوصاية والجراية ونحوهن فإنما شبهن بالولاية لأن معناهن\nالقيام بالشيء وعليه الخلافة والإمارة والنكابة”*' والعرافة وإنما أردت أن تخبر بالولاية.\nومثل ذلك الإبالة والعياسة والسياسة . .\n\nوقالوا: «التجارة والخياطة والقصابة وإنما أرادوا أن يخبروا بالصنعة التي\nتليها فصار بمنزلة الوكالة وكذلك السعاية إنما أخبر بولايته كأنه جعله الأمر\n\n‎)١(‏ «لسان العرب»(١١/‏ 778) (وقف).\n\n‎.)5١96-7١4 /5( ‏«سيبويه»‎ )5(\n\n‏(9) «التصريح» (7/ 74 ). (الصبان؟ (57/ 0704.\n\n‏(5) النكابة: من المنكب والمنكب الذي في يده اثنتا عشرة عرافة (السيرافي بهامش سيبويه 17 / 110).\n\n‏لح",
+              "error": null,
+              "duration_sec": 1.0471238749887561,
+              "retries": 0
+            },
+            "marker": {
+              "engine": "marker",
+              "text": "",
+              "error": "Command '['/Users/jacobgruber/Projects/ocr-pipeline/.marker-venv/bin/python', '/var/folders/l1/_vlhws7x1gv132mtl76_g7800000gn/T/tmp45wonpa3.py']' timed out after 120.0 seconds",
+              "duration_sec": 364.1965165829897,
+              "retries": 2
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T02:15:13.522156+00:00",
+          "completed_at": "2026-07-03T02:21:17.976440+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "ar_linguistics.pdf",
+        "size_bytes": 30576,
+        "mtime_epoch": 1783044197.3584323,
+        "sha256": "fb44a8f61248ead20e97406f453854109d643be3cff9bde78f8727df19ce1d34"
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "page_index": 0,
+  "page_label": "page_0001",
+  "engine_outputs": {},
+  "merged_markdown": "[Header: Espressif Systems]\n[p. 23]\n\n### 3 Boot Configurations\n\n*Table 3-2. Description of Timing Parameters for the Strapping Pins*\n\n| Parameter | Description | Min (ms) |\n|---|---|---|\n| t~SU~ | Setup time is the time reserved for the power rails to stabilize before the CHIP\\_PU pin is pulled high to activate the chip. | 0 |\n| t~H~ | Hold time is the time reserved for the chip to read the strapping pin values after CHIP\\_PU is already high and before these pins start operating as regular IO pins. | 1 |\n\n[Diagram: Timing diagram showing CHIP_PU and Strapping pin waveforms relative to VIH_nRST and VIH, with tSU and tH intervals indicated.]\nFig. 3-1. Visualization of Timing Parameters for the Strapping Pins\n\n## 3.1 Chip Boot Mode Control\n\nGPIO0 and GPIO2 control the boot mode after the reset is released. See *Table 3-3 Chip Boot Mode Control*.\n\n*Table 3-3. Chip Boot Mode Control*\n\n| Boot Mode | GPIO0 | GPIO2 |\n|---|---|---|\n| SPI Boot Mode | **1** | Any value |\n| Joint Download Boot Mode ² | 0 | 0 |\n\n¹ **Bold** marks the default value and configuration.\n² Joint Download Boot mode supports the following download methods:\n*   SDIO Download Boot\n*   UART Download Boot\n\nIn Joint Download Boot mode, the detailed boot flow of the chip is put below *3-2*.\n\nEspressif Systems\nSubmit Documentation Feedback\nESP32 Series Datasheet v5.2",
+  "vlm_raw_response": "",
+  "vlm_model": "",
+  "engines_agreement": 0.0,
+  "processed_at": "2026-07-03T02:02:29.197074+00:00"
+}

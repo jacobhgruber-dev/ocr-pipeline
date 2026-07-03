@@ -1,0 +1,33 @@
+config,profile,script,pdf_hash,page,char_count,word_count,non_latin_ratio,cyrillic_found,cjk_found,arabic_found,diacritics_found,engines_agreement,engine_count,cross_cer_vs_baseline
+T-G,academic,Latin (English),465516bfd9b6,page_0001_final,4469,743,0.0,False,False,False,False,0.0,0,0.3502
+T-G,academic,Latin (English),d28ae549466c,page_0001_final,1938,294,0.0015,False,False,False,False,0.0,0,0.0047
+T-G,books,Latin (English),3a3cbe6e92dc,page_0001_final,1145,191,0.0279,False,False,False,False,0.0,0,0.2097
+T-G,books,Latin (English),8fcc93a5caa5,page_0001_final,1341,238,0.0037,False,False,False,False,0.0,0,0.0
+T-G,legal,Latin (English),310b6cbe94a1,page_0001_final,860,136,0.0047,False,False,False,False,0.0,0,0.0329
+T-G,legal,Latin (English),f7f0579e415a,page_0001_final,1950,300,0.021,False,False,False,False,0.0,0,0.0819
+T-G,technical,Latin (English),94c7628f56b5,page_0001_final,2835,503,0.0063,False,False,False,False,0.0,0,0.0339
+T-G,technical,Latin (English),c0d18778a95b,page_0001_final,1307,233,0.0023,False,False,False,False,0.0,0,0.9769
+T-G,french,Latin+diacritics,0ba3c8fd79dc,page_0001_final,1245,220,0.0337,False,False,False,True,0.0,1,
+T-G,french,Latin+diacritics,0ba3c8fd79dc,page_0002_final,1165,221,0.03,False,False,False,True,0.0,1,
+T-G,russian,Cyrillic,ea6fe16a17fd,page_0001_final,2078,331,0.5597,True,False,False,False,0.0,0,
+T-G,russian,Cyrillic,ea6fe16a17fd,page_0002_final,967,140,0.5895,True,False,False,False,0.0,0,
+T-G,chinese,CJK,1cd0d6347084,page_0001_final,1993,469,0.0005,False,False,False,False,0.0,0,
+T-G,chinese,CJK,1cd0d6347084,page_0002_final,2077,483,0.001,False,False,False,False,0.0,0,
+T-G,arabic,Arabic,fb44a8f61248,page_0001_final,1228,205,0.7272,False,False,True,False,0.0,1,
+T-G,arabic,Arabic,fb44a8f61248,page_0002_final,1409,231,0.7544,False,False,True,False,0.0,1,
+MT-G,academic,Latin (English),465516bfd9b6,page_0001_final,4475,743,0.0,False,False,False,False,0.0,0,0.1329
+MT-G,academic,Latin (English),d28ae549466c,page_0001_final,1950,284,0.0,False,False,False,False,0.0,0,0.0261
+MT-G,books,Latin (English),3a3cbe6e92dc,page_0001_final,1214,218,0.0189,False,False,False,False,0.0,0,0.1662
+MT-G,books,Latin (English),8fcc93a5caa5,page_0001_final,1341,238,0.0037,False,False,False,False,0.0,0,0.0
+MT-G,legal,Latin (English),310b6cbe94a1,page_0001_final,872,136,0.0046,False,False,False,False,0.0,0,0.0606
+MT-G,legal,Latin (English),f7f0579e415a,page_0001_final,1954,301,0.0205,False,False,False,False,0.0,0,0.0833
+MT-G,technical,Latin (English),94c7628f56b5,page_0001_final,3362,510,0.0054,False,False,False,False,0.0,0,0.1864
+MT-G,technical,Latin (English),c0d18778a95b,page_0001_final,1344,235,0.0022,False,False,False,False,0.0,0,0.9726
+MT-G,french,Latin+diacritics,0ba3c8fd79dc,page_0001_final,1247,220,0.0393,False,False,False,True,0.9663,2,
+MT-G,french,Latin+diacritics,0ba3c8fd79dc,page_0002_final,1162,221,0.0293,False,False,False,True,0.9657,2,
+MT-G,russian,Cyrillic,ea6fe16a17fd,page_0001_final,2062,331,0.564,True,False,False,False,0.0,0,
+MT-G,russian,Cyrillic,ea6fe16a17fd,page_0002_final,2266,313,0.5944,True,False,False,False,0.0,0,
+MT-G,chinese,CJK,1cd0d6347084,page_0001_final,1993,469,0.0005,False,False,False,False,0.0,0,
+MT-G,chinese,CJK,1cd0d6347084,page_0002_final,2077,483,0.001,False,False,False,False,0.0,0,
+MT-G,arabic,Arabic,fb44a8f61248,page_0001_final,0,0,0.0,False,False,False,False,0.0,0,
+MT-G,arabic,Arabic,fb44a8f61248,page_0002_final,1409,231,0.7544,False,False,True,False,0.0,2,

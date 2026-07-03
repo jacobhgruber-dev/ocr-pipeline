@@ -1,0 +1,23 @@
+{
+  "page_index": 0,
+  "page_label": "page_0001",
+  "engine_outputs": {
+    "tesseract": {
+      "text": "sont trois gendarmes et Jean Valjean.\n\n— Monseigneur..., dit un des gendarmes.\n\n— Monseigneur... murmure Jean Valjean, stupéfait.\n\n— Silence, dit le gendarme, c’est Monseigneur\nl'évêque.\n\nMais l’évêque s'approche de Jean Valjean et lui dit :\n\n— Ah ! Vous voilà ! Je vous ai aussi donné les chan-\ndeliers, pourquoi ne les avez-vous pas emportés avec\nles couverts ?\n\nJean Valjean ouvre de grands yeux en entendant\nl'évêque.\n\n— Monseigneur, dit le gendarme, cet homme nous a\ndit que vous lui aviez donné ces couverts, c'était donc\nvrai ?\n\n— Naturellement, répond l’évêque.\n\nEt il va à la cheminée, prend deux chandeliers en\nargent, les donne à Jean Valjean et lui dit :\n\n— Mon ami, avant de vous en aller, prenez vos chan-\ndeliers. Les voici.\n\nJean Valjean se met à trembler. Il prend les deux\nchandeliers machinalement.\n\n— Maintenant, dit l'évêque, allez en paix.\n\nJean Valjean sort de la maison de l’évêque et marche\nrapidement. Il se trouve bientôt hors de la ville.\n\nTout à coup, il entend un bruit joyeux. Il tourne la\ntête et voit venir sur le sentier un petit garçon de dix\nans qui chantonne. Tout en chantant, il fait sauter dans\n\nsa main quelques pièces de monnaie. Toute sa fortune.\nTout à coup, une des pièces tombe et va rouler jus-\n\nmr",
+      "error": null,
+      "duration_sec": 0.6993396659963764,
+      "retries": 0
+    },
+    "marker": {
+      "text": "sont trois gendarmes et Jean Valjean.\n\n- Monseigneur..., dit un des gendarmes.\n- Monseigneur..., murmure Jean Valjean, stupéfait.\n- Silence, dit le gendarme, c'est Monseigneur l'évêque.\n\nMais l'évêque s'approche de Jean Valjean et lui dit :\n\n– Ah! Vous voilà! Je vous ai aussi donné les chandeliers, pourquoi ne les avez-vous pas emportés avec les couverts?\n\nJean Valjean ouvre de grands yeux en entendant l'évêque.\n\n- Monseigneur, dit le gendarme, cet homme nous a dit que vous lui aviez donné ces couverts, c'était donc vrai ?\n  - Naturellement, répond l'évêque.\n\nEt il va à la cheminée, prend deux chandeliers en argent, les donne à Jean Valjean et lui dit :\n\n Mon ami, avant de vous en aller, prenez vos chandeliers. Les voici.\n\nJean Valjean se met à trembler. Il prend les deux chandeliers machinalement.\n\nMaintenant, dit l'évêque, allez en paix.\n\nJean Valjean sort de la maison de l'évêque et marche rapidement. Il se trouve bientôt hors de la ville.\n\nTout à coup, il entend un bruit joyeux. Il tourne la tête et voit venir sur le sentier un petit garçon de dix ans qui chantonne. Tout en chantant, il fait sauter dans sa main quelques pièces de monnaie. Toute sa fortune.\n\nTout à coup, une des pièces tombe et va rouler jus-",
+      "error": null,
+      "duration_sec": 234.52790825000557,
+      "retries": 1
+    }
+  },
+  "merged_markdown": "sont trois gendarmes et Jean Valjean.\n\n– Monseigneur..., dit un des gendarmes.\n\n– Monseigneur..., murmure Jean Valjean, stupéfait.\n\n– Silence, dit le gendarme, c’est Monseigneur l’évêque.\n\nMais l’évêque s’approche de Jean Valjean et lui dit :\n\n– Ah ! Vous voilà ! Je vous ai aussi donné les chan-deliers, pourquoi ne les avez-vous pas emportés avec les couverts ?\n\nJean Valjean ouvre de grands yeux en entendant l’évêque.\n\n– Monseigneur, dit le gendarme, cet homme nous a dit que vous lui aviez donné ces couverts, c’était donc vrai ?\n\n– Naturellement, répond l’évêque.\n\nEt il va à la cheminée, prend deux chandeliers en argent, les donne à Jean Valjean et lui dit :\n\n– Mon ami, avant de vous en aller, prenez vos chan-deliers. Les voici.\n\nJean Valjean se met à trembler. Il prend les deux chandeliers machinalement.\n\n– Maintenant, dit l’évêque, allez en paix.\n\nJean Valjean sort de la maison de l’évêque et marche rapidement. Il se trouve bientôt hors de la ville.\n\nTout à coup, il entend un bruit joyeux. Il tourne la tête et voit venir sur le sentier un petit garçon de dix ans qui chantonne. Tout en chantant, il fait sauter dans sa main quelques pièces de monnaie. Toute sa fortune.\n\nTout à coup, une des pièces tombe et va rouler jus-\n\n– 9 –",
+  "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1947, \"output_tokens\": 354}",
+  "vlm_model": "gemini-2.5-flash",
+  "engines_agreement": 0.9663,
+  "processed_at": "2026-07-03T02:11:29.003958+00:00"
+}
