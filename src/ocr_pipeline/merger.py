@@ -386,7 +386,7 @@ def _call_vlm(
             max_tokens=max_tokens,
             timeout_sec=timeout_sec,
         )
-    else:
+    elif any(p in model_lower for p in ("claude", "anthropic")):
         return _call_anthropic(
             model=model,
             b64_image=b64_image,
@@ -395,6 +395,20 @@ def _call_vlm(
             max_tokens=max_tokens,
             timeout_sec=timeout_sec,
         )
+
+    logger.warning(
+        "Unknown VLM model '%s' — defaulting to Anthropic API. "
+        "Supported: gemini-*, claude-*, anthropic-*.",
+        model,
+    )
+    return _call_anthropic(
+        model=model,
+        b64_image=b64_image,
+        user_message=user_message,
+        system_prompt=system_prompt,
+        max_tokens=max_tokens,
+        timeout_sec=timeout_sec,
+    )
 
 
 # ── Quality check ─────────────────────────────────────────────────────────

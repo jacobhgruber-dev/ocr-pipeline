@@ -194,7 +194,7 @@ class CredentialStore:
     4. Legacy: ``ocr_pipeline/config.yaml`` (for non-opencode users)
     """
 
-    _OPENDODE_GLOBAL = Path.home() / ".config" / "opencode" / "opencode.json"
+    _OPENCODE_GLOBAL = Path.home() / ".config" / "opencode" / "opencode.json"
     _LEGACY_CONFIG = Path(__file__).resolve().parent.parent.parent / "config.yaml"
 
     def __init__(self) -> None:
@@ -219,7 +219,7 @@ class CredentialStore:
         return None
 
     def _load_opencode_global(self) -> None:
-        self._load_json_credentials(self._OPENDODE_GLOBAL)
+        self._load_json_credentials(self._OPENCODE_GLOBAL)
 
     def _load_opencode_project(self) -> None:
         proj = self._find_project_root()

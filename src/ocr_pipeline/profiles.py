@@ -763,7 +763,13 @@ def get_profile(name: str) -> DocumentProfile:
     """
     if name in _USER_PROFILES:
         return _USER_PROFILES[name]
-    return PROFILES.get(name, PROFILES["general"])
+    if name not in PROFILES and name not in _USER_PROFILES:
+        logger.warning(
+            "Unknown profile '%s' — falling back to 'general'. Valid: %s",
+            name,
+            ", ".join(sorted(PROFILES.keys())),
+        )
+    return PROFILES.get(name, PROFILES["general"]) if name not in _USER_PROFILES else _USER_PROFILES[name]
 
 
 def list_profiles() -> list[str]:

@@ -53,10 +53,16 @@ def _detect_script(text: str) -> str:
             counts["greek"] = counts.get("greek", 0) + 1
         elif 0x0900 <= cp <= 0x097F:
             counts["devanagari"] = counts.get("devanagari", 0) + 1
-        elif 0x0041 <= cp <= 0x007A:
-            counts["latin"] = counts.get("latin", 0) + 1  # A-Z a-z
+        elif 0x0041 <= cp <= 0x005A or 0x0061 <= cp <= 0x007A:
+            counts["latin"] = counts.get("latin", 0) + 1  # A-Z, a-z
         elif 0x00C0 <= cp <= 0x024F:
-            counts["latin"] = counts.get("latin", 0) + 1  # Latin extended
+            counts["latin"] = counts.get("latin", 0) + 1  # Latin Extended-A/B
+        elif 0x1E00 <= cp <= 0x1EFF:
+            counts["latin"] = counts.get("latin", 0) + 1  # Latin Extended Additional
+        elif 0x0250 <= cp <= 0x02AF:
+            counts["latin"] = counts.get("latin", 0) + 1  # IPA Extensions
+        elif 0xA720 <= cp <= 0xA7FF:
+            counts["latin"] = counts.get("latin", 0) + 1  # Latin Extended-D
     if not counts:
         return "latin"
     return max(counts, key=counts.get)  # type: ignore[arg-type]
