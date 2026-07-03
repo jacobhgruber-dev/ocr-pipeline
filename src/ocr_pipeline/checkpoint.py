@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -22,13 +22,12 @@ from .models import (
     PageResult,
     PageStatus,
     PdfProgress,
+    now_iso,
 )
 
 _CHECKPOINT_VERSION = 3
 
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+logger = logging.getLogger(__name__)
 
 
 class CheckpointManager:
@@ -77,13 +76,13 @@ class CheckpointManager:
 
         Each entry is written to ``_pdf_path(rel_path)`` atomically.
         """
-        started_at = _now_iso()
+        started_at = now_iso()
         for rel_path, pp in pdfs.items():
             fp = self._pdf_path(rel_path)
             payload: dict[str, Any] = {
                 "version": _CHECKPOINT_VERSION,
                 "started_at": started_at,
-                "updated_at": _now_iso(),
+                "updated_at": now_iso(),
                 "rel_path": rel_path,
                 "pdf": pp.to_dict(),
             }
@@ -179,8 +178,8 @@ class CheckpointManager:
 
         payload: dict[str, Any] = {
             "version": _CHECKPOINT_VERSION,
-            "started_at": data.get("started_at", _now_iso()),
-            "updated_at": _now_iso(),
+            "started_at": data.get("started_at", now_iso()),
+            "updated_at": now_iso(),
             "rel_path": relative_path,
             "pdf": pp.to_dict(),
         }
@@ -290,80 +289,31 @@ class CheckpointManager:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def migrate_from_v1(old_checkpoint_path: Path, input_dir: Path) -> int:
-        """Migrate a v1 (SHA256-keyed) checkpoint to v2 (path-keyed) format."""
-        if not old_checkpoint_path.exists():
-            raise CheckpointError(f"v1 checkpoint not found: {old_checkpoint_path}")
+    def _pdf_path_static(base_dir: Path, rel_path: str) -> Path:
+        h = hashlib.sha256(rel_path.encode()).hexdigest()[:16]
+        return base_dir / f"{h}.json"
 
-        try:
-            raw = json.loads(old_checkpoint_path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
-            raise CheckpointError(f"Failed to parse v1 checkpoint: {old_checkpoint_path}") from exc
+    @staticmethod
+    def migrate_from_v1(v1_path: Path, base_dir: Path) -> None:
+        """Migrate a v1 checkpoint file to v3 per-PDF files.
 
-        path_to_stat: dict[str, tuple[int, float]] = {}
-        for pdf_path in input_dir.rglob("*.pdf"):
-            try:
-                rel = str(pdf_path.relative_to(input_dir))
-                st = pdf_path.stat()
-                path_to_stat[rel] = (st.st_size, st.st_mtime)
-            except OSError:
-                continue
+        Args:
+            v1_path: Path to the monolithic v1 checkpoint JSON file.
+            base_dir: Directory where per-PDF v3 checkpoint files are stored.
+        """
+        with open(v1_path) as fh:
+            v1_data = json.load(fh)
 
-        new_pdfs: dict[str, PdfProgress] = {}
+        base_dir.mkdir(parents=True, exist_ok=True)
         migrated = 0
-
-        for old_sha256, entry in raw.get("pdfs", {}).items():
-            old_path = entry.get("path", "")
-            if not old_path:
+        for rel_path_str, data in v1_data.items():
+            if not isinstance(data, dict) or "pages" not in data:
                 continue
-
-            stat_info = path_to_stat.get(old_path)
-            if stat_info is None:
-                for candidate, stat_tuple in path_to_stat.items():
-                    if candidate.lower() == old_path.lower():
-                        stat_info = stat_tuple
-                        old_path = candidate
-                        break
-
-            if stat_info is None:
-                continue
-
-            size_bytes, mtime_epoch = stat_info
-
-            file_id = FileIdentity(
-                relative_path=old_path,
-                size_bytes=size_bytes,
-                mtime_epoch=mtime_epoch,
-                sha256=old_sha256,
-            )
-
-            try:
-                pp = PdfProgress.from_dict(entry)
-            except (KeyError, TypeError, ValueError):
-                continue
-
-            pp.file_identity = file_id  # type: ignore[union-attr]
-
-            new_pdfs[old_path] = pp
+            fp = CheckpointManager._pdf_path_static(base_dir, rel_path_str)
+            data["_version"] = _CHECKPOINT_VERSION
+            tmp = fp.with_suffix(".tmp")
+            tmp.write_text(json.dumps(data, indent=2, default=str))
+            os.replace(tmp, fp)
             migrated += 1
 
-        new_path = old_checkpoint_path.with_suffix(".v2.json")
-        payload: dict[str, Any] = {
-            "version": _CHECKPOINT_VERSION,
-            "started_at": raw.get("started_at", _now_iso()),
-            "updated_at": _now_iso(),
-            "pdfs": {rel_path: p.to_dict() for rel_path, p in new_pdfs.items()},
-        }
-
-        new_path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path: Path = new_path.with_suffix(".tmp")
-        try:
-            tmp_path.write_text(
-                json.dumps(payload, indent=2, ensure_ascii=False),
-                encoding="utf-8",
-            )
-            os.replace(str(tmp_path), str(new_path))
-        except OSError as exc:
-            raise CheckpointError(f"Failed to write migrated checkpoint: {new_path}") from exc
-
-        return migrated
+        logger.info("Migrated %d PDFs from v1 to v3 checkpoint", migrated)

@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +23,7 @@ from .merger import (
     _build_system_prompt,
     compute_engine_agreement,
 )
-from .models import EngineName, EngineOutput, PageResult, PageStatus
+from .models import EngineName, EngineOutput, PageResult, PageStatus, now_iso
 from .postprocess import PostProcessor
 from .renderer import render_page
 
@@ -71,10 +70,6 @@ def _detect_script(text: str) -> str:
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
-
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +150,7 @@ class PageProcessor:
 
     def process(self, ctx: PageContext) -> PageContext:
         """Run all phases on a page context.  Returns updated context."""
-        ctx.page.started_at = _now_iso()
+        ctx.page.started_at = now_iso()
 
         try:
             # Phase 1: try text extraction (fast path)
@@ -169,7 +164,7 @@ class PageProcessor:
                 ctx.merged_markdown = ctx.page.merged_markdown
                 self._save_outputs(ctx)
                 ctx.page.status = PageStatus.COMPLETE
-                ctx.page.completed_at = _now_iso()
+                ctx.page.completed_at = now_iso()
                 return ctx
 
             # Phase 2: render to PNG
@@ -181,7 +176,7 @@ class PageProcessor:
             if not self._has_usable_output(ctx):
                 ctx.page.status = PageStatus.FAILED
                 ctx.page.error = "All OCR engines failed"
-                ctx.page.completed_at = _now_iso()
+                ctx.page.completed_at = now_iso()
                 ctx.page.engine_outputs = {eo.engine: eo for eo in ctx.engine_outputs}
                 return ctx
 
@@ -198,13 +193,13 @@ class PageProcessor:
             self._save_outputs(ctx)
 
             ctx.page.status = PageStatus.COMPLETE
-            ctx.page.completed_at = _now_iso()
+            ctx.page.completed_at = now_iso()
 
         except Exception as exc:
             logger.error("Page %d processing failed: %s", ctx.page.page_index, exc)
             ctx.page.status = PageStatus.FAILED
             ctx.page.error = str(exc)
-            ctx.page.completed_at = _now_iso()
+            ctx.page.completed_at = now_iso()
 
         return ctx
 
@@ -228,7 +223,7 @@ class PageProcessor:
                 ctx.page.merged_markdown = text
                 ctx.page.has_extractable_text = True
                 ctx.page.status = PageStatus.EXTRACTED
-                ctx.page.completed_at = _now_iso()
+                ctx.page.completed_at = now_iso()
                 ctx.page.estimated_cost = 0.0
                 ctx.cost = 0.0
 
@@ -315,16 +310,7 @@ class PageProcessor:
 
             # Detect script and route to appropriate model
             all_text = " ".join(eo.text for eo in ctx.engine_outputs if eo.text)
-            detected_script = _detect_script(all_text)
-            from .profiles import get_profile as _get_profile
-
-            profile = _get_profile(self.config.profile)
-            vlm_model = profile.model_routing.get(detected_script, self.config.vlm_model)
-            if vlm_model != self.config.vlm_model:
-                logger.info(
-                    "Script detected: %s → routing to %s (default: %s)",
-                    detected_script, vlm_model, self.config.vlm_model,
-                )
+            vlm_model = self._resolve_vlm_model(all_text)
 
             assert ctx.png_path is not None, "png_path must be set before VLM merge"
             merged_md, vlm_raw, vlm_model_used, merge_cost = self.vlm_merger.merge(
@@ -415,7 +401,7 @@ class PageProcessor:
             "vlm_raw_response": ctx.vlm_raw,
             "vlm_model": ctx.vlm_model,
             "engines_agreement": round(ctx.agreement, 4),
-            "processed_at": ctx.page.completed_at or _now_iso(),
+            "processed_at": ctx.page.completed_at or now_iso(),
         }
         json_path = ctx.output_dir / f"{ctx.page.page_label}_raw.json"
         json_path.write_text(json.dumps(raw, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -473,16 +459,7 @@ class PageProcessor:
             )
 
             # Detect script and route to appropriate model
-            detected_script = _detect_script(ctx.page.merged_markdown)
-            from .profiles import get_profile as _get_profile
-
-            profile = _get_profile(self.config.profile)
-            vlm_model = profile.model_routing.get(detected_script, self.config.vlm_model)
-            if vlm_model != self.config.vlm_model:
-                logger.info(
-                    "Script detected: %s → routing to %s (default: %s)",
-                    detected_script, vlm_model, self.config.vlm_model,
-                )
+            vlm_model = self._resolve_vlm_model(ctx.page.merged_markdown)
 
             assert ctx.png_path is not None, "png_path must be set before VLM merge"
             merged_md, vlm_raw, vlm_model_used, merge_cost = self.vlm_merger.merge(
@@ -503,6 +480,22 @@ class PageProcessor:
             ctx.cost += merge_cost
         except Exception:
             pass  # Keep extracted text as-is
+
+    def _resolve_vlm_model(self, all_text: str) -> str:
+        """Detect script from engine text and route to the correct VLM model."""
+        from .profiles import get_profile as _get_profile
+
+        detected_script = _detect_script(all_text)
+        profile = _get_profile(self.config.profile)
+        vlm_model = profile.model_routing.get(detected_script, self.config.vlm_model)
+        if vlm_model != self.config.vlm_model:
+            logger.info(
+                "Script detected: %s → routing to %s (default: %s)",
+                detected_script,
+                vlm_model,
+                self.config.vlm_model,
+            )
+        return vlm_model
 
     def _can_skip_vlm(
         self,

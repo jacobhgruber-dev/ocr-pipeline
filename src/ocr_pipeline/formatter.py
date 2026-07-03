@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, ClassVar
 
 from .models import MetadataResult, PageResult
 
@@ -62,6 +62,31 @@ class YamlFrontmatterFormatter:
         path.write_text(md)
     """
 
+    _FIELD_MAP: ClassVar[list[tuple[str, str]]] = [
+        ("title", "title"),
+        ("authors", "authors"),
+        ("document_type", "document_type"),
+        ("language", "language"),
+        ("doi", "doi"),
+        ("isbn", "isbn"),
+        ("journal", "journal"),
+        ("publisher", "publisher"),
+        ("volume", "volume"),
+        ("issue", "issue"),
+        ("year", "year"),
+        ("date", "date"),
+        ("court", "court"),
+        ("docket_number", "docket_number"),
+        ("edition", "edition"),
+        ("series", "series"),
+        ("part_number", "part_number"),
+        ("revision", "revision"),
+        ("pages", "pages"),
+        ("abstract", "abstract"),
+        ("keywords", "keywords"),
+        ("identifiers", "identifiers"),
+    ]
+
     def format(self, metadata: MetadataResult | None, pages: list[PageResult]) -> str:
         """Concatenate all *pages* with YAML frontmatter from *metadata*.
 
@@ -74,50 +99,12 @@ class YamlFrontmatterFormatter:
         """
         frontmatter: dict[str, Any] = {}
         if metadata:
-            if metadata.title:
-                frontmatter["title"] = metadata.title
-            if metadata.authors:
-                frontmatter["authors"] = metadata.authors
-            if metadata.document_type:
-                frontmatter["document_type"] = metadata.document_type
-            if metadata.language:
-                frontmatter["language"] = metadata.language
-            if metadata.doi:
-                frontmatter["doi"] = metadata.doi
-            if metadata.isbn:
-                frontmatter["isbn"] = metadata.isbn
-            if metadata.journal:
-                frontmatter["journal"] = metadata.journal
-            if metadata.publisher:
-                frontmatter["publisher"] = metadata.publisher
-            if metadata.volume:
-                frontmatter["volume"] = metadata.volume
-            if metadata.issue:
-                frontmatter["issue"] = metadata.issue
-            if metadata.year:
-                frontmatter["year"] = metadata.year
-            if metadata.date:
-                frontmatter["date"] = metadata.date
-            if metadata.court:
-                frontmatter["court"] = metadata.court
-            if metadata.docket_number:
-                frontmatter["docket_number"] = metadata.docket_number
-            if metadata.edition:
-                frontmatter["edition"] = metadata.edition
-            if metadata.series:
-                frontmatter["series"] = metadata.series
-            if metadata.part_number:
-                frontmatter["part_number"] = metadata.part_number
-            if metadata.revision:
-                frontmatter["revision"] = metadata.revision
-            if metadata.abstract:
-                frontmatter["abstract"] = metadata.abstract[:500]
-            if metadata.keywords:
-                frontmatter["keywords"] = metadata.keywords
-            if metadata.pages:
-                frontmatter["pages"] = metadata.pages
-            if metadata.identifiers:
-                frontmatter["identifiers"] = metadata.identifiers
+            for attr, key in self._FIELD_MAP:
+                val = getattr(metadata, attr, None)
+                if val or (isinstance(val, list) and val):
+                    if attr == "abstract" and isinstance(val, str) and len(val) > 500:
+                        val = val[:500]
+                    frontmatter[key] = val
 
         import yaml as yaml_lib
 
