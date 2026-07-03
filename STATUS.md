@@ -6,7 +6,7 @@ Last updated: 2026-07-03
 
 | Metric | Value |
 |---|---|
-| Tests | 373 passing (unit + integration + e2e + sources + language + sidecar) |
+| Tests | 395 passing (unit + integration + e2e + sources + language + sidecar + identifier) |
 | Lint | ruff clean (56 source + test files) |
 | Format | ruff format clean (56 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
