@@ -21,7 +21,7 @@ class PipelineConfig:
 
     # -- Engine selection ----------------------------------------------------
     engines: list[str] = field(default_factory=lambda: ["marker"])
-    # Valid: "google_doc_ai", "mathpix", "marker", "surya2", "olmocr"
+    # Valid: "google_doc_ai", "mathpix", "marker", "surya2", "olmocr", "tesseract"
 
     # -- VLM merge -----------------------------------------------------------
     vlm_enabled: bool = True
@@ -61,6 +61,7 @@ class PipelineConfig:
             "marker": 0.0,
             "surya2": 0.0,
             "olmocr": 0.0,
+            "tesseract": 0.0,
         }
     )
 
@@ -321,6 +322,7 @@ class ConfigLoader:
                     "marker": 0.0,
                     "surya2": 0.0,
                     "olmocr": 0.0,
+                    "tesseract": 0.0,
                 },
             ),
             # Concurrency

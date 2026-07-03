@@ -47,6 +47,7 @@ class PostProcessor:
     def __init__(self, steps: list[str] | None = None) -> None:
         self._step_registry = {
             "soft_hyphens": self._fix_soft_hyphens,
+            "dehyphenate": self._dehyphenate,
             "em_dash_breaks": self._fix_em_dash_breaks,
             "whitespace_normalize": self._normalize_whitespace,
             "ligature_expand": self._expand_ligatures,
@@ -91,6 +92,20 @@ class PostProcessor:
         # Remove any remaining standalone ¬ (rare, but defensive).
         text = text.replace("¬", "")
         return text
+
+    def _dehyphenate(self, text: str) -> str:
+        """Rejoin words broken by hard hyphen at line boundary.
+
+        ``train-\\ning`` → ``training``.  Only removes the hyphen when it
+        appears immediately before a newline — intra-word hyphens like
+        ``well-known`` are left untouched.
+
+        This is one of the most common post-processing steps in professional
+        OCR pipelines (ABBYY, Tesseract, Google Cloud Vision all do it).
+        """
+        # Match: word characters + hyphen + newline + optional whitespace + word characters
+        # The hyphen must be at the END of a line (before \n) to be removed.
+        return re.sub(r"(\w)-\s*\n\s*(\w)", r"\1\2", text)
 
     def _fix_em_dash_breaks(self, text: str) -> str:
         """Fix em-dashes broken across lines: ``word—\\nnext`` → ``word—next``."""

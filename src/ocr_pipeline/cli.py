@@ -237,7 +237,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         metavar="ENGINE",
-        help="List languages supported by ENGINE (marker, surya2, google_doc_ai)",
+        help="List languages supported by ENGINE (marker, surya2, google_doc_ai, tesseract)",
     )
 
     # -- Post-processing -----------------------------------------------------
@@ -428,6 +428,13 @@ _ENGINE_INFO: dict[str, dict[str, str]] = {
         "requires": "Docker running grobid container",
         "install": "docker run -d -p 8070:8070 lfoppiano/grobid:0.8.1",
         "cost": "free (runs locally)",
+    },
+    "tesseract": {
+        "header": "Local, free. The most widely deployed OCR engine.",
+        "best_for": "Scanned typewritten documents, structured forms. Universal fallback.",
+        "requires": "tesseract binary on PATH (brew install tesseract)",
+        "install": "brew install tesseract && uv add pytesseract",
+        "cost": "free",
     },
 }
 

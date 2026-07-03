@@ -166,10 +166,14 @@ SURYA2_LANGUAGES: set[str] = set(LANGUAGE_NAMES.keys()) | {
 GOOGLE_DOC_AI_LANGUAGES: set[str] = set(LANGUAGE_NAMES.keys()) - {"gle", "grc"}
 
 # All known engine names (for --list-engines and validation).
+# Tesseract supports 100+ languages including all LANGUAGE_NAMES codes.
+TESSERACT_LANGUAGES: set[str] = set(LANGUAGE_NAMES.keys())
+
 ENGINE_NAMES: dict[str, set[str]] = {
     "marker": MARKER_LANGUAGES,
     "surya2": SURYA2_LANGUAGES,
     "google_doc_ai": GOOGLE_DOC_AI_LANGUAGES,
+    "tesseract": TESSERACT_LANGUAGES,
     # mathpix does not accept explicit language hints -- it auto-detects.
     # grobid auto-detects; no per-language configuration exposed.
 }
@@ -184,6 +188,8 @@ ENGINE_DESCRIPTIONS: dict[str, str] = {
     "Auto-detects languages.",
     "grobid": "Metadata extraction via GROBID. Requires a running GROBID server "
     "(default http://localhost:8070).",
+    "tesseract": "Local OCR engine (Tesseract). Requires tesseract binary on PATH. "
+    "Supports 100+ languages.",
 }
 """Human-readable descriptions for each engine."""
 
@@ -205,8 +211,9 @@ def list_languages() -> list[str]:
 def list_languages_for_engine(engine: str) -> list[str]:
     """Return a sorted list of language codes supported by *engine*.
 
-    ``engine`` must be one of ``"marker"``, ``"surya2"``, or
-    ``"google_doc_ai"``.  Raises ``ValueError`` for unknown engines.
+    ``engine`` must be one of ``"marker"``, ``"surya2"``,
+    ``"google_doc_ai"``, or ``"tesseract"``.
+    Raises ``ValueError`` for unknown engines.
     """
     engine_set = ENGINE_NAMES.get(engine)
     if engine_set is None:
@@ -266,8 +273,10 @@ def _engine_support_label(code: str) -> str:
         engines.append("surya2")
     if code in GOOGLE_DOC_AI_LANGUAGES:
         engines.append("google_doc_ai")
+    if code in TESSERACT_LANGUAGES:
+        engines.append("tesseract")
 
-    if len(engines) == 3:
+    if len(engines) == 4:
         return "(all engines)"
     if not engines:
         return "(none)"

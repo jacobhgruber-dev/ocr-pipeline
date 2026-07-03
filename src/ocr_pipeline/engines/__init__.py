@@ -22,6 +22,7 @@ from .grobid import GrobidEngine
 from .marker import MarkerEngine
 from .mathpix import MathpixEngine
 from .surya2 import Surya2Engine
+from .tesseract import TesseractEngine
 
 __all__ = [
     # Base types & infrastructure
@@ -37,6 +38,7 @@ __all__ = [
     "MarkerEngine",
     "MathpixEngine",
     "Surya2Engine",
+    "TesseractEngine",
     # Factory
     "create_engine",
 ]
@@ -49,6 +51,7 @@ _ENGINE_CLASSES: dict[str, type] = {
     EngineName.MARKER: MarkerEngine,
     EngineName.GROBID: GrobidEngine,
     EngineName.SURYA2: Surya2Engine,
+    EngineName.TESSERACT: TesseractEngine,
 }
 
 
@@ -127,6 +130,11 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
             else "http://localhost:8070"
         )
         return GrobidEngine(grobid_url=grobid_url)
+
+    if name == EngineName.TESSERACT:
+        tesseract_cmd = getattr(config, "tesseract_cmd", "tesseract") if config is not None else "tesseract"
+        timeout = getattr(config, "api_timeout_sec", 120.0) if config is not None else 120.0
+        return TesseractEngine(tesseract_cmd=tesseract_cmd, timeout_sec=timeout)
 
     if name == EngineName.SURYA2:
         venv = None

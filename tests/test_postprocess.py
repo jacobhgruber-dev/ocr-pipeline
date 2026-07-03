@@ -190,4 +190,4 @@ class TestPostProcessorGeneral:
 
     def test_default_uses_all_registered_steps(self):
         post = PostProcessor()  # no explicit steps → all registered
-        assert len(post._enabled_steps) == 5  # 5 cleanup steps registered
+        assert len(post._enabled_steps) == 6  # 6 cleanup steps (dehyphenate added)
