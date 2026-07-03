@@ -2,22 +2,31 @@
 
 from __future__ import annotations
 
+import json
+import zipfile
 from pathlib import Path
 
 import pytest
 
 from ocr_pipeline.errors import ConfigError
 from ocr_pipeline.sources import (
+    ArchiveSource,
     CsvSource,
     DocxSource,
+    EmailSource,
     EpubSource,
     ExcelSource,
     HtmlSource,
     ImageSource,
+    JsonSource,
     LatexSource,
     MarkdownSource,
+    NotebookSource,
+    OdtSource,
     PdfSource,
     PptxSource,
+    RtfSource,
+    SubtitleSource,
     TxtSource,
     detect_source,
 )
@@ -540,5 +549,407 @@ class TestLatexSource:
         f = tmp_path / "test.tex"
         f.write_text(r"\begin{document}text\end{document}", encoding="utf-8")
         source = LatexSource(f)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# JsonSource
+# ---------------------------------------------------------------------------
+
+
+class TestJsonSource:
+    def test_basic(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.json"
+        f.write_text('{"key": "value"}', encoding="utf-8")
+        source = JsonSource(f)
+        assert source.source_format == "json"
+        assert source.source_mimetype == "application/json"
+        assert source.page_count == 1
+
+    def test_extract_text(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.json"
+        f.write_text('{"name": "test", "items": [1, 2, 3]}', encoding="utf-8")
+        source = JsonSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "test" in text
+        assert "items" in text
+        assert saved is not None
+        assert saved.exists()
+
+    def test_json_ld_metadata(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.json"
+        f.write_text(
+            json.dumps(
+                {
+                    "@context": "https://schema.org",
+                    "@type": "ScholarlyArticle",
+                    "name": "Test Article",
+                    "author": {"name": "Dr. Smith"},
+                    "datePublished": "2024-06-01",
+                    "description": "A test paper.",
+                }
+            ),
+            encoding="utf-8",
+        )
+        source = JsonSource(f)
+        meta = source.extract_metadata()
+        assert meta.title == "Test Article"
+        assert meta.authors == ["Dr. Smith"]
+        assert meta.date == "2024-06-01"
+        assert meta.extraction_method == "json-parsing"
+
+    def test_pure_json_no_json_ld(self, tmp_path: Path) -> None:
+        """Pure JSON (no JSON-LD) still extracts text successfully."""
+        f = tmp_path / "test.json"
+        f.write_text('{"data": {"value": 42}}', encoding="utf-8")
+        source = JsonSource(f)
+        text, _ = source.extract_text(0, tmp_path / "out")
+        assert "42" in text
+        assert "value" in text
+        # Metadata should still work without JSON-LD
+        meta = source.extract_metadata()
+        assert meta.extraction_method == "json-parsing"
+
+    def test_render_page_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.json"
+        f.write_text("{}", encoding="utf-8")
+        source = JsonSource(f)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# RtfSource
+# ---------------------------------------------------------------------------
+
+
+class TestRtfSource:
+    def test_basic(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.rtf"
+        f.write_text("{\\rtf1\\ansi Hello World}", encoding="utf-8")
+        source = RtfSource(f)
+        assert source.source_format == "rtf"
+        assert source.source_mimetype == "application/rtf"
+        assert source.page_count == 1
+
+    def test_extract_text(self, tmp_path: Path) -> None:
+        """Text extraction strips RTF control codes."""
+        f = tmp_path / "test.rtf"
+        f.write_text("{\\rtf1\\ansi\\deff0 {\\b Bold} and normal text.}", encoding="utf-8")
+        source = RtfSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "Bold" in text
+        assert "normal text" in text
+        assert saved is not None
+        assert saved.exists()
+
+    def test_metadata(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.rtf"
+        f.write_text("{\\rtf1\\ansi minimal}", encoding="utf-8")
+        source = RtfSource(f)
+        meta = source.extract_metadata()
+        assert meta.extraction_method == "rtf-stripping"
+        assert meta.document_type == "document"
+
+    def test_render_page_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.rtf"
+        f.write_text("{\\rtf1\\ansi test}", encoding="utf-8")
+        source = RtfSource(f)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# OdtSource
+# ---------------------------------------------------------------------------
+
+
+class TestOdtSource:
+    """ODT files are ZIP containers with content.xml and meta.xml."""
+
+    @pytest.fixture()
+    def odt_path(self, tmp_path: Path) -> Path:
+        """Create a minimal valid ODT file using zipfile."""
+        path = tmp_path / "test.odt"
+        with zipfile.ZipFile(str(path), "w") as zf:
+            # mimetype must be first and stored uncompressed for valid ODT
+            zf.writestr("mimetype", "application/vnd.oasis.opendocument.text")
+            zf.writestr(
+                "content.xml",
+                """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-content
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0">
+  <office:body>
+    <office:text>
+      <text:p>Hello ODT World</text:p>
+      <text:h>ODT Heading</text:h>
+    </office:text>
+  </office:body>
+</office:document-content>""",
+            )
+            zf.writestr(
+                "meta.xml",
+                """<?xml version="1.0" encoding="UTF-8"?>
+<office:document-meta
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0"
+ xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <office:meta>
+    <dc:title>Test ODT Document</dc:title>
+    <dc:creator>ODT Author</dc:creator>
+    <meta:document-statistic meta:page-count="1"/>
+  </office:meta>
+</office:document-meta>""",
+            )
+        return path
+
+    def test_basic(self, odt_path: Path) -> None:
+        source = OdtSource(odt_path)
+        assert source.source_format == "odt"
+        assert source.page_count == 1
+
+    def test_extract_text(self, odt_path: Path, tmp_path: Path) -> None:
+        source = OdtSource(odt_path)
+        text, saved = source.extract_text(0, tmp_path)
+        assert "Hello ODT World" in text
+        assert "ODT Heading" in text
+        assert saved is not None
+        assert saved.exists()
+
+    def test_metadata(self, odt_path: Path) -> None:
+        source = OdtSource(odt_path)
+        meta = source.extract_metadata()
+        assert meta.title == "Test ODT Document"
+        assert meta.authors == ["ODT Author"]
+        assert meta.extraction_method == "odt-parsing"
+
+    def test_render_page_raises(self, odt_path: Path, tmp_path: Path) -> None:
+        source = OdtSource(odt_path)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# NotebookSource
+# ---------------------------------------------------------------------------
+
+
+class TestNotebookSource:
+    @pytest.fixture()
+    def notebook_path(self, tmp_path: Path) -> Path:
+        """Create a minimal .ipynb with markdown + code cells."""
+        nb = {
+            "metadata": {
+                "kernelspec": {"display_name": "Python 3", "name": "python3"},
+                "language_info": {"name": "python"},
+                "title": "My Notebook",
+                "authors": ["Alice Coder", "Bob Analyst"],
+            },
+            "nbformat": 4,
+            "nbformat_minor": 5,
+            "cells": [
+                {
+                    "cell_type": "markdown",
+                    "source": ["# Introduction\n", "This is a notebook about data."],
+                },
+                {
+                    "cell_type": "code",
+                    "source": ["import pandas as pd\n", "df = pd.read_csv('data.csv')"],
+                    "outputs": [
+                        {
+                            "output_type": "stream",
+                            "text": ["Hello from stdout\n"],
+                        }
+                    ],
+                },
+            ],
+        }
+        path = tmp_path / "test.ipynb"
+        path.write_text(json.dumps(nb), encoding="utf-8")
+        return path
+
+    def test_basic(self, notebook_path: Path) -> None:
+        source = NotebookSource(notebook_path)
+        assert source.source_format == "notebook"
+        assert source.page_count == 1
+
+    def test_extract_text(self, notebook_path: Path, tmp_path: Path) -> None:
+        source = NotebookSource(notebook_path)
+        text, saved = source.extract_text(0, tmp_path)
+        assert "Introduction" in text
+        assert "import pandas" in text
+        assert "Hello from stdout" in text
+        assert saved is not None
+
+    def test_metadata(self, notebook_path: Path) -> None:
+        source = NotebookSource(notebook_path)
+        meta = source.extract_metadata()
+        assert meta.title == "My Notebook"
+        assert meta.authors == ["Alice Coder, Bob Analyst"]
+        assert meta.language == "python"
+        assert meta.extraction_method == "notebook-parsing"
+
+    def test_render_page_raises(self, notebook_path: Path, tmp_path: Path) -> None:
+        source = NotebookSource(notebook_path)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# ArchiveSource
+# ---------------------------------------------------------------------------
+
+
+class TestArchiveSource:
+    @pytest.fixture()
+    def zip_path(self, tmp_path: Path) -> Path:
+        """Create a minimal .zip containing text files and a readme."""
+        path = tmp_path / "test.zip"
+        with zipfile.ZipFile(str(path), "w") as zf:
+            zf.writestr("readme.md", "# Test Archive\n\nThis is a test readme.")
+            zf.writestr("data.txt", "sample data content")
+            zf.writestr("notes/note.txt", "note content")
+        return path
+
+    def test_basic(self, zip_path: Path) -> None:
+        source = ArchiveSource(zip_path)
+        assert source.source_format == "zip"
+        assert source.source_mimetype == "application/zip"
+        assert source.page_count == 1
+
+    def test_extract_text_lists_files(self, zip_path: Path, tmp_path: Path) -> None:
+        source = ArchiveSource(zip_path)
+        text, saved = source.extract_text(0, tmp_path)
+        assert "readme.md" in text
+        assert "data.txt" in text
+        assert "Test Archive" in text  # readme content included
+        assert saved is not None
+
+    def test_metadata(self, zip_path: Path) -> None:
+        source = ArchiveSource(zip_path)
+        meta = source.extract_metadata()
+        assert meta.extraction_method == "archive-listing"
+        assert meta.document_type == "archive"
+        assert meta.source_info.extra.get("file_count") == 3
+
+    def test_render_page_raises(self, zip_path: Path, tmp_path: Path) -> None:
+        source = ArchiveSource(zip_path)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# EmailSource
+# ---------------------------------------------------------------------------
+
+
+class TestEmailSource:
+    @pytest.fixture()
+    def eml_path(self, tmp_path: Path) -> Path:
+        """Create a minimal .eml file with headers and body."""
+        path = tmp_path / "test.eml"
+        path.write_text(
+            "From: sender@example.com\r\n"
+            "To: recipient@example.com\r\n"
+            "Subject: Test Email\r\n"
+            "Date: Thu, 01 Jan 2025 00:00:00 +0000\r\n"
+            "Content-Type: text/plain; charset=utf-8\r\n"
+            "\r\n"
+            "This is the email body.\r\n",
+            encoding="utf-8",
+        )
+        return path
+
+    def test_basic(self, eml_path: Path) -> None:
+        source = EmailSource(eml_path)
+        assert source.source_format == "email"
+        assert source.page_count == 1
+
+    def test_extract_text(self, eml_path: Path, tmp_path: Path) -> None:
+        source = EmailSource(eml_path)
+        text, saved = source.extract_text(0, tmp_path)
+        assert "This is the email body." in text
+        assert "Subject: Test Email" in text
+        assert "From: sender@example.com" in text
+        assert saved is not None
+
+    def test_metadata(self, eml_path: Path) -> None:
+        source = EmailSource(eml_path)
+        meta = source.extract_metadata()
+        assert meta.title == "Test Email"
+        assert meta.authors == ["sender@example.com"]
+        assert meta.extraction_method == "email-parsing"
+        assert meta.document_type == "email"
+
+    def test_render_page_raises(self, eml_path: Path, tmp_path: Path) -> None:
+        source = EmailSource(eml_path)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
+
+
+# ---------------------------------------------------------------------------
+# SubtitleSource
+# ---------------------------------------------------------------------------
+
+
+class TestSubtitleSource:
+    def test_basic(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.srt"
+        f.write_text(
+            "1\n"
+            "00:00:01,000 --> 00:00:04,000\n"
+            "Hello world\n"
+            "\n"
+            "2\n"
+            "00:00:05,000 --> 00:00:08,000\n"
+            "This is a test\n",
+            encoding="utf-8",
+        )
+        source = SubtitleSource(f)
+        assert source.source_format == "srt"
+        assert source.source_mimetype == "application/x-subrip"
+        assert source.page_count == 1
+
+    def test_extract_text(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.srt"
+        f.write_text(
+            "1\n"
+            "00:00:01,000 --> 00:00:04,000\n"
+            "Hello world\n"
+            "\n"
+            "2\n"
+            "00:00:05,000 --> 00:00:08,000\n"
+            "This is a test\n",
+            encoding="utf-8",
+        )
+        source = SubtitleSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "Hello world" in text
+        assert "This is a test" in text
+        # Timestamps and sequence numbers are stripped
+        assert "00:00:01,000" not in text
+        assert "1" not in text.splitlines()
+        assert saved is not None
+
+    def test_metadata(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.srt"
+        f.write_text(
+            "1\n00:00:01,000 --> 00:00:04,000\nHello world\n",
+            encoding="utf-8",
+        )
+        source = SubtitleSource(f)
+        meta = source.extract_metadata()
+        assert meta.extraction_method == "subtitle-parsing"
+        assert meta.document_type == "subtitle"
+
+    def test_render_page_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.srt"
+        f.write_text(
+            "1\n00:00:01,000 --> 00:00:04,000\nTest\n",
+            encoding="utf-8",
+        )
+        source = SubtitleSource(f)
         with pytest.raises(NotImplementedError):
             source.render_page(0, tmp_path)

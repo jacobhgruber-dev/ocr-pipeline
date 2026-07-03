@@ -33,32 +33,46 @@ from pathlib import Path
 from ocr_pipeline.errors import ConfigError
 
 from .base import DocumentSource
+from .archive import ArchiveSource
 from .csv_source import CsvSource
 from .docx import DocxSource
+from .email_source import EmailSource
 from .epub import EpubSource
 from .excel import ExcelSource
 from .html import HtmlSource
 from .image import ImageSource
+from .json_source import JsonSource
 from .latex import LatexSource
 from .markdown import MarkdownSource
+from .notebook import NotebookSource
+from .odt import OdtSource
 from .pdf import PdfSource
 from .pptx import PptxSource
+from .rtf import RtfSource
+from .subtitle import SubtitleSource
 from .txt import TxtSource
 
 logger = logging.getLogger(__name__)
 
 __all__ = [
+    "ArchiveSource",
     "CsvSource",
     "DocumentSource",
     "DocxSource",
+    "EmailSource",
     "EpubSource",
     "ExcelSource",
     "HtmlSource",
     "ImageSource",
+    "JsonSource",
     "LatexSource",
     "MarkdownSource",
+    "NotebookSource",
+    "OdtSource",
     "PdfSource",
     "PptxSource",
+    "RtfSource",
+    "SubtitleSource",
     "TxtSource",
     "detect_source",
 ]
@@ -96,6 +110,23 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".xlsm": ExcelSource,
     ".pptx": PptxSource,
     ".ppt": PptxSource,
+    ".json": JsonSource,
+    ".jsonl": JsonSource,
+    ".rtf": RtfSource,
+    ".odt": OdtSource,
+    ".ipynb": NotebookSource,
+    ".zip": ArchiveSource,
+    ".tar": ArchiveSource,
+    ".tgz": ArchiveSource,
+    ".7z": ArchiveSource,
+    ".gz": ArchiveSource,
+    ".bz2": ArchiveSource,
+    ".xz": ArchiveSource,
+    ".eml": EmailSource,
+    ".mbox": EmailSource,
+    ".srt": SubtitleSource,
+    ".vtt": SubtitleSource,
+    ".sbv": SubtitleSource,
 }
 
 
