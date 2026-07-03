@@ -17,7 +17,6 @@ import logging
 import shutil
 import subprocess
 from pathlib import Path
-from zipfile import ZipFile
 
 from ocr_pipeline.models import MetadataResult, RightsInfo, SourceInfo
 
@@ -47,14 +46,24 @@ def _check_dedrm() -> bool:
     """Check if Calibre DeDRM plugin is installed."""
     import os
 
-    calibre_plugins = os.path.expanduser("~/Library/Preferences/calibre/plugins")
-    # Linux path
-    calibre_config = os.path.expanduser("~/.config/calibre/plugins")
-    for path in (calibre_plugins, calibre_config):
-        if os.path.isdir(path):
-            contents = os.listdir(path)
-            if any("DeDRM" in f for f in contents):
-                return True
+    paths = [
+        os.path.expanduser("~/Library/Preferences/calibre/plugins"),  # macOS
+        os.path.expanduser("~/.config/calibre/plugins"),  # Linux
+        os.path.expanduser("~/AppData/Roaming/calibre/plugins"),  # Windows
+    ]
+    # Also check APPDATA env var for non-standard Windows installs
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        paths.append(os.path.join(appdata, "calibre", "plugins"))
+
+    for path in paths:
+        try:
+            if os.path.isdir(path):
+                contents = os.listdir(path)
+                if any("DeDRM" in f for f in contents):
+                    return True
+        except OSError:
+            continue
     return False
 
 
@@ -93,19 +102,7 @@ class EbookSource(DocumentSource):
             self._drm_cache = True
             return True
 
-        # EPUB: check for encryption.xml in the ZIP container
-        if ext == ".epub":
-            try:
-                with ZipFile(str(self.path), "r") as zf:
-                    has_enc = (
-                        "META-INF/encryption.xml" in zf.namelist()
-                        or "encryption.xml" in zf.namelist()
-                    )
-                self._drm_cache = has_enc
-                return has_enc
-            except Exception:
-                self._drm_cache = False
-                return False
+        # EPUB is handled by EpubSource; delegation documented here.
 
         # AZW/AZW3: check header markers
         if ext in (".azw", ".azw3"):
@@ -166,6 +163,7 @@ class EbookSource(DocumentSource):
             logger.debug("ebook-convert (Calibre) not installed — skipping text extraction")
         except Exception as exc:
             logger.warning("ebook-convert error: %s", exc)
+        txt_path.unlink(missing_ok=True)
         return ""
 
     def extract_metadata(self) -> MetadataResult:

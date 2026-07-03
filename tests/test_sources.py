@@ -1026,13 +1026,14 @@ class TestDjvuSource:
         assert source.page_count >= 1
 
     def test_extract_text_out_of_range(self, tmp_path: Path) -> None:
-        """Out-of-range page returns empty string."""
+        """Out-of-range page raises RenderError."""
+        from ocr_pipeline.errors import RenderError
+
         f = tmp_path / "test.djvu"
         f.write_text("")
         source = DjvuSource(f)
-        text, saved = source.extract_text(999, tmp_path / "out")
-        assert text == ""
-        assert saved is None
+        with pytest.raises(RenderError, match="out of range"):
+            source.extract_text(999, tmp_path / "out")
 
     def test_render_page_raises_without_ddjvu(self, tmp_path: Path) -> None:
         """render_page raises NotImplementedError when ddjvu is not installed."""

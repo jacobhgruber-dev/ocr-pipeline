@@ -42,7 +42,10 @@ class PptxSource(DocumentSource):
 
         from pptx import Presentation
 
-        prs = Presentation(str(self.path))
+        try:
+            prs = Presentation(str(self.path))
+        except Exception as exc:
+            raise RenderError(f"Failed to open PPTX: {self.path}") from exc
         slides: list[str] = []
 
         for slide_idx, slide in enumerate(prs.slides):

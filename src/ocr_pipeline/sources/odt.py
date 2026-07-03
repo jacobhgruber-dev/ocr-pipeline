@@ -76,8 +76,8 @@ class OdtSource(DocumentSource):
                     for el in meta_xml.iter(f"{_NS_DC}creator"):
                         if el.text:
                             meta.setdefault("author", el.text.strip())
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("ODT meta.xml parsing skipped: %s", exc)
 
             # Parse content.xml
             if "content.xml" in zf.namelist():
@@ -90,8 +90,8 @@ class OdtSource(DocumentSource):
                             for child in el:
                                 if child.tail:
                                     text_parts.append(child.tail.strip())
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("ODT content.xml parsing skipped: %s", exc)
 
         self._text_cache = "\n\n".join(p for p in text_parts if p)
         self._meta_cache = meta

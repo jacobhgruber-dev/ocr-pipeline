@@ -23,20 +23,7 @@ class ImageSource(DocumentSource):
     files are treated as multi-page documents (one page per frame).
     """
 
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
-        self._format: str | None = None
-        self._register_heif()
-
-    @staticmethod
-    def _register_heif() -> None:
-        """Register HEIC/HEIF support with Pillow if pillow-heif is installed."""
-        try:
-            from pillow_heif import register_heif_opener
-
-            register_heif_opener()
-        except ImportError:
-            pass
+    _format: str | None = None
 
     @property
     def source_format(self) -> str:
@@ -123,3 +110,12 @@ class ImageSource(DocumentSource):
     ) -> tuple[str, Path | None]:
         # Images have no embedded text — always fall through to OCR.
         return "", None
+
+
+# Register HEIC/HEIF support if pillow-heif is installed (module-level, once at import)
+try:
+    from pillow_heif import register_heif_opener
+
+    register_heif_opener()
+except ImportError:
+    pass

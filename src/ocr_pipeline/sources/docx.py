@@ -41,7 +41,10 @@ class DocxSource(DocumentSource):
 
         from docx import Document
 
-        doc = Document(str(self.path))
+        try:
+            doc = Document(str(self.path))
+        except Exception as exc:
+            raise RenderError(f"Failed to open DOCX: {self.path}") from exc
         paragraphs: list[str] = []
 
         for para in doc.paragraphs:
@@ -82,12 +85,14 @@ class DocxSource(DocumentSource):
         current: list[str] = []
         for text in paragraphs:
             if "\f" in text:
-                # Page break within paragraph
-                before, _, after = text.partition("\f")
-                if before.strip():
-                    current.append(before)
-                pages.append(current)
-                current = [after] if after.strip() else []
+                # Page break within paragraph — split on all breaks
+                parts = text.split("\f")
+                for i, part in enumerate(parts):
+                    if i > 0:
+                        pages.append(current)
+                        current = []
+                    if part.strip():
+                        current.append(part)
             else:
                 current.append(text)
         if current:

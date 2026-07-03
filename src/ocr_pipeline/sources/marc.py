@@ -80,8 +80,8 @@ class MarcSource(DocumentSource):
                     if notes:
                         r["notes"] = "; ".join(notes)
                     records.append(r)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("MARC record parse skipped: %s", exc)
         except Exception as exc:
             logger.warning("MARC parsing failed for %s: %s", self.path.name, exc)
 

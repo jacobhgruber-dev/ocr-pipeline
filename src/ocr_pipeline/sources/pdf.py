@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ocr_pipeline.errors import RenderError
-
 from .base import DocumentSource
 
 
@@ -35,8 +33,8 @@ class PdfSource(DocumentSource):
                 return doc.page_count
             finally:
                 doc.close()
-        except Exception as exc:
-            raise RenderError(f"Failed to open PDF: {self.path}") from exc
+        except Exception:
+            return 0  # Consistent with other sources: 0 = failed/corrupt
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
         from ocr_pipeline.renderer import render_page as _render_page

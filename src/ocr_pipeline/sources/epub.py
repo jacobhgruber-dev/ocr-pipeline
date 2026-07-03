@@ -31,6 +31,7 @@ class EpubSource(DocumentSource):
 
     _SPINE_ITEMS: list[tuple[str, str]] | None = None  # (item_id, href)
     _drm_cache: bool | None = None
+    _book: object | None = None
 
     @property
     def source_format(self) -> str:
@@ -131,6 +132,7 @@ class EpubSource(DocumentSource):
         from ebooklib import epub
 
         book = epub.read_epub(str(self.path))
+        self._book = book
         spine: list[tuple[str, str]] = []
 
         for item_id, _linear in book.spine:
@@ -157,7 +159,6 @@ class EpubSource(DocumentSource):
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None
     ) -> tuple[str, Path | None]:
-        from ebooklib import epub as _epub
         from lxml import html as lxml_html
 
         spine = self._load_spine()
@@ -165,7 +166,7 @@ class EpubSource(DocumentSource):
             raise RenderError(f"EPUB page index {page_index} out of range ({len(spine)} items)")
 
         item_id, href = spine[page_index]
-        book = _epub.read_epub(str(self.path))
+        book = self._book
         item = book.get_item_with_id(item_id)
         if item is None:
             raise RenderError(f"EPUB item {item_id} not found in {self.path}")

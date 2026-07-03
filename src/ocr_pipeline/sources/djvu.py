@@ -105,7 +105,9 @@ class DjvuSource(DocumentSource):
         self, page_index: int, output_dir: Path, flags: int | None = None
     ) -> tuple[str, Path | None]:
         if page_index < 0 or page_index >= self.page_count:
-            return "", None
+            raise RenderError(
+                f"DJVU page index {page_index} out of range ({self.page_count} pages)"
+            )
 
         output_dir.mkdir(parents=True, exist_ok=True)
         out_path = output_dir / f"page_{page_index + 1:04d}_final.md"

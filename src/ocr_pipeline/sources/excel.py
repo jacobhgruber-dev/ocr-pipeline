@@ -44,7 +44,10 @@ class ExcelSource(DocumentSource):
 
         from python_calamine import CalamineWorkbook
 
-        wb = CalamineWorkbook.from_path(str(self.path))
+        try:
+            wb = CalamineWorkbook.from_path(str(self.path))
+        except Exception as exc:
+            raise RenderError(f"Failed to open Excel file: {self.path}") from exc
         self._sheet_names = list(wb.sheet_names)
         self._sheets_data = {}
 

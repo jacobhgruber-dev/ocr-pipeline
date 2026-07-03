@@ -40,14 +40,6 @@ class TeiSource(DocumentSource):
     def page_count(self) -> int:
         return 1
 
-    def _is_tei(self) -> bool:
-        """Quick check: does this XML file use the TEI namespace?"""
-        try:
-            raw = self.path.read_text(encoding="utf-8", errors="replace")[:2000]
-            return "tei-c.org" in raw or "TEI" in raw
-        except Exception:
-            return False
-
     def _parse(self) -> tuple[str, dict[str, str]]:
         if self._text_cache is not None:
             return self._text_cache, self._meta_cache or {}
@@ -59,7 +51,9 @@ class TeiSource(DocumentSource):
 
         try:
             raw = self.path.read_text(encoding="utf-8", errors="replace")
-            doc = etree.fromstring(raw.encode("utf-8"))
+            # Use safe parser to prevent entity expansion attacks
+            parser = etree.XMLParser(resolve_entities=False, no_network=True)
+            doc = etree.fromstring(raw.encode("utf-8"), parser)
             ns = _NS_TEI
 
             # --- Header metadata ---
