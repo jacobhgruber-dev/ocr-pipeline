@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:45:59.506518+00:00",
+  "updated_at": "2026-07-03T03:46:36.863864+00:00",
+  "pdfs": {
+    "chinese_ml.pdf": {
+      "sha256": "1cd0d6347084c3f34a0dbb901ec97c5468474fcac39a417f1d3c79c9e51bf426",
+      "short_sha": "1cd0d6347084",
+      "path": "chinese_ml.pdf",
+      "filename": "chinese_ml.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "1cd0d6347084c3f34a0dbb901ec97c5468474fcac39a417f1d3c79c9e51bf426",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:45:59.506962+00:00",
+          "completed_at": "2026-07-03T03:46:36.863684+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "1cd0d6347084c3f34a0dbb901ec97c5468474fcac39a417f1d3c79c9e51bf426",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:45:59.507042+00:00",
+          "completed_at": "2026-07-03T03:46:18.264249+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "chinese_ml.pdf",
+        "size_bytes": 126972,
+        "mtime_epoch": 1783034468.9769905,
+        "sha256": "1cd0d6347084c3f34a0dbb901ec97c5468474fcac39a417f1d3c79c9e51bf426"
+      }
+    }
+  }
+}

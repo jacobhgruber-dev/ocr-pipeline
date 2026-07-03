@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:24:15.279987+00:00",
+  "updated_at": "2026-07-03T03:24:32.770408+00:00",
+  "pdfs": {
+    "jp_kokoro.pdf": {
+      "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+      "short_sha": "0be0be493f00",
+      "path": "jp_kokoro.pdf",
+      "filename": "jp_kokoro.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"id\":\"msg_01FFxurHepW7harvi8uyumC7\",\"content\":[{\"citations\":null,\"text\":\"# こころ\\n\\n私は毎日海へはいりに出掛けた。古い燻ぶり返った藁葺の間を通り抜けて磯へ下りると、この辺にこれほどの都会人種が住んでいるかと思うほど、避暑に来た男や女で砂の上が動いていた。ある時は海の中が銭湯のように黒い頭でごちゃごちゃしている事もあった。その中に知った人を一人ももたない私も、こういう賑やかな景色の中に裹まれて、砂の上に寝そべってみたり、膝頭を波に打たしてそこいらを跳ね廻るのは愉快であった。\\n\\n私は実に先生をこの雑沓の間に見付け出したのである。その時海岸には掛茶屋が二軒あった。私はふとした機会からその一軒の方に行き慣れていた。長谷辺に大きな別荘を構えている人と違って、各自に専有の着換場を拵えていないここいらの避暑客には、ぜひともこうした共同着換所といった風なものが必要なのであった。彼らはここで茶を飲み、ここで休息する外に、\",\"type\":\"text\"}],\"model\":\"claude-sonnet-5\",\"role\":\"assistant\",\"stop_reason\":\"end_turn\",\"stop_sequence\":null,\"type\":\"message\",\"usage\":{\"cache_creation_input_tokens\":0,\"cache_read_input_tokens\":0,\"input_tokens\":4405,\"output_tokens\":377,\"cache_creation\":{\"ephemeral_5m_input_tokens\":0,\"ephemeral_1h_input_tokens\":0},\"output_tokens_details\":{\"thinking_tokens\":0},\"service_tier\":\"standard\",\"inference_geo\":\"global\"},\"stop_details\":null}",
+          "started_at": "2026-07-03T03:24:15.280623+00:00",
+          "completed_at": "2026-07-03T03:24:32.764914+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "claude-sonnet-5"
+          },
+          "confidence": null
+        },
+        {
+          "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2035, \"output_tokens\": 412}",
+          "started_at": "2026-07-03T03:24:15.280759+00:00",
+          "completed_at": "2026-07-03T03:24:19.743235+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "jp_kokoro.pdf",
+        "size_bytes": 1774670,
+        "mtime_epoch": 1783049005.1152632,
+        "sha256": "0be0be493f00cffb6d13925c2d748255d990083746a7fc88fa4f8fca8060d727"
+      }
+    }
+  }
+}

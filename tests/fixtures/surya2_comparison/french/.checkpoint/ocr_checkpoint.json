@@ -1,0 +1,72 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:24:07.949844+00:00",
+  "updated_at": "2026-07-03T03:36:52.181888+00:00",
+  "pdfs": {
+    "french_les_mis.pdf": {
+      "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+      "short_sha": "0ba3c8fd79dc",
+      "path": "french_les_mis.pdf",
+      "filename": "french_les_mis.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "failed",
+          "engine_outputs": {
+            "surya2": {
+              "engine": "surya2",
+              "text": "",
+              "error": "Surya 2 subprocess failed (exit -6): <no stderr>",
+              "duration_sec": 2.084776832998614,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:36:47.830055+00:00",
+          "completed_at": "2026-07-03T03:36:49.916116+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "failed",
+          "engine_outputs": {
+            "surya2": {
+              "engine": "surya2",
+              "text": "",
+              "error": "Surya 2 subprocess failed (exit -6): <no stderr>",
+              "duration_sec": 2.2640112499939278,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:36:49.916151+00:00",
+          "completed_at": "2026-07-03T03:36:52.181654+00:00",
+          "error": "All OCR engines failed",
+          "estimated_cost": 0.0,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "french_les_mis.pdf",
+        "size_bytes": 685395,
+        "mtime_epoch": 1783049005.1042469,
+        "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3"
+      }
+    }
+  }
+}

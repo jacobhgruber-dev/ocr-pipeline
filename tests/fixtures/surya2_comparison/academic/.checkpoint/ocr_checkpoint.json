@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:23:34.080611+00:00",
+  "updated_at": "2026-07-03T03:43:54.106625+00:00",
+  "pdfs": {
+    "title_abstract.pdf": {
+      "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40",
+      "short_sha": "d28ae549466c",
+      "path": "title_abstract.pdf",
+      "filename": "title_abstract.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1887, \"output_tokens\": 516}",
+          "started_at": "2026-07-03T03:23:34.081124+00:00",
+          "completed_at": "2026-07-03T03:23:44.176207+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "title_abstract.pdf",
+        "size_bytes": 172292,
+        "mtime_epoch": 1783049005.1008716,
+        "sha256": "d28ae549466cc8049966241c9e4afc964cb3b79ef2b8f1cbef8c01de8e41ed40"
+      }
+    },
+    "citations_body.pdf": {
+      "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50",
+      "short_sha": "465516bfd9b6",
+      "path": "citations_body.pdf",
+      "filename": "citations_body.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2561, \"output_tokens\": 1238}",
+          "started_at": "2026-07-03T03:43:45.536800+00:00",
+          "completed_at": "2026-07-03T03:43:54.106338+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "citations_body.pdf",
+        "size_bytes": 89603,
+        "mtime_epoch": 1783032653.5315826,
+        "sha256": "465516bfd9b628c5fa9a1c54fa48311996cff319725790c9d301c66df694af50"
+      }
+    }
+  }
+}
