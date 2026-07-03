@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -106,7 +107,7 @@ class VlmMetadataEngine:
         timeout_sec: float = 30.0,
     ) -> None:
         self.vlm_model = vlm_model
-        self.api_key = api_key
+        self.api_key = api_key or os.environ.get("GEMINI_API_KEY") or ""
         self.page_count = page_count
         self.timeout_sec = timeout_sec
 
