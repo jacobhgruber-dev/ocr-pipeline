@@ -87,9 +87,13 @@ class PageContext:
     """
 
     page: PageResult
-    pdf_path: Path
+    pdf_path: Path  # legacy — kept for backward compatibility; prefer *source*
     output_dir: Path
     render_dir: Path
+
+    # -- NEW: source abstraction (v0.3) --
+    source: Any = None  # DocumentSource | None — set by pipeline for non-PDF formats
+    source_image: Path | None = None  # pre-rendered image for image-based sources
 
     # Populated by phases
     png_path: Path | None = None
@@ -216,8 +220,33 @@ class PageProcessor:
     # ------------------------------------------------------------------
 
     def _try_text_extraction(self, ctx: PageContext) -> bool:
-        """Try PyMuPDF text extraction.  Returns True if the fast path succeeded."""
+        """Try text extraction via the document source or PyMuPDF fallback.
+
+        Returns True if the fast path succeeded (text was extracted
+        without rendering).
+        """
         try:
+            if ctx.source is not None:
+                # -- New path: delegate to DocumentSource --
+                text, saved = ctx.source.extract_text(
+                    ctx.page.page_index,
+                    ctx.output_dir,
+                    flags=self.config.text_extraction_flags,
+                )
+                if text.strip():
+                    if self.config.postprocess_enabled:
+                        text = self.postprocessor.process(text)
+                    ctx.page.merged_markdown = text
+                    ctx.page.has_extractable_text = True
+                    ctx.page.status = PageStatus.EXTRACTED
+                    ctx.page.completed_at = now_iso()
+                    ctx.page.estimated_cost = 0.0
+                    ctx.cost = 0.0
+                    self._save_extracted_outputs(ctx)
+                    return True
+                return False
+
+            # -- Legacy PDF path (backward compat) --
             text, _saved = extract_page_text(
                 ctx.pdf_path,
                 ctx.page.page_index,
@@ -227,48 +256,61 @@ class PageProcessor:
             if text.strip():
                 if self.config.postprocess_enabled:
                     text = self.postprocessor.process(text)
-
                 ctx.page.merged_markdown = text
                 ctx.page.has_extractable_text = True
                 ctx.page.status = PageStatus.EXTRACTED
                 ctx.page.completed_at = now_iso()
                 ctx.page.estimated_cost = 0.0
                 ctx.cost = 0.0
-
-                # Capture page dimensions from PyMuPDF for ALTO output
-                # (no PNG rendering on the fast path, but ALTO needs WIDTH/HEIGHT)
-                try:
-                    import fitz
-
-                    doc = fitz.open(str(ctx.pdf_path))
-                    page = doc[ctx.page.page_index]
-                    rect = page.mediabox
-                    ctx.page.metadata["page_width"] = int(rect.width)
-                    ctx.page.metadata["page_height"] = int(rect.height)
-                    doc.close()
-                except Exception:
-                    pass
-
-                # Save via configured formatters
-                for fmt_name in self.config.output_formats:
-                    formatter = get_formatter(fmt_name)
-                    content = formatter.format(ctx.page)
-                    out_path = (
-                        ctx.output_dir / f"{ctx.page.page_label}_final{formatter.extension()}"
-                    )
-                    out_path.write_text(content, encoding="utf-8")
-
-                self._save_raw_json(ctx)
+                self._save_extracted_outputs(ctx)
                 return True
         except RenderError:
             pass
         return False
+
+    def _save_extracted_outputs(self, ctx: PageContext) -> None:
+        """Save outputs for text-extracted pages (shared by both paths)."""
+        # Capture page dimensions from PyMuPDF for ALTO output
+        # (no PNG rendering on the fast path, but ALTO needs WIDTH/HEIGHT)
+        try:
+            import fitz
+
+            doc = fitz.open(str(ctx.pdf_path))
+            page = doc[ctx.page.page_index]
+            rect = page.mediabox
+            ctx.page.metadata["page_width"] = int(rect.width)
+            ctx.page.metadata["page_height"] = int(rect.height)
+            doc.close()
+        except Exception:
+            pass
+
+        # Save via configured formatters
+        for fmt_name in self.config.output_formats:
+            formatter = get_formatter(fmt_name)
+            content = formatter.format(ctx.page)
+            out_path = ctx.output_dir / f"{ctx.page.page_label}_final{formatter.extension()}"
+            out_path.write_text(content, encoding="utf-8")
+
+        self._save_raw_json(ctx)
 
     # ------------------------------------------------------------------
     # Phase 2: rendering
     # ------------------------------------------------------------------
 
     def _render_page(self, ctx: PageContext) -> None:
+        if ctx.source_image is not None:
+            # Image-based source: the image is already rendered — copy/link it
+            ctx.png_path = ctx.source_image
+            return
+        if ctx.source is not None:
+            # Delegate to source's render_page
+            ctx.png_path = ctx.source.render_page(
+                ctx.page.page_index,
+                ctx.render_dir,
+                dpi=self.config.render_dpi,
+            )
+            return
+        # Legacy PDF path
         ctx.png_path = render_page(
             ctx.pdf_path,
             ctx.page.page_index,

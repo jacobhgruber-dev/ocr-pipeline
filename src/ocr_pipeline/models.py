@@ -43,6 +43,97 @@ class EngineName(str, Enum):
 
 
 # ---------------------------------------------------------------------------
+# Source metadata
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SourceInfo:
+    """Provenance and technical metadata for an ingested document.
+
+    Captures the original format, conversion chain, and identity clues
+    so downstream consumers (cataloguers, indexers, rights-review tools)
+    can make informed decisions.
+
+    Attributes:
+        format: Original file format (``"pdf"``, ``"epub"``, ``"docx"``, etc.).
+        page_count: Number of logical pages in the document.
+        mimetype: IANA media type (e.g. ``"application/epub+zip"``).
+        converted_from: When the document was auto-converted from another
+            format, this holds the name of the original format.  ``None``
+            for natively supported formats.
+        title: Document title, if extractable from the source.
+        extra: Arbitrary per-format metadata (e.g. Word document revision
+            history, EPUB spine order).
+    """
+
+    format: str = ""
+    page_count: int = 0
+    mimetype: str = ""
+    converted_from: str | None = None
+    title: str = ""
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "format": self.format,
+            "page_count": self.page_count,
+            "mimetype": self.mimetype,
+            "converted_from": self.converted_from,
+            "title": self.title,
+            "extra": self.extra,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> SourceInfo:
+        return cls(
+            format=str(d.get("format", "")),
+            page_count=int(d.get("page_count", 0)),
+            mimetype=str(d.get("mimetype", "")),
+            converted_from=d.get("converted_from"),
+            title=str(d.get("title", "")),
+            extra=d.get("extra", {}) or {},
+        )
+
+
+@dataclass
+class RightsInfo:
+    """Copyright, licensing, and access-control metadata.
+
+    Attributes:
+        license: SPDX identifier or free-text license name
+            (e.g. ``"CC-BY-4.0"``, ``"Public Domain"``).
+        rights_holder: Person or organisation that holds the copyright.
+        access_restrictions: Human-readable description of any access
+            restrictions (e.g. ``"Embargoed until 2027-01-01"``).
+        extra: Arbitrary extension fields (e.g. copyright registration
+            numbers, territorial restrictions).
+    """
+
+    license: str = ""
+    rights_holder: str = ""
+    access_restrictions: str = ""
+    extra: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "license": self.license,
+            "rights_holder": self.rights_holder,
+            "access_restrictions": self.access_restrictions,
+            "extra": self.extra,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> RightsInfo:
+        return cls(
+            license=str(d.get("license", "")),
+            rights_holder=str(d.get("rights_holder", "")),
+            access_restrictions=str(d.get("access_restrictions", "")),
+            extra=d.get("extra", {}) or {},
+        )
+
+
+# ---------------------------------------------------------------------------
 # Data classes
 # ---------------------------------------------------------------------------
 
@@ -119,8 +210,13 @@ class MetadataResult:
     extraction_method: str = ""  # "vlm", "grobid", "vlm_failed", "none"
     extra: dict[str, Any] = field(default_factory=dict)
 
+    # -- NEW: source provenance and rights --
+    source_info: SourceInfo | None = None  # technical metadata about the ingested file
+    rights: RightsInfo | None = None  # copyright / licensing metadata
+    sha256: str = ""  # content hash of the source file
+
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "title": self.title,
             "authors": self.authors,
             "abstract": self.abstract,
@@ -148,10 +244,23 @@ class MetadataResult:
             "identifiers": self.identifiers,
             "extraction_method": self.extraction_method,
             "extra": self.extra,
+            "sha256": self.sha256,
         }
+        if self.source_info is not None:
+            d["source_info"] = self.source_info.to_dict()
+        if self.rights is not None:
+            d["rights"] = self.rights.to_dict()
+        return d
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> MetadataResult:
+        source_info = None
+        if "source_info" in d and d["source_info"] is not None:
+            source_info = SourceInfo.from_dict(d["source_info"])
+        rights = None
+        if "rights" in d and d["rights"] is not None:
+            rights = RightsInfo.from_dict(d["rights"])
+
         return cls(
             title=str(d.get("title", "")),
             authors=[str(a) for a in d.get("authors", [])],
@@ -180,6 +289,9 @@ class MetadataResult:
             identifiers=d.get("identifiers", {}) or {},
             extraction_method=str(d.get("extraction_method", "")),
             extra=d.get("extra", {}) or {},
+            source_info=source_info,
+            rights=rights,
+            sha256=str(d.get("sha256", "")),
         )
 
 
@@ -227,16 +339,21 @@ class EngineOutput:
 
 @dataclass
 class FileIdentity:
-    """Stable identity for a PDF file, independent of SHA256 changes.
+    """Stable identity for a file, independent of SHA256 changes.
 
     Used as the primary checkpoint key so that reorganized or re-downloaded
     files (which change SHA256) can still be matched.
+
+    *file_type* is added in v0.3 so the checkpoint layer can distinguish
+    PDF from non-PDF sources without inspecting files on disk.  Defaults
+    to ``"pdf"`` for backward compatibility with v0.2 checkpoints.
     """
 
     relative_path: str  # e.g. "Pope Paul VI/1964/issue_1.pdf"
     size_bytes: int
     mtime_epoch: float
     sha256: str | None = None  # populated lazily after hashing
+    file_type: str = "pdf"  # e.g. "pdf", "epub", "docx", "png"
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -244,6 +361,7 @@ class FileIdentity:
             "size_bytes": self.size_bytes,
             "mtime_epoch": self.mtime_epoch,
             "sha256": self.sha256,
+            "file_type": self.file_type,
         }
 
     @classmethod
@@ -253,6 +371,7 @@ class FileIdentity:
             size_bytes=int(d["size_bytes"]),
             mtime_epoch=float(d["mtime_epoch"]),
             sha256=d.get("sha256"),
+            file_type=str(d.get("file_type", "pdf")),
         )
 
 
@@ -324,7 +443,13 @@ class PageResult:
 
 @dataclass
 class PdfProgress:
-    """Processing progress for a single PDF in the corpus."""
+    """Processing progress for a single file in the corpus.
+
+    Despite the name, this dataclass is now used for *any* file type
+    (PDF, image, EPUB, DOCX, etc.).  The ``file_type`` field records
+    the original format.  Backward-compatible: checkpoints written by
+    v0.2 default to ``file_type="pdf"``.
+    """
 
     sha256: str  # full SHA256
     short_sha: str  # first 12 chars for directory naming
@@ -335,6 +460,7 @@ class PdfProgress:
     pages: list[PageResult] = field(default_factory=list)
     file_identity: FileIdentity | None = None  # populated by checkpoint manager
     metadata: dict[str, Any] = field(default_factory=dict)
+    file_type: str = "pdf"  # e.g. "pdf", "epub", "docx", "png"
 
     def to_dict(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -346,6 +472,7 @@ class PdfProgress:
             "has_extractable_text": self.has_extractable_text,
             "pages": [p.to_dict() for p in self.pages],
             "metadata": self.metadata,
+            "file_type": self.file_type,
         }
         if self.file_identity is not None:
             result["file_identity"] = self.file_identity.to_dict()
@@ -367,4 +494,5 @@ class PdfProgress:
             pages=[PageResult.from_dict(p) for p in d.get("pages", [])],
             file_identity=file_identity,
             metadata=d.get("metadata", {}),
+            file_type=str(d.get("file_type", "pdf")),
         )

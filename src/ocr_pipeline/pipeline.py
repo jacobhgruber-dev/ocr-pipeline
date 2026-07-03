@@ -7,8 +7,9 @@ Usage::
     stats = pipeline.run()
     print(stats)
 
-    # Or process a single file:
+    # Or process a single file (PDF or any supported format):
     pipeline.process_one(Path("./pdfs/document.pdf"))
+    pipeline.process_one(DocxSource(Path("./reports/report.docx")))
 """
 
 from __future__ import annotations
@@ -46,7 +47,6 @@ from .models import (
 from .page_processor import PageContext, PageProcessor
 from .postprocess import PostProcessor
 from .progress import PipelineProgress
-from .renderer import get_page_count
 
 logger = logging.getLogger("ocr_pipeline")
 
@@ -57,11 +57,12 @@ logger = logging.getLogger("ocr_pipeline")
 
 
 class Pipeline:
-    """Multi-engine OCR pipeline with VLM merge for PDF documents.
+    """Multi-engine OCR pipeline with VLM merge for PDF and other documents.
 
-    Processes all PDFs found in ``config.input_dir``, using a fast
-    text-extraction path for pages with embedded text and a full
-    render→OCR→VLM-merge path for image-only pages.
+    Processes all files matching ``config.input_extensions`` found in
+    ``config.input_dir``, using a fast text-extraction path for pages
+    with embedded text and a full render→OCR→VLM-merge path for
+    image-only pages.
     """
 
     def __init__(
@@ -154,10 +155,10 @@ class Pipeline:
     # ------------------------------------------------------------------
 
     def run(self) -> dict[str, Any]:
-        """Process all PDFs in ``config.input_dir``.
+        """Process all files matching ``config.input_extensions`` in ``config.input_dir``.
 
-        PDFs are processed in parallel (controlled by ``pdf_concurrency``,
-        default 2).  Each PDF's pages are processed in parallel internally.
+        Files are processed in parallel (controlled by ``pdf_concurrency``,
+        default 2).  Each file's pages are processed in parallel internally.
 
         Returns:
             Stats dict with keys ``pdfs_processed``, ``pdfs_failed``,
@@ -166,25 +167,38 @@ class Pipeline:
         """
         t0 = time.perf_counter()
 
-        pdf_paths = sorted(self.config.input_dir.rglob("*.pdf"))
-        if not pdf_paths:
-            logger.warning("No PDFs found in %s", self.config.input_dir)
+        # Collect all paths matching configured extensions
+        ext_list = getattr(self.config, "input_extensions", ["pdf"])
+        file_paths: list[Path] = []
+        for ext in ext_list:
+            ext_clean = ext.lstrip(".")
+            file_paths.extend(sorted(self.config.input_dir.rglob(f"*.{ext_clean}")))
+
+        if not file_paths:
+            extensions_str = ", ".join(ext_list)
+            logger.warning(
+                "No files matching extensions [%s] found in %s",
+                extensions_str,
+                self.config.input_dir,
+            )
             return self._build_stats(0.0)
 
         # Pre-compute total pages for progress reporting
         total_pages = 0
-        for pdf_path in pdf_paths:
+        for fp in file_paths:
             try:
-                total_pages += get_page_count(pdf_path)
+                source = self._build_source(fp)
+                total_pages += source.page_count
             except Exception:
                 total_pages += 1  # assume at least 1 page
         if self.config.test_mode:
-            total_pages = min(total_pages, 3 * len(pdf_paths))
+            total_pages = min(total_pages, 3 * len(file_paths))
 
         logger.info(
-            "Found %d PDF(s) (%d total pages) in %s",
-            len(pdf_paths),
+            "Found %d file(s) (%d total pages) matching %s in %s",
+            len(file_paths),
             total_pages,
+            ext_list,
             self.config.input_dir,
         )
 
@@ -194,30 +208,32 @@ class Pipeline:
 
         with ThreadPoolExecutor(max_workers=pdf_workers) as executor:
             future_to_path: dict[Future[dict[str, Any]], Path] = {
-                executor.submit(self.process_one, pdf_path): pdf_path for pdf_path in pdf_paths
+                executor.submit(self.process_one, fp): fp for fp in file_paths
             }
 
             for future in as_completed(future_to_path):
-                pdf_path = future_to_path[future]
-                pdf_stats: dict[str, Any] = {}
+                file_path = future_to_path[future]
+                file_stats: dict[str, Any] = {}
                 try:
-                    pdf_stats = future.result()
+                    file_stats = future.result()
                     with stats_lock:
                         self._pdfs_processed += 1
-                        self._pages_processed += pdf_stats.get("pages_processed", 0)
-                        self._pages_complete += pdf_stats.get("pages_complete", 0)
-                        self._pages_failed += pdf_stats.get("pages_failed", 0)
+                        self._pages_processed += file_stats.get("pages_processed", 0)
+                        self._pages_complete += file_stats.get("pages_complete", 0)
+                        self._pages_failed += file_stats.get("pages_failed", 0)
                 except Exception as exc:
-                    logger.error("Failed to process %s: %s", pdf_path.name, exc)
+                    logger.error("Failed to process %s: %s", file_path.name, exc)
                     with stats_lock:
                         self._pdfs_failed += 1
 
-                pages_done = pdf_stats.get("pages_processed", 0) + pdf_stats.get("pages_skipped", 0)
+                pages_done = file_stats.get("pages_processed", 0) + file_stats.get(
+                    "pages_skipped", 0
+                )
                 for _ in range(max(pages_done, 1)):
                     progress.update(0, 0.0)
 
                 with stats_lock:
-                    self._total_confidence += pdf_stats.get("pages_confidence_sum", 0.0)
+                    self._total_confidence += file_stats.get("pages_confidence_sum", 0.0)
 
         progress.close()
 
@@ -230,25 +246,38 @@ class Pipeline:
         duration = round(time.perf_counter() - t0, 1)
         return self._build_stats(duration)
 
-    def process_one(self, pdf_path: Path) -> dict[str, Any]:
-        """Process a single PDF file through the pipeline.
+    def process_one(self, file_input: Path | Any) -> dict[str, Any]:
+        """Process a single file through the pipeline.
 
         Args:
-            pdf_path: Absolute path to the PDF file.
+            file_input: Either a ``Path`` to a file on disk, or a
+                ``DocumentSource`` instance (for programmatic use).
 
         Returns:
-            Per-PDF stats dict.
+            Per-file stats dict.
         """
-        pdf_path = pdf_path.resolve()
+        # -- Resolve input to a Path + optional DocumentSource --
+        if isinstance(file_input, Path):
+            file_path = file_input.resolve()
+            source = self._build_source(file_path)
+        else:
+            # Assume DocumentSource instance
+            source = file_input
+            file_path = source.path
 
-        # Build file identity (without SHA256 yet — computed lazily)
+        file_type = source.source_format
+        page_count = source.page_count
+        if self.config.test_mode:
+            page_count = min(page_count, 3)
+
+        # Build file identity
         try:
-            st = pdf_path.stat()
+            st = file_path.stat()
         except OSError as exc:
-            raise RenderError(f"Cannot stat PDF: {pdf_path}") from exc
+            raise RenderError(f"Cannot stat file: {file_path}") from exc
 
-        rel_path = str(pdf_path.relative_to(self.config.input_dir))
-        sha256 = self._compute_sha256(pdf_path)
+        rel_path = str(file_path.relative_to(self.config.input_dir))
+        sha256 = self._compute_sha256(file_path)
         short_sha = sha256[:12]
 
         file_id = FileIdentity(
@@ -256,6 +285,7 @@ class Pipeline:
             size_bytes=st.st_size,
             mtime_epoch=st.st_mtime,
             sha256=sha256,
+            file_type=file_type,
         )
 
         # Check checkpoint for existing progress
@@ -269,7 +299,7 @@ class Pipeline:
                 p.status in (PageStatus.COMPLETE, PageStatus.EXTRACTED) for p in existing.pages
             )
             if all_done:
-                logger.info("PDF %s: all pages already complete — skipping", short_sha)
+                logger.info("%s: all pages already complete — skipping", short_sha)
                 return {
                     "pages_processed": 0,
                     "pages_complete": 0,
@@ -277,23 +307,19 @@ class Pipeline:
                     "pages_confidence_sum": 0.0,
                 }
 
-        # Determine page count (per-page extractability tested individually)
-        page_count = get_page_count(pdf_path)
-        if self.config.test_mode:
-            page_count = min(page_count, 3)
-
         # Get or create PdfProgress
         with self._checkpoint_lock:
             pp = self._get_or_create_progress(
                 file_id=file_id,
-                pdf_path=pdf_path,
+                pdf_path=file_path,
                 sha256=sha256,
                 short_sha=short_sha,
                 rel_path=rel_path,
                 page_count=page_count,
             )
+            pp.file_type = file_type
 
-        # Output directory for this PDF
+        # Output directory for this file
         output_dir = self.config.output_dir / short_sha
         render_dir = output_dir / "renders"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -312,7 +338,7 @@ class Pipeline:
         ]
 
         if not pending:
-            logger.info("PDF %s: all %d pages already complete", short_sha, page_count)
+            logger.info("%s: all %d pages already complete", short_sha, page_count)
             return {
                 "pages_processed": 0,
                 "pages_complete": 0,
@@ -327,10 +353,11 @@ class Pipeline:
             for page_index, page in pending:
                 future = executor.submit(
                     self._process_single_page,
-                    pdf_path,
+                    file_path,
                     page,
                     output_dir,
                     render_dir,
+                    source,
                 )
                 future_map[future] = page
 
@@ -362,11 +389,12 @@ class Pipeline:
                     with self._checkpoint_lock:
                         self.checkpoint.update_page(rel_path, page)
 
-        # Produce document-level concatenated output with GROBID metadata
-        try:
-            self._produce_document_output(pdf_path, output_dir, short_sha, page_count)
-        except Exception:
-            logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
+        # Produce document-level concatenated output (PDF-only for now)
+        if file_type == "pdf":
+            try:
+                self._produce_document_output(file_path, output_dir, short_sha, page_count)
+            except Exception:
+                logger.debug("Skipping document-level output for %s", short_sha, exc_info=True)
 
         return {
             "pages_processed": pages_processed,
@@ -374,6 +402,22 @@ class Pipeline:
             "pages_failed": pages_failed,
             "pages_confidence_sum": pages_confidence_sum,
         }
+
+    def _build_source(self, file_path: Path) -> Any:
+        """Build a ``DocumentSource`` for *file_path* using the factory.
+
+        Falls back to treating the file as a PDF if the sources package
+        is not available (graceful degradation).
+        """
+        try:
+            from .sources import detect_source
+
+            return detect_source(file_path)
+        except Exception:
+            # Fallback for environments without the sources package
+            from .sources.pdf import PdfSource
+
+            return PdfSource(file_path)
 
     def _produce_document_output(
         self,
@@ -570,6 +614,7 @@ class Pipeline:
         page: PageResult,
         output_dir: Path,
         render_dir: Path,
+        source: Any = None,
     ) -> tuple[PageResult, float]:
         """Process a single page via :class:`PageProcessor`.
 
@@ -593,6 +638,7 @@ class Pipeline:
             pdf_path=pdf_path,
             output_dir=output_dir,
             render_dir=render_dir,
+            source=source,
         )
         ctx = processor.process(ctx)
         return ctx.page, ctx.cost

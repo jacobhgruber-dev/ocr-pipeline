@@ -18,6 +18,10 @@ class PipelineConfig:
     input_dir: Path
     output_dir: Path
     checkpoint_dir: Path | None = None  # defaults to output_dir/.checkpoint/
+    input_extensions: list[str] = field(default_factory=lambda: ["pdf"])
+    """File extensions to glob for in ``input_dir`` (without leading dot).
+    Default ``["pdf"]`` for backward compatibility.  Set to
+    ``["pdf", "epub", "docx", "txt"]`` for multi-format ingestion."""
 
     # -- Engine selection ----------------------------------------------------
     engines: list[str] = field(default_factory=lambda: ["marker"])
@@ -132,6 +136,7 @@ class ConfigLoader:
         ("input_dir", "OCR_PIPELINE_INPUT_DIR", Path),
         ("output_dir", "OCR_PIPELINE_OUTPUT_DIR", Path),
         ("checkpoint_dir", "OCR_PIPELINE_CHECKPOINT_DIR", Path),
+        ("input_extensions", "OCR_PIPELINE_INPUT_EXTENSIONS", None),  # comma-separated -> list
         ("engines", "OCR_PIPELINE_ENGINES", None),  # comma-separated -> list
         ("vlm_enabled", "OCR_PIPELINE_VLM_ENABLED", None),  # "true"/"false"
         ("vlm_model", "OCR_PIPELINE_VLM_MODEL", str),
@@ -225,6 +230,8 @@ class ConfigLoader:
                     overrides[field_name] = [s.strip() for s in value.split(",") if s.strip()]
                 elif field_name == "output_formats":
                     overrides[field_name] = [s.strip() for s in value.split(",") if s.strip()]
+                elif field_name == "input_extensions":
+                    overrides[field_name] = [s.strip() for s in value.split(",") if s.strip()]
                 else:
                     overrides[field_name] = value
             elif parser is Path:
@@ -282,6 +289,7 @@ class ConfigLoader:
             input_dir=_coerce_path(raw, "input_dir"),
             output_dir=_coerce_path(raw, "output_dir"),
             checkpoint_dir=cls._coerce_optional_path(raw, "checkpoint_dir"),
+            input_extensions=_coerce_str_list(raw.get("input_extensions", ["pdf"])),
             # Engine selection
             engines=_coerce_str_list(raw.get("engines", ["marker"])),
             # VLM

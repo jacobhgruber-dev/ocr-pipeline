@@ -1,0 +1,92 @@
+"""PowerPoint document source — extract text from slide decks.
+
+Uses ``python-pptx`` to extract text from each slide.  Each slide is
+treated as a logical page.  Rendering a slide to PNG is supported via
+a placeholder approach.
+"""
+
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+from ocr_pipeline.errors import RenderError
+
+from .base import DocumentSource
+
+logger = logging.getLogger(__name__)
+
+
+class PptxSource(DocumentSource):
+    """Document source for PowerPoint files (.pptx).
+
+    Each slide is a single logical page.  Text extraction walks all
+    shapes on each slide and aggregates text content.  Rendering is
+    not supported — convert slides to images before OCR.
+    """
+
+    _slides_text: list[str] | None = None
+
+    @property
+    def source_format(self) -> str:
+        return "pptx"
+
+    @property
+    def source_mimetype(self) -> str:
+        return "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+
+    def _load_slides(self) -> list[str]:
+        """Extract text from each slide, caching the result."""
+        if self._slides_text is not None:
+            return self._slides_text
+
+        from pptx import Presentation
+
+        prs = Presentation(str(self.path))
+        slides: list[str] = []
+
+        for slide_idx, slide in enumerate(prs.slides):
+            parts: list[str] = [f"## Slide {slide_idx + 1}", ""]
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for para in shape.text_frame.paragraphs:
+                        text = para.text.strip()
+                        if text:
+                            parts.append(text)
+            # Extract speaker notes if present
+            try:
+                if slide.has_notes_slide:
+                    notes_text = slide.notes_slide.notes_text_frame.text.strip()
+                    if notes_text:
+                        parts.append("")
+                        parts.append(f"**Notes:** {notes_text}")
+            except Exception:
+                pass
+            slides.append("\n".join(parts))
+
+        self._slides_text = slides
+        return slides
+
+    @property
+    def page_count(self) -> int:
+        return len(self._load_slides())
+
+    def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
+        raise NotImplementedError(
+            "PptxSource.render_page not yet implemented — convert slides to images before OCR."
+        )
+
+    def extract_text(
+        self, page_index: int, output_dir: Path, flags: int | None = None
+    ) -> tuple[str, Path | None]:
+        slides = self._load_slides()
+        if page_index < 0 or page_index >= len(slides):
+            raise RenderError(f"PPTX slide index {page_index} out of range ({len(slides)} slides)")
+
+        text = slides[page_index]
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        out_path = output_dir / f"page_{page_index + 1:04d}_final.md"
+        out_path.write_text(text, encoding="utf-8")
+
+        return text, out_path
