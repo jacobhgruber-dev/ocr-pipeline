@@ -11,3 +11,5 @@ dist/
 build/
 .DS_Store
 .env
+tests/fixtures/benchmark_results.csv
+.playwright-mcp/
