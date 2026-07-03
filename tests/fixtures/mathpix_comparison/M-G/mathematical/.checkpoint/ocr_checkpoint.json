@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:02:38.177853+00:00",
+  "updated_at": "2026-07-03T03:03:06.301053+00:00",
+  "pdfs": {
+    "russian_math.pdf": {
+      "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+      "short_sha": "ea6fe16a17fd",
+      "path": "russian_math.pdf",
+      "filename": "russian_math.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2393, \"output_tokens\": 784}",
+          "started_at": "2026-07-03T03:02:38.178382+00:00",
+          "completed_at": "2026-07-03T03:03:05.745609+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        },
+        {
+          "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 2447, \"output_tokens\": 719}",
+          "started_at": "2026-07-03T03:02:38.178459+00:00",
+          "completed_at": "2026-07-03T03:03:06.300773+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "russian_math.pdf",
+        "size_bytes": 241968,
+        "mtime_epoch": 1783047699.600191,
+        "sha256": "ea6fe16a17fd7ad288315eb4861f136218c1458abcfeec3ac49d962211460acc"
+      }
+    }
+  }
+}

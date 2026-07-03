@@ -1,0 +1,142 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:02:06.940051+00:00",
+  "updated_at": "2026-07-03T03:02:20.659606+00:00",
+  "pdfs": {
+    "chapter_opening.pdf": {
+      "sha256": "8fcc93a5caa5426de7fd6940dee4845b598c1d3a9de6927a107596625c4d9aa9",
+      "short_sha": "8fcc93a5caa5",
+      "path": "chapter_opening.pdf",
+      "filename": "chapter_opening.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "8fcc93a5caa5426de7fd6940dee4845b598c1d3a9de6927a107596625c4d9aa9",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1556, \"output_tokens\": 329}",
+          "started_at": "2026-07-03T03:02:06.940498+00:00",
+          "completed_at": "2026-07-03T03:02:13.490425+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "chapter_opening.pdf",
+        "size_bytes": 29918,
+        "mtime_epoch": 1783047699.5907028,
+        "sha256": "8fcc93a5caa5426de7fd6940dee4845b598c1d3a9de6927a107596625c4d9aa9"
+      }
+    },
+    "block_quotes.pdf": {
+      "sha256": "3a3cbe6e92dc1f39f0d19daebe3b7ef278df0dbdb20296deba00bfc9139d5944",
+      "short_sha": "3a3cbe6e92dc",
+      "path": "block_quotes.pdf",
+      "filename": "block_quotes.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "3a3cbe6e92dc1f39f0d19daebe3b7ef278df0dbdb20296deba00bfc9139d5944",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1553, \"output_tokens\": 331}",
+          "started_at": "2026-07-03T03:02:06.954529+00:00",
+          "completed_at": "2026-07-03T03:02:16.846207+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "block_quotes.pdf",
+        "size_bytes": 31652,
+        "mtime_epoch": 1783047699.590114,
+        "sha256": "3a3cbe6e92dc1f39f0d19daebe3b7ef278df0dbdb20296deba00bfc9139d5944"
+      }
+    },
+    "french_les_mis.pdf": {
+      "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+      "short_sha": "0ba3c8fd79dc",
+      "path": "french_les_mis.pdf",
+      "filename": "french_les_mis.pdf",
+      "page_count": 2,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "mathpix": {
+              "engine": "mathpix",
+              "text": "sont trois gendarmes et Jean Valjean.\n- Monseigneur..., dit un des gendarmes.\n- Monseigneur..., murmure Jean Valjean, stupéfait.\n- Silence, dit le gendarme, c'est Monseigneur l'évêque.\n\nMais l'évêque s'approche de Jean Valjean et lui dit :\n- Ah ! Vous voilà ! Je vous ai aussi donné les chandeliers, pourquoi ne les avez-vous pas emportés avec les couverts?\n\nJean Valjean ouvre de grands yeux en entendant l'évêque.\n- Monseigneur, dit le gendarme, cet homme nous a dit que vous lui aviez donné ces couverts, c'était donc vrai?\n- Naturellement, répond l'évêque.\n\nEt il va à la cheminée, prend deux chandeliers en argent, les donne à Jean Valjean et lui dit :\n- Mon ami, avant de vous en aller, prenez vos chandeliers. Les voici.\n\nJean Valjean se met à trembler. Il prend les deux chandeliers machinalement.\n- Maintenant, dit l'évêque, allez en paix.\n\nJean Valjean sort de la maison de l'évêque et marche rapidement. Il se trouve bientôt hors de la ville.\n\nTout à coup, il entend un bruit joyeux. Il tourne la tête et voit venir sur le sentier un petit garçon de dix ans qui chantonne. Tout en chantant, il fait sauter dans sa main quelques pièces de monnaie. Toute sa fortune.\n\nTout à coup, une des pièces tombe et va rouler jus-\n\n- 9 -",
+              "error": null,
+              "duration_sec": 1.5438648749986896,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:02:18.651447+00:00",
+          "completed_at": "2026-07-03T03:02:20.659413+00:00",
+          "error": null,
+          "estimated_cost": 0.005,
+          "metadata": {},
+          "confidence": null
+        },
+        {
+          "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3",
+          "page_index": 1,
+          "page_label": "page_0002",
+          "has_extractable_text": false,
+          "status": "complete",
+          "engine_outputs": {
+            "mathpix": {
+              "engine": "mathpix",
+              "text": "qu'aux pieds de Jean Valjean. Jean Valjean met le pied dessus.\n\nL'enfant, qui suit sa pièce du regard, s'approche de l'homme.\n- Monsieur, dit-il, ma pièce !\n- Comment t'appelles-tu ? dit Jean Valjean.\n- Petit-Gervais, monsieur.\n- Va-t'en, dit Jean Valjean.\n- Monsieur, rendez-moi ma pièce.\n\nIl semble que Jean Valjean n'entend pas. Il a un air effrayant. L'enfant le prend par sa veste et le secoue. Il se met à pleurer en hurlant :\n- Je veux ma pièce ! Je veux ma pièce !\n\nTout à coup, Jean Valjean le regarde. Ses yeux sont pleins de haine.\n- Va-t'en, crie-t-il à l'enfant.\n\nL'enfant, effrayé, se met à courir sans oser se retourner. Au bout d'un moment, il disparaît.\n\nJean Valjean semble alors revenir à la réalité. Il voit la pièce à ses pieds et dit :\n- Qu'est-ce que c'est que ça ?\n\nIl la prend, se redresse et se met à regarder de tous les côtés. Alors, il crie de toutes ses forces :\n- Petit-Gervais! Petit-Gervais!\n\nIl se tait et attend. Il murmure encore : PetitGervais, puis il tombe à genoux. Il se rend compte du mal qu'il vient de faire. Les poings dans ses cheveux et le visage dans ses genoux, il crie :\n- Je suis un misérable !\n\n- 10 -",
+              "error": null,
+              "duration_sec": 1.511817125006928,
+              "retries": 0
+            }
+          },
+          "merged_markdown": "",
+          "vlm_raw_response": "",
+          "started_at": "2026-07-03T03:02:18.651555+00:00",
+          "completed_at": "2026-07-03T03:02:20.423313+00:00",
+          "error": null,
+          "estimated_cost": 0.005,
+          "metadata": {},
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "french_les_mis.pdf",
+        "size_bytes": 685395,
+        "mtime_epoch": 1783047699.591482,
+        "sha256": "0ba3c8fd79dc08a14fa4d470c637e9c7e0c1380547a5f335addfb11e91b35ca3"
+      }
+    }
+  }
+}

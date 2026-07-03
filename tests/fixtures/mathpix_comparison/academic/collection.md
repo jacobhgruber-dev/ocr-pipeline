@@ -1,0 +1,241 @@
+# OCR Pipeline Output
+
+Generated: 2026-07-03T02:59:33.670516+00:00
+PDFs processed: 2
+Total pages: 2
+
+---
+
+---
+document_type: academic_article
+language: en
+---
+
+## 2 Approach
+
+Our training approach is similar to the methods
+described in previous work (Brown et al., 2020;
+Chowdhery et al., 2022), and is inspired by the
+Chinchilla scaling laws (Hoffmann et al., 2022).
+We train large transformers on a large quantity of
+textual data using a standard optimizer.
+
+### 2.1 Pre-training Data
+
+Our training dataset is a mixture of several sources,
+reported in Table 1, that cover a diverse set of do-
+mains. For the most part, we reuse data sources
+that have been leveraged to train other LLMs, with
+the restriction of only using data that is publicly
+available, and compatible with open sourcing. This
+leads to the following mixture of data and the per-
+centage they represent in the training set:
+
+| Dataset | Sampling prop. | Epochs | Disk size |
+|---|---|---|---|
+| CommonCrawl | 67.0% | 1.10 | 3.3 TB |
+| C4 | 15.0% | 1.06 | 783 GB |
+| Github | 4.5% | 0.64 | 328 GB |
+| Wikipedia | 4.5% | 2.45 | 83 GB |
+| Books | 4.5% | 2.23 | 85 GB |
+| ArXiv | 2.5% | 1.06 | 92 GB |
+| StackExchange | 2.0% | 1.03 | 78 GB |
+
+Table 1: Pre-training data. Data mixtures used for pre-
+training, for each subset we list the sampling propor-
+tion, number of epochs performed on the subset when
+training on 1.4T tokens, and disk size. The pre-training
+runs on 1T tokens have the same sampling proportion.
+
+English CommonCrawl [67%]. We preprocess
+five CommonCrawl dumps, ranging from 2017
+to 2020, with the CCNet pipeline (Wenzek et al.,
+2020). This process deduplicates the data at the
+line level, performs language identification with
+a fastText linear classifier to remove non-English
+pages and filters low quality content with an n-
+gram language model. In addition, we trained a
+linear model to classify pages used as references
+in Wikipedia *v.s.* randomly sampled pages, and
+discarded pages not classified as references.
+
+C4 [15%]. During exploratory experiments, we
+observed that using diverse pre-processed Com-
+monCrawl datasets improves performance. We thus
+included the publicly available C4 dataset (Raffel
+et al., 2020) in our data. The preprocessing of C4
+also contains deduplication and language identifi-
+cation steps: the main difference with CCNet is
+the quality filtering, which mostly relies on heuris-
+tics such as presence of punctuation marks or the
+number of words and sentences in a webpage.
+
+Github [4.5%]. We use the public GitHub
+dataset available on Google BigQuery. We only
+kept projects that are distributed under the Apache,
+BSD and MIT licenses. Additionally, we filtered
+low quality files with heuristics based on the line
+length or proportion of alphanumeric characters,
+and removed boilerplate, such as headers, with reg-
+ular expressions. Finally, we deduplicate the result-
+ing dataset at the file level, with exact matches.
+
+Wikipedia [4.5%]. We add Wikipedia dumps
+from the June-August 2022 period, covering 20
+languages, which use either the Latin or Cyrillic
+scripts: bg, ca, cs, da, de, en, es, fr, hr, hu, it,
+nl, pl, pt, ro, ru, sl, sr, sv, uk. We process the
+data to remove hyperlinks, comments and other
+formatting boilerplate.
+
+Gutenberg and Books3 [4.5%]. We include
+two book corpora in our training dataset: the Guten-
+berg Project, which contains books that are in the
+public domain, and the Books3 section of TheP-
+ile (Gao et al., 2020), a publicly available dataset
+for training large language models. We perform
+deduplication at the book level, removing books
+with more than 90% content overlap.
+
+ArXiv [2.5%]. We process arXiv Latex files
+to add scientific data to our dataset. Following
+Lewkowycz et al. (2022), we removed everything
+before the first section, as well as the bibliography.
+We also removed the comments from the .tex files,
+and inline-expanded definitions and macros written
+by users to increase consistency across papers.
+
+Stack Exchange [2%]. We include a dump of
+Stack Exchange, a website of high quality ques-
+tions and answers that covers a diverse set of do-
+mains, ranging from computer science to chemistry.
+We kept the data from the 28 largest websites, re-
+moved the HTML tags from text and sorted the
+answers by score (from highest to lowest).
+
+Tokenizer. We tokenize the data with the byte-
+pair encoding (BPE) algorithm (Sennrich et al.,
+2015), using the implementation from Sentence-
+Piece (Kudo and Richardson, 2018). Notably, we
+split all numbers into individual digits, and fallback
+to bytes to decompose unknown UTF-8 characters.
+
+---
+
+---
+title: 'LLAMA 2: Open Foundation and Fine-Tuned Chat Models'
+authors:
+- Hugo Touvron
+- Louis Martin
+- Kevin Stone
+- Peter Albert
+- Amjad Almahairi
+- Yasmine Babaei
+- Nikolay Bashlykov
+- Soumya Batra
+- Prajjwal Bhargava
+- Shruti Bhosale
+- Dan Bikel
+- Lukas Blecher
+- Cristian Canton Ferrer
+- Moya Chen
+- Guillem Cucurull
+- David Esiobu
+- Jude Fernandes
+- Jeremy Fu
+- Wenyin Fu
+- Brian Fuller
+- Cynthia Gao
+- Vedanuj Goswami
+- Naman Goyal
+- Anthony Hartshorn
+- Saghar Hosseini
+- Rui Hou
+- Hakan Inan
+- Marcin Kardas
+- Viktor Kerkez
+- Madian Khabsa
+- Isabel Kloumann
+- Artem Korenev
+- Punit Singh Koura
+- Marie-Anne Lachaux
+- Thibaut Lavril
+- Jenya Lee
+- Diana Liskovich
+- Yinghai Lu
+- Yuning Mao
+- Xavier Martinet
+- Todor Mihaylov
+- Pushkar Mishra
+- Igor Molybog
+- Yixin Nie
+- Andrew Poulton
+- Jeremy Reizenstein
+- Rashi Rungta
+- Kalyan Saladi
+- Alan Schelten
+- Ruan Silva
+- Eric Michael Smith
+- Ranjan Subramanian
+- Xiaoqing Ellen Tan
+- Binh Tang
+- Ross Taylor
+- Adina Williams
+- Jian Xiang Kuan
+- Puxin Xu
+- Zheng Yan
+- Iliyan Zarov
+- Yuchen Zhang
+- Angela Fan
+- Melanie Kambadur
+- Sharan Narang
+- Aurelien Rodriguez
+- Robert Stojnic
+- Sergey Edunov
+- Thomas Scialom
+document_type: academic_article
+language: en
+publisher: GenAI, Meta
+date: '2023-07-19'
+abstract: In this work, we develop and release Llama 2, a collection of pretrained
+  and fine-tuned large language models (LLMs) ranging in scale from 7 billion to 70
+  billion parameters. Our fine-tuned LLMs, called Llama 2-Chat, are optimized for
+  dialogue use cases. Our models outperform open-source chat models on most benchmarks
+  we tested, and based on our human evaluations for helpfulness and safety, may be
+  a suitable substitute for closed-source models. We provide a detailed description
+  of our approach t
+identifiers:
+  arXiv: 2307.09288v2
+---
+
+[Header: arXiv:2307.09288v2 [cs.CL] 19 Jul 2023]
+# LLAMA 2: Open Foundation and Fine-Tuned Chat Models
+
+Hugo Touvron* Louis Martin† Kevin Stone†
+Peter Albert Amjad Almahairi Yasmine Babaei Nikolay Bashlykov Soumya Batra
+Prajjwal Bhargava Shruti Bhosale Dan Bikel Lukas Blecher Cristian Canton Ferrer Moya Chen
+Guillem Cucurull David Esiobu Jude Fernandes Jeremy Fu Wenyin Fu Brian Fuller
+Cynthia Gao Vedanuj Goswami Naman Goyal Anthony Hartshorn Saghar Hosseini Rui Hou
+Hakan Inan Marcin Kardas Viktor Kerkez Madian Khabsa Isabel Kloumann Artem Korenev
+Punit Singh Koura Marie-Anne Lachaux Thibaut Lavril Jenya Lee Diana Liskovich
+Yinghai Lu Yuning Mao Xavier Martinet Todor Mihaylov Pushkar Mishra
+Igor Molybog Yixin Nie Andrew Poulton Jeremy Reizenstein Rashi Rungta Kalyan Saladi
+Alan Schelten Ruan Silva Eric Michael Smith Ranjan Subramanian Xiaoqing Ellen Tan Binh Tang
+Ross Taylor Adina Williams Jian Xiang Kuan Puxin Xu Zheng Yan Iliyan Zarov Yuchen Zhang
+Angela Fan Melanie Kambadur Sharan Narang Aurelien Rodriguez Robert Stojnic
+Sergey Edunov Thomas Scialom*
+
+GenAI, Meta
+
+> **Abstract:** In this work, we develop and release Llama 2, a collection of pretrained and fine-tuned
+> large language models (LLMs) ranging in scale from 7 billion to 70 billion parameters.
+> Our fine-tuned LLMs, called Llama 2-Chat, are optimized for dialogue use cases. Our
+> models outperform open-source chat models on most benchmarks we tested, and based on
+> our human evaluations for helpfulness and safety, may be a suitable substitute for closed-
+> source models. We provide a detailed description of our approach to fine-tuning and safety
+> improvements of Llama 2-Chat in order to enable the community to build on our work and
+> contribute to the responsible development of LLMs.
+
+*Equal contribution, corresponding authors: {tscialom, htouvron}@meta.com
+†Second author
+Contributions for all the authors can be found in Section A.1.

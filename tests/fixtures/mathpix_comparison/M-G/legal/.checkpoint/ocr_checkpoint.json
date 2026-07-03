@@ -1,0 +1,42 @@
+{
+  "version": 2,
+  "started_at": "2026-07-03T03:02:35.583191+00:00",
+  "updated_at": "2026-07-03T03:02:42.934632+00:00",
+  "pdfs": {
+    "court_opinion.pdf": {
+      "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3",
+      "short_sha": "310b6cbe94a1",
+      "path": "court_opinion.pdf",
+      "filename": "court_opinion.pdf",
+      "page_count": 1,
+      "has_extractable_text": false,
+      "pages": [
+        {
+          "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3",
+          "page_index": 0,
+          "page_label": "page_0001",
+          "has_extractable_text": true,
+          "status": "complete",
+          "engine_outputs": {},
+          "merged_markdown": "",
+          "vlm_raw_response": "{\"model\": \"gemini-2.5-flash\", \"input_tokens\": 1623, \"output_tokens\": 277}",
+          "started_at": "2026-07-03T03:02:35.584029+00:00",
+          "completed_at": "2026-07-03T03:02:42.934147+00:00",
+          "error": null,
+          "estimated_cost": 0.0,
+          "metadata": {
+            "vlm_model": "gemini-2.5-flash"
+          },
+          "confidence": null
+        }
+      ],
+      "metadata": {},
+      "file_identity": {
+        "relative_path": "court_opinion.pdf",
+        "size_bytes": 64236,
+        "mtime_epoch": 1783047699.5947292,
+        "sha256": "310b6cbe94a1ec5ba9d699a9808c1c3f2c0433c390b39f6a8cfd1f902128faf3"
+      }
+    }
+  }
+}
