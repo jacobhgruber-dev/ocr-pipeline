@@ -626,8 +626,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "Add google_doc_ai engine for forms and structured layouts "
             "(requires Google Cloud credentials)."
         ),
-        suggested_engines=["marker", "google_doc_ai"],
-        optional_engines=["tesseract"],
+        suggested_engines=["marker", "mathpix", "google_doc_ai"],
+        optional_engines=["tesseract", "google_doc_ai"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="claude-sonnet-5",
@@ -641,8 +641,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "diagrams, and procedure steps. Add google_doc_ai engine for "
             "structured datasheets and form-heavy specs (requires Google Cloud)."
         ),
-        suggested_engines=["marker", "google_doc_ai"],
-        optional_engines=["tesseract"],
+        suggested_engines=["marker", "mathpix", "google_doc_ai"],
+        optional_engines=["tesseract", "google_doc_ai"],
         suggested_languages=["en"],
         suggested_model="gemini-2.5-flash",
         best_model="gemini-2.5-flash",

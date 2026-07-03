@@ -531,6 +531,39 @@ Use Marker as your default. Add Tesseract for Arabic/RTL scripts or as a fallbac
 
 ---
 
+## Output Structure
+
+After a successful run, your output directory contains:
+
+```
+output/
+├── collection.md              ← All PDFs concatenated (cross-PDF)
+├── abc123de/                  ← One directory per PDF (SHA256 prefix)
+│   ├── abc123de.md            ← Per-PDF summary with metadata
+│   ├── document.md            ← All pages concatenated with YAML frontmatter
+│   ├── page_0001_final.md     ← Final VLM-merged markdown (main file to read)
+│   ├── page_0001_raw.json     ← Raw engine outputs + VLM response (debug)
+│   ├── page_0002_final.md
+│   └── renders/               ← Rendered page images (PNG, 300 DPI)
+│       ├── page_0001.png
+│       └── page_0002.png
+└── .checkpoint/               ← Resume state (SHA256-identified, safe to keep)
+```
+
+| File | Purpose | Delete after processing? |
+|---|---|---|
+| `page_NNNN_final.md` | **The final output.** Clean markdown from VLM merge. | No — this is what you want |
+| `page_NNNN_raw.json` | Debugging: raw engine text + VLM response | Yes (safe to delete) |
+| `document.md` | All pages concatenated with YAML frontmatter (title, authors, DOI) | Keep if you want one file |
+| `collection.md` | All PDFs concatenated into one file | Keep for multi-PDF projects |
+| `renders/*.png` | Rendered page images | Yes (regenerated on resume) |
+| `.checkpoint/` | Resume state | Do NOT delete during active processing |
+
+> **Tip:** To clean up after a run, delete `renders/` and `*_raw.json` files.
+> The `.checkpoint/` directory can be deleted once you're done with the batch.
+
+---
+
 ## Obtaining API Keys
 
 **You don't need any API keys to start.** The pipeline works with Marker and/or
