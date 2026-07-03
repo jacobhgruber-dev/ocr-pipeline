@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  grobid:
+    image: lfoppiano/grobid:0.8.1
+    ports:
+      - "8070:8070"
+    restart: unless-stopped
+
+  # To use the OCR pipeline via Docker (build first: docker compose build):
+  #   docker compose run --rm ocr-pipeline --input /pdfs/ --output /out/ --profile general
+  ocr-pipeline:
+    build: .
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ${INPUT_DIR:-./pdfs}:/pdfs:ro
+      - ${OUTPUT_DIR:-./out}:/out
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - MATHPIX_APP_ID=${MATHPIX_APP_ID}
+      - MATHPIX_APP_KEY=${MATHPIX_APP_KEY}
+      - GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+    depends_on:
+      - grobid
+    profiles:
+      - pipeline

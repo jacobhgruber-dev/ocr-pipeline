@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ocr-pipeline"
-version = "0.1.0"
+version = "0.2.0"
 authors = [{ name = "Jacob Gruber" }]
 description = "Multi-engine OCR with VLM merge for PDF documents"
 readme = "README.md"
