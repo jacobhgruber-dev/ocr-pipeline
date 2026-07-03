@@ -170,6 +170,13 @@ class PageProcessor:
             # Phase 2: render to PNG
             self._render_page(ctx)
 
+            # Capture rendered image dimensions for ALTO output
+            if ctx.png_path:
+                from PIL import Image
+                img = Image.open(str(ctx.png_path))
+                ctx.page.metadata["page_width"] = img.width
+                ctx.page.metadata["page_height"] = img.height
+
             # Phase 3: run OCR engines
             self._run_ocr(ctx)
 

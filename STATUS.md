@@ -6,7 +6,7 @@ Last updated: 2026-07-03
 
 | Metric | Value |
 |---|---|
-| Tests | 249 passing (unit + integration + e2e) |
+| Tests | 258 passing (unit + integration + e2e) |
 | Lint | ruff clean (30 source files) |
 | Types | mypy clean |
 | Python | 3.10+ (CI: 3.10, 3.12) |
@@ -62,7 +62,6 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 
 - Table detection is prompt-based (VLM) — no dedicated ML model for cell-level extraction.
 - Image handling is placeholder-based (`[Figure: description]`) — no embedded image extraction.
-- No standard OCR format output (ALTO XML, hOCR) for digital library integration.
 - Ground truth files exist (12 fixtures) but are derived from pipeline output — no human-curated references.
 
 ## Shipping Infrastructure
@@ -79,3 +78,4 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | E2E tests (stub + real VLM) | ✅ `pytest -m e2e` — stub runs in CI, real VLM needs API key |
 | Benchmark (12 fixtures) | ✅ `scripts/benchmark.py` — CER/WER against ground truth |
 | Ground truth files (12) | ✅ `tests/fixtures/ground_truth/` — baselines from marker+gemini output |
+| ALTO XML output | ✅ `output_formats: ["markdown", "json", "alto"]` — v4.4 schema, lxml-valid, word-level confidence |

@@ -83,7 +83,7 @@ class PipelineConfig:
 
     # -- Output formats -------------------------------------------------------
     output_formats: list[str] = field(default_factory=lambda: ["markdown"])
-    # Valid: "markdown", "json"
+    # Valid: "markdown", "json", "alto"
 
     # -- Test mode ------------------------------------------------------------
     test_mode: bool = False  # limit to first 3 pages per PDF
