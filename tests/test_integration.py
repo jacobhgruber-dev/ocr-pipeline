@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import subprocess
-import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -43,7 +42,8 @@ def test_cli_list_languages() -> None:
 
 def test_cli_dry_run() -> None:
     """CLI --dry-run with temp dirs loads without crashing."""
-    import tempfile, shutil
+    import tempfile
+    import shutil
     d = Path(tempfile.mkdtemp())
     result = subprocess.run(
         ["uv", "run", "ocr-pipeline", "--input", str(d), "--output", str(d), "--dry-run"],
@@ -93,7 +93,8 @@ def test_rtl_detection() -> None:
 
 def test_checkpoint_v3_init() -> None:
     """Checkpoint v3 initializes correctly with per-PDF directory."""
-    import tempfile, shutil
+    import tempfile
+    import shutil
     from ocr_pipeline.checkpoint import CheckpointManager
     d = Path(tempfile.mkdtemp()) / ".checkpoint"
     cm = CheckpointManager(d)
