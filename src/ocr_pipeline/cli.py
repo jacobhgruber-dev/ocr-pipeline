@@ -2,13 +2,13 @@
 """CLI entry point for the OCR pipeline.
 
 Usage:
-    uv run ocr-pipeline --input ./pdfs/ --output ./out/
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --engines marker,mathpix
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --config config.yaml
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test
-    uv run ocr-pipeline --list-profiles
-    uv run ocr-pipeline -i ./pdfs/ -o ./out/ --profile academic
+    uv run ocr-pipeline --input ./docs/ --output ./out/
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --engines marker,mathpix
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --config config.yaml
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --dry-run
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --test
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --input-extensions pdf,epub,docx
+    uv run ocr-pipeline -i ./docs/ -o ./out/ --profile academic
 """
 
 from __future__ import annotations
@@ -66,17 +66,18 @@ def _build_parser() -> argparse.ArgumentParser:
     """Construct the CLI argument parser."""
     parser = argparse.ArgumentParser(
         prog="ocr-pipeline",
-        description="Multi-engine OCR with VLM merge for PDF documents.",
+        description="Multi-engine OCR with VLM merge for documents (PDF, EPUB, DOCX, images, and 26 other formats).",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
-            "  uv run ocr-pipeline --input ./pdfs/ --output ./out/\n"
-            "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --engines marker,mathpix"
+            "  uv run ocr-pipeline --input ./docs/ --output ./out/\n"
+            "  uv run ocr-pipeline -i ./docs/ -o ./out/ --engines marker,mathpix"
             " --vlm-model gemini-2.0-flash-001\n"
-            "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --budget 10.0"
-            " --profile academic --langs en,la\n"
-            "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --dry-run\n"
-            "  uv run ocr-pipeline -i ./pdfs/ -o ./out/ --test\n"
+            "  uv run ocr-pipeline -i ./docs/ -o ./out/ --budget 10.0"
+            " --profile general\n"
+            "  uv run ocr-pipeline -i ./docs/ -o ./out/ --dry-run\n"
+            "  uv run ocr-pipeline -i ./docs/ -o ./out/ --test\n"
+            "  uv run ocr-pipeline -i ./docs/ -o ./out/ --input-extensions pdf,epub,docx"
         ),
     )
 
@@ -86,7 +87,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "-i",
         type=Path,
         default=None,
-        help="Input directory containing PDF files (required unless --config is used)",
+        help="Input directory containing documents (required unless --config is used)",
     )
     parser.add_argument(
         "--output",
@@ -326,14 +327,21 @@ def _build_config(args: argparse.Namespace) -> PipelineConfig:
 
 def _dry_run(config: PipelineConfig) -> None:
     """Print what would be processed without running the pipeline."""
-    pdf_paths = sorted(config.input_dir.rglob("*.pdf"))
-    if not pdf_paths:
-        print(f"No PDFs found in {config.input_dir}")
+    ext_list = getattr(config, "input_extensions", ["pdf"])
+    file_paths: list[Path] = []
+    for ext in ext_list:
+        file_paths.extend(sorted(config.input_dir.rglob(f"*.{ext}")))
+    file_paths = sorted(set(file_paths))
+
+    if not file_paths:
+        exts = ", ".join(ext_list)
+        print(f"No files found matching extensions {{{exts}}} in {config.input_dir}")
         return
 
     print(f"Input directory:    {config.input_dir}")
     print(f"Output directory:   {config.output_dir}")
-    print(f"PDFs found:         {len(pdf_paths)}")
+    print(f"Files found:        {len(file_paths)}")
+    print(f"Extensions:         {', '.join(ext_list)}")
     print(f"Engines:            {', '.join(config.engines)}")
     print(f"VLM merge:          {'enabled' if config.vlm_enabled else 'disabled'}")
     if config.vlm_enabled:
@@ -343,17 +351,15 @@ def _dry_run(config: PipelineConfig) -> None:
     print(f"Languages:          {', '.join(config.languages)}")
     print(f"Render DPI:         {config.render_dpi}")
     print(f"Max workers:        {config.max_workers}")
-    print(f"PDF concurrency:    {config.pdf_concurrency}")
-    print(f"Marker concurrency: {config.marker_concurrency}")
     if config.budget_cap_usd is not None:
         print(f"Budget cap:         ${config.budget_cap_usd:.2f}")
     print(f"Post-process:       {'enabled' if config.postprocess_enabled else 'disabled'}")
     print(f"Test mode:          {'yes' if config.test_mode else 'no'}")
 
-    print("\n--- PDFs that would be processed ---")
-    for pdf_path in pdf_paths:
-        rel = pdf_path.relative_to(config.input_dir)
-        size_mb = pdf_path.stat().st_size / (1024 * 1024)
+    print(f"\n--- Files that would be processed ({len(file_paths)}) ---")
+    for path in file_paths:
+        rel = path.relative_to(config.input_dir)
+        size_mb = path.stat().st_size / (1024 * 1024)
         print(f"  {rel}  ({size_mb:.1f} MB)")
 
 
@@ -495,8 +501,8 @@ def _print_languages_for_engine(engine: str) -> None:
 def _print_stats(stats: dict[str, Any]) -> None:
     """Print pipeline run statistics."""
     print("\n=== Pipeline Complete ===")
-    print(f"PDFs processed:     {stats.get('pdfs_processed', 0)}")
-    print(f"PDFs failed:        {stats.get('pdfs_failed', 0)}")
+    print(f"Files processed:    {stats.get('pdfs_processed', 0)}")
+    print(f"Files failed:       {stats.get('pdfs_failed', 0)}")
     print(f"Pages processed:    {stats.get('pages_processed', 0)}")
     print(f"Pages complete:     {stats.get('pages_complete', 0)}")
     print(f"Pages failed:       {stats.get('pages_failed', 0)}")
