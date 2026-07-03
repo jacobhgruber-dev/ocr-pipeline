@@ -77,15 +77,15 @@ class ImageSource(DocumentSource):
         try:
             from PIL import Image
 
-            img = Image.open(str(self.path))
-            count = 0
-            while True:
-                count += 1
-                try:
-                    img.seek(count)
-                except EOFError:
-                    break
-            return count
+            with Image.open(str(self.path)) as img:
+                count = 0
+                while True:
+                    count += 1
+                    try:
+                        img.seek(count)
+                    except EOFError:
+                        break
+                return count
         except Exception:
             return 1
 
@@ -100,18 +100,17 @@ class ImageSource(DocumentSource):
         try:
             from PIL import Image
 
-            img = Image.open(str(self.path))
+            with Image.open(str(self.path)) as img:
+                # Seek to frame for multi-page TIFF
+                if self._detect_format() == "tiff" and page_index > 0:
+                    try:
+                        img.seek(page_index)
+                    except EOFError:
+                        raise RenderError(f"TIFF page {page_index} out of range for {self.path}")
 
-            # Seek to frame for multi-page TIFF
-            if self._detect_format() == "tiff" and page_index > 0:
-                try:
-                    img.seek(page_index)
-                except EOFError:
-                    raise RenderError(f"TIFF page {page_index} out of range for {self.path}")
-
-            # Always save as PNG for OCR
-            converted = img.convert("RGB")
-            converted.save(str(out_path), "PNG")
+                # Always save as PNG for OCR
+                converted = img.convert("RGB")
+                converted.save(str(out_path), "PNG")
             logger.info("Saved image page %d -> %s", page_index + 1, out_path)
             return out_path
         except RenderError:

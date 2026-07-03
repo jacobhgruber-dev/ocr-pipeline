@@ -55,9 +55,8 @@ class EmailSource(DocumentSource):
             try:
                 mbox = mailbox.mbox(str(self.path))
                 for key in mbox.keys():
-                    msg = mbox[key]
-                    if isinstance(msg, Message):
-                        msgs.append(msg)
+                    msgs.append(mbox[key])
+                mbox.close()
             except Exception:
                 # Fallback to manual parsing for malformed mbox files
                 parser = email.parser.BytesParser(policy=email.policy.default)
@@ -90,15 +89,21 @@ class EmailSource(DocumentSource):
                 ct = part.get_content_type()
                 if ct == "text/plain":
                     try:
-                        payload = part.get_content()
-                        if isinstance(payload, str):
+                        payload = part.get_payload(decode=True)
+                        if isinstance(payload, bytes):
+                            parts.append(payload.decode("utf-8", errors="replace"))
+                        elif isinstance(payload, str):
                             parts.append(payload)
+                        else:
+                            parts.append(str(payload or ""))
                     except Exception:
                         pass
             return "\n\n".join(parts)
         else:
             try:
-                payload = msg.get_content()
+                payload = msg.get_payload(decode=True)
+                if isinstance(payload, bytes):
+                    return payload.decode("utf-8", errors="replace")
                 return str(payload) if payload else ""
             except Exception:
                 return ""

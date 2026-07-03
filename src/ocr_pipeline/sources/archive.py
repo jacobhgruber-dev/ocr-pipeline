@@ -126,7 +126,10 @@ class ArchiveSource(DocumentSource):
         common_names = {"readme", "readme.md", "readme.txt", "index.html", "manifest.json"}
         for name in common_names:
             matched = [
-                f for f in files if f.lower().endswith(name) or f.lower().split("/")[-1] == name
+                f
+                for f in files
+                if f.lower().endswith(name) or f.lower().split("/")[-1] == name
+                if ".." not in f and not f.startswith("/")  # Reject traversal paths
             ]
             if matched:
                 lines.append("")

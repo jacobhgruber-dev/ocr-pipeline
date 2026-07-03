@@ -53,7 +53,9 @@ class PagesSource(DocumentSource):
             with ZipFile(str(self.path), "r") as zf:
                 if "index.xml" not in zf.namelist():
                     # Legacy .pages format — not a ZIP
-                    self._text_cache = "[Legacy .pages format — please re-save as modern .pages or export to PDF]"
+                    self._text_cache = (
+                        "[Legacy .pages format — please re-save as modern .pages or export to PDF]"
+                    )
                     self._meta_cache = {}
                     return self._text_cache, {}
 
@@ -62,11 +64,7 @@ class PagesSource(DocumentSource):
 
                 # Extract text from all text storage elements
                 for el in doc.iter():
-                    tag = (
-                        el.tag.split("}")[-1]
-                        if "}" in el.tag
-                        else el.tag
-                    )
+                    tag = el.tag.split("}")[-1] if "}" in el.tag else el.tag
                     if tag in ("sf:text-storage", "sf:text-body"):
                         body_text = "".join(el.itertext())
                         if body_text.strip():
@@ -80,7 +78,9 @@ class PagesSource(DocumentSource):
         except Exception as exc:
             logger.warning("Pages parsing failed for %s: %s", self.path.name, exc)
 
-        self._text_cache = "\n\n".join(text_parts) or self.path.read_text(encoding="utf-8", errors="replace")
+        self._text_cache = "\n\n".join(text_parts) or self.path.read_text(
+            encoding="utf-8", errors="replace"
+        )
         self._meta_cache = meta
         return self._text_cache, meta
 

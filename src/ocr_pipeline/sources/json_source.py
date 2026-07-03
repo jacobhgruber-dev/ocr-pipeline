@@ -96,11 +96,17 @@ class JsonSource(DocumentSource):
         meta = self._extract_json_ld(data)
         st = self.path.stat()
 
+        # Check raw data for JSON-LD context (not stored in flat meta dict)
+        has_jsonld = isinstance(data, dict) and (
+            "@context" in data
+            or any("@context" in str(v) for v in data.values() if isinstance(v, str))
+        )
+
         return MetadataResult(
             title=meta.get("title", ""),
             authors=[meta["author"]] if "author" in meta else [],
             date=meta.get("date", ""),
-            document_type="json" if "@context" not in meta else "json-ld",
+            document_type="json-ld" if has_jsonld else "json",
             extraction_method="json-parsing",
             source_info=SourceInfo(
                 format="json",

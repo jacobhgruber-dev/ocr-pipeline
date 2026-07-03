@@ -52,7 +52,8 @@ class Fb2Source(DocumentSource):
 
         try:
             raw = self.path.read_text(encoding="utf-8", errors="replace")
-            doc = etree.fromstring(raw.encode("utf-8"))
+            parser = etree.XMLParser(resolve_entities=False, no_network=True)
+            doc = etree.fromstring(raw.encode("utf-8"), parser)
             ns = _NS_FB
 
             # --- Metadata ---

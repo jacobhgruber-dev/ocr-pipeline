@@ -97,7 +97,10 @@ class EbookSource(DocumentSource):
         if ext == ".epub":
             try:
                 with ZipFile(str(self.path), "r") as zf:
-                    has_enc = "META-INF/encryption.xml" in zf.namelist() or "encryption.xml" in zf.namelist()
+                    has_enc = (
+                        "META-INF/encryption.xml" in zf.namelist()
+                        or "encryption.xml" in zf.namelist()
+                    )
                 self._drm_cache = has_enc
                 return has_enc
             except Exception:
@@ -193,7 +196,11 @@ class EbookSource(DocumentSource):
             rights=RightsInfo(
                 access_restrictions="DRM-protected — text extraction unavailable"
                 if has_drm
-                else ("" if calibre_available else "Calibre not installed — text extraction unavailable")
+                else (
+                    ""
+                    if calibre_available
+                    else "Calibre not installed — text extraction unavailable"
+                )
             ),
         )
 

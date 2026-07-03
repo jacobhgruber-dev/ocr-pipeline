@@ -11,6 +11,7 @@ import logging
 from pathlib import Path
 from zipfile import ZipFile
 
+from ocr_pipeline.errors import RenderError
 from ocr_pipeline.models import MetadataResult, SourceInfo
 
 from .base import DocumentSource
@@ -105,8 +106,9 @@ class ComicSource(DocumentSource):
             img.save(str(out_path), "PNG")
             return out_path
         except Exception as exc:
-            logger.warning("Failed to render comic page %d: %s", page_index, exc)
-            return out_path
+            raise RenderError(
+                f"Failed to render comic page {page_index} from {self.path.name}: {exc}"
+            ) from exc
 
     def extract_metadata(self) -> MetadataResult:
         images = self._list_images()

@@ -47,9 +47,7 @@ class EpubSource(DocumentSource):
         try:
             with ZipFile(str(self.path), "r") as zf:
                 names = zf.namelist()
-                has_enc = any(
-                    "encryption.xml" in n or "rights.xml" in n for n in names
-                )
+                has_enc = "META-INF/encryption.xml" in names or "META-INF/rights.xml" in names
                 self._drm_cache = has_enc
                 return has_enc
         except Exception:
@@ -67,7 +65,7 @@ class EpubSource(DocumentSource):
                 title=self.path.stem,
                 document_type="ebook",
                 extraction_method="epub-detection",
-                source_info=SourceInfo(format="epub", page_count=self.page_count),
+                source_info=SourceInfo(format="epub", page_count=1),
             )
 
         meta = MetadataResult(
@@ -80,10 +78,14 @@ class EpubSource(DocumentSource):
             extraction_method="epub-opf",
             source_info=SourceInfo(
                 format="epub",
-                page_count=self.page_count,
+                page_count=1,  # Default — updated below if possible
                 mimetype="application/epub+zip",
             ),
         )
+        try:
+            meta.source_info.page_count = self.page_count
+        except Exception:
+            pass
 
         # DC metadata
         dc_titles = book.get_metadata("DC", "title")
