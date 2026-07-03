@@ -37,7 +37,10 @@ from .csv_source import CsvSource
 from .docx import DocxSource
 from .epub import EpubSource
 from .excel import ExcelSource
+from .html import HtmlSource
 from .image import ImageSource
+from .latex import LatexSource
+from .markdown import MarkdownSource
 from .pdf import PdfSource
 from .pptx import PptxSource
 from .txt import TxtSource
@@ -45,15 +48,18 @@ from .txt import TxtSource
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "DocumentSource",
-    "PdfSource",
-    "ImageSource",
-    "EpubSource",
-    "DocxSource",
-    "TxtSource",
     "CsvSource",
+    "DocumentSource",
+    "DocxSource",
+    "EpubSource",
     "ExcelSource",
+    "HtmlSource",
+    "ImageSource",
+    "LatexSource",
+    "MarkdownSource",
+    "PdfSource",
     "PptxSource",
+    "TxtSource",
     "detect_source",
 ]
 
@@ -73,9 +79,15 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".epub": EpubSource,
     ".docx": DocxSource,
     ".txt": TxtSource,
-    ".md": TxtSource,
+    ".md": MarkdownSource,
+    ".markdown": MarkdownSource,
     ".rst": TxtSource,
     ".text": TxtSource,
+    ".html": HtmlSource,
+    ".htm": HtmlSource,
+    ".xhtml": HtmlSource,
+    ".tex": LatexSource,
+    ".latex": LatexSource,
     ".csv": CsvSource,
     ".tsv": CsvSource,
     ".tab": CsvSource,
@@ -83,7 +95,7 @@ _EXTENSION_MAP: dict[str, type[DocumentSource]] = {
     ".xls": ExcelSource,
     ".xlsm": ExcelSource,
     ".pptx": PptxSource,
-    ".ppt": PptxSource,  # old format — calamine-based path falls back
+    ".ppt": PptxSource,
 }
 
 

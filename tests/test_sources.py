@@ -12,7 +12,10 @@ from ocr_pipeline.sources import (
     DocxSource,
     EpubSource,
     ExcelSource,
+    HtmlSource,
     ImageSource,
+    LatexSource,
+    MarkdownSource,
     PdfSource,
     PptxSource,
     TxtSource,
@@ -374,3 +377,168 @@ class TestExcelSource:
         text, saved = source.extract_text(1, tmp_path / "s2")
         assert "Total" in text
         assert saved is not None
+
+
+# ---------------------------------------------------------------------------
+# MarkdownSource
+# ---------------------------------------------------------------------------
+
+
+class TestMarkdownSource:
+    def test_basic_no_frontmatter(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.md"
+        f.write_text("# Hello\n\nThis is markdown.", encoding="utf-8")
+        source = MarkdownSource(f)
+        assert source.source_format == "markdown"
+        assert source.page_count == 1
+
+    def test_extract_text(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.md"
+        f.write_text("# Title\n\nBody text here.", encoding="utf-8")
+        source = MarkdownSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "Title" in text
+        assert "Body text" in text
+        assert saved is not None
+
+    def test_frontmatter_parsing(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.md"
+        f.write_text(
+            "---\ntitle: My Document\nauthor: Jane Doe\ndate: 2025-01-15\n---\n\n# Content\n\nText here.",
+            encoding="utf-8",
+        )
+        source = MarkdownSource(f)
+        meta = source.extract_metadata()
+        assert meta.title == "My Document"
+        assert meta.authors == ["Jane Doe"]
+        assert meta.date == "2025-01-15"
+        assert meta.extraction_method == "frontmatter"
+
+    def test_html_comments_stripped(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.md"
+        f.write_text("<!-- doc: title: Test | author: Me -->\n\n# Actual content", encoding="utf-8")
+        source = MarkdownSource(f)
+        text, _ = source.extract_text(0, tmp_path / "out")
+        assert "Actual content" in text
+        assert "doc:" not in text  # HTML comment stripped
+
+
+# ---------------------------------------------------------------------------
+# HtmlSource
+# ---------------------------------------------------------------------------
+
+
+class TestHtmlSource:
+    def test_basic(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.html"
+        f.write_text(
+            "<html><head><title>Test Page</title></head><body><h1>Heading</h1><p>Paragraph.</p></body></html>",
+            encoding="utf-8",
+        )
+        source = HtmlSource(f)
+        assert source.source_format == "html"
+        assert source.page_count == 1
+
+    def test_extract_text(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.html"
+        f.write_text("<html><body><p>Hello world</p></body></html>", encoding="utf-8")
+        source = HtmlSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "Hello world" in text
+        assert saved is not None
+
+    def test_json_ld_metadata(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.html"
+        f.write_text(
+            """<html><head>
+<script type="application/ld+json">
+{"@context": "https://schema.org", "@type": "ScholarlyArticle",
+ "name": "Test Article", "author": {"name": "Dr. Smith"},
+ "datePublished": "2024-06-01", "description": "A test paper."}
+</script></head><body>Content</body></html>""",
+            encoding="utf-8",
+        )
+        source = HtmlSource(f)
+        meta = source.extract_metadata()
+        assert meta.title == "Test Article"
+        assert meta.authors == ["Dr. Smith"]
+        assert meta.date == "2024-06-01"
+        assert meta.extraction_method == "html-metadata"
+
+    def test_meta_tags(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.html"
+        f.write_text(
+            "<html><head>"
+            '<meta name="citation_title" content="Cited Paper">'
+            '<meta name="citation_author" content="A. Author">'
+            '<meta name="dc.publisher" content="University Press">'
+            "</head><body>Text</body></html>",
+            encoding="utf-8",
+        )
+        source = HtmlSource(f)
+        meta = source.extract_metadata()
+        assert meta.title == "Cited Paper"
+
+
+# ---------------------------------------------------------------------------
+# LatexSource
+# ---------------------------------------------------------------------------
+
+
+class TestLatexSource:
+    def test_basic(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.tex"
+        f.write_text(
+            r"\title{My Paper}\author{A. U. Thor}\date{2025}\begin{document}\section{Intro}Hello world.\end{document}",
+            encoding="utf-8",
+        )
+        source = LatexSource(f)
+        assert source.source_format == "latex"
+        assert source.page_count == 1
+
+    def test_extract_text_strips_commands(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.tex"
+        f.write_text(
+            r"\documentclass{article}\begin{document}\textbf{Bold} and \emph{italic} text.\end{document}",
+            encoding="utf-8",
+        )
+        source = LatexSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert "Bold" in text
+        # Strip commands should remove \textbf and \emph but keep the content
+        assert "italic" in text.lower()
+        assert saved is not None
+
+    def test_metadata_extraction(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.tex"
+        f.write_text(
+            r"\title{Quantum Computing Primer}"
+            r"\author{Alice Researcher, Bob Scientist}"
+            r"\date{March 2025}"
+            r"\begin{abstract}This paper introduces quantum computing.\end{abstract}"
+            r"\begin{document}\section{Body}Content.\end{document}",
+            encoding="utf-8",
+        )
+        source = LatexSource(f)
+        meta = source.extract_metadata()
+        assert "Quantum Computing" in meta.title
+        assert len(meta.authors) == 1
+        assert meta.extraction_method == "latex-parsing"
+
+    def test_comments_stripped(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.tex"
+        f.write_text(
+            "% This is a comment\n\\begin{document}Visible content\\end{document}",
+            encoding="utf-8",
+        )
+        source = LatexSource(f)
+        text, _ = source.extract_text(0, tmp_path / "out")
+        assert "Visible content" in text
+        assert "comment" not in text.lower()
+
+    def test_render_page_raises(self, tmp_path: Path) -> None:
+        f = tmp_path / "test.tex"
+        f.write_text(r"\begin{document}text\end{document}", encoding="utf-8")
+        source = LatexSource(f)
+        with pytest.raises(NotImplementedError):
+            source.render_page(0, tmp_path)
