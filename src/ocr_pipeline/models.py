@@ -103,23 +103,32 @@ class RightsInfo:
     Attributes:
         license: SPDX identifier or free-text license name
             (e.g. ``"CC-BY-4.0"``, ``"Public Domain"``).
+        license_url: Canonical URL for the license text.
         rights_holder: Person or organisation that holds the copyright.
+        copyright_holder: Alias for *rights_holder* (user-facing).
         access_restrictions: Human-readable description of any access
             restrictions (e.g. ``"Embargoed until 2027-01-01"``).
+        open_access: Whether the document is freely available (bool as str).
         extra: Arbitrary extension fields (e.g. copyright registration
             numbers, territorial restrictions).
     """
 
     license: str = ""
+    license_url: str = ""
     rights_holder: str = ""
+    copyright_holder: str = ""
     access_restrictions: str = ""
+    open_access: bool = False
     extra: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "license": self.license,
+            "license_url": self.license_url,
             "rights_holder": self.rights_holder,
+            "copyright_holder": self.copyright_holder,
             "access_restrictions": self.access_restrictions,
+            "open_access": self.open_access,
             "extra": self.extra,
         }
 
@@ -127,8 +136,11 @@ class RightsInfo:
     def from_dict(cls, d: dict[str, Any]) -> RightsInfo:
         return cls(
             license=str(d.get("license", "")),
+            license_url=str(d.get("license_url", "")),
             rights_holder=str(d.get("rights_holder", "")),
+            copyright_holder=str(d.get("copyright_holder", "")),
             access_restrictions=str(d.get("access_restrictions", "")),
+            open_access=bool(d.get("open_access", False)),
             extra=d.get("extra", {}) or {},
         )
 

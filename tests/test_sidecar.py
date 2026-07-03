@@ -22,10 +22,7 @@ class TestLoadSidecarMetadata:
         doc.write_text("dummy pdf content")
         sidecar = tmp_path / "report.pdf.meta.yaml"
         sidecar.write_text(
-            "title: My Document\n"
-            "author: Jane Researcher\n"
-            "date: '2025-06-01'\n"
-            "language: en\n",
+            "title: My Document\nauthor: Jane Researcher\ndate: '2025-06-01'\nlanguage: en\n",
             encoding="utf-8",
         )
 
@@ -43,8 +40,7 @@ class TestLoadSidecarMetadata:
         doc.write_text("some notes")
         sidecar = tmp_path / "notes.txt.meta.yml"
         sidecar.write_text(
-            "title: Fallback Document\n"
-            "document_type: notes\n",
+            "title: Fallback Document\ndocument_type: notes\n",
             encoding="utf-8",
         )
 
@@ -112,7 +108,11 @@ class TestMergeSidecarMetadata:
         """Helper to create a MetadataResult with default empty fields."""
         return MetadataResult(
             title=str(kwargs.get("title", "")),
-            authors=kwargs.get("authors", []) if isinstance(kwargs.get("authors"), list) else [str(kwargs.get("authors", ""))] if kwargs.get("authors") else [],
+            authors=kwargs.get("authors", [])
+            if isinstance(kwargs.get("authors"), list)
+            else [str(kwargs.get("authors", ""))]
+            if kwargs.get("authors")
+            else [],
             date=str(kwargs.get("date", "")),
             language=str(kwargs.get("language", "")),
             publisher=str(kwargs.get("publisher", "")),
@@ -129,10 +129,7 @@ class TestMergeSidecarMetadata:
         doc.write_text("dummy")
         sidecar = tmp_path / "report.pdf.meta.yaml"
         sidecar.write_text(
-            "title: Injected Title\n"
-            "author: Sidecar Author\n"
-            "date: '2024-12-25'\n"
-            "language: fr\n",
+            "title: Injected Title\nauthor: Sidecar Author\ndate: '2024-12-25'\nlanguage: fr\n",
             encoding="utf-8",
         )
 
@@ -150,8 +147,7 @@ class TestMergeSidecarMetadata:
         doc.write_text("dummy")
         sidecar = tmp_path / "paper.pdf.meta.yaml"
         sidecar.write_text(
-            "title: Should Not Override\n"
-            "date: '2000-01-01'\n",
+            "title: Should Not Override\ndate: '2000-01-01'\n",
             encoding="utf-8",
         )
 
@@ -210,8 +206,7 @@ class TestMergeSidecarMetadata:
         doc.write_text("dummy")
         sidecar = tmp_path / "article.pdf.meta.yaml"
         sidecar.write_text(
-            "publisher: ACM Press\n"
-            "doi: 10.1145/1234567\n",
+            "publisher: ACM Press\ndoi: 10.1145/1234567\n",
             encoding="utf-8",
         )
 
@@ -243,8 +238,7 @@ class TestMergeSidecarMetadata:
         doc.write_text("dummy")
         sidecar = tmp_path / "book.pdf.meta.yaml"
         sidecar.write_text(
-            "isbn: 978-3-16-148410-0\n"
-            "document_type: book\n",
+            "isbn: 978-3-16-148410-0\ndocument_type: book\n",
             encoding="utf-8",
         )
 

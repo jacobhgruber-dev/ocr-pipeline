@@ -11,6 +11,7 @@ import re
 import subprocess
 from pathlib import Path
 
+from ocr_pipeline.errors import RenderError
 from ocr_pipeline.models import MetadataResult, SourceInfo
 
 from .base import DocumentSource
@@ -79,11 +80,11 @@ class DjvuSource(DocumentSource):
                 check=True,
             )
         except FileNotFoundError:
-            raise NotImplementedError(
-                "ddjvu not found — install djvulibre for DJVU rendering"
-            )
+            raise NotImplementedError("ddjvu not found — install djvulibre for DJVU rendering")
         except subprocess.CalledProcessError as exc:
-            logger.warning("ddjvu failed for page %d: %s", page_index, exc.stderr)
+            raise RenderError(
+                f"ddjvu failed for page {page_index} of {self.path}: {exc.stderr}"
+            ) from exc
 
         return out_path
 

@@ -46,7 +46,7 @@ class DocxSource(DocumentSource):
 
         for para in doc.paragraphs:
             text = para.text
-            if para.style.name and para.style.name.startswith("Heading"):
+            if para.style is not None and para.style.name and para.style.name.startswith("Heading"):
                 level = para.style.name.replace("Heading ", "")
                 if len(level) == 1 and level.isdigit():
                     hashes = "#" * int(level)

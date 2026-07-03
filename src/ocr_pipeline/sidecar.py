@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from ocr_pipeline.models import MetadataResult
+from ocr_pipeline.models import MetadataResult, RightsInfo, SourceInfo
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,9 @@ def merge_sidecar_metadata(meta: MetadataResult, file_path: Path) -> MetadataRes
         elif isinstance(kw, str):
             meta.keywords = [k.strip() for k in kw.split(",")]
 
-    # Rights
+    # Rights — initialise if None
+    if meta.rights is None:
+        meta.rights = RightsInfo()
     if sidecar.get("license") and not meta.rights.license:
         meta.rights.license = str(sidecar["license"])
     if sidecar.get("license_url") and not meta.rights.license_url:
@@ -116,7 +118,9 @@ def merge_sidecar_metadata(meta: MetadataResult, file_path: Path) -> MetadataRes
     if sidecar.get("open_access") and not meta.rights.open_access:
         meta.rights.open_access = bool(sidecar["open_access"])
 
-    # Extra fields
+    # Extra fields — initialise source_info if None
+    if meta.source_info is None:
+        meta.source_info = SourceInfo()
     extra = sidecar.get("extra")
     if isinstance(extra, dict) and not meta.source_info.extra:
         meta.source_info.extra = {str(k): str(v) for k, v in extra.items()}

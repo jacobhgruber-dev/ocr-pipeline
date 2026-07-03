@@ -58,7 +58,9 @@ class CsvSource(DocumentSource):
 
             results = from_bytes(raw)
             if results:
-                encoding = results.best().encoding or "utf-8"
+                best = results.best()
+                if best and best.encoding:
+                    encoding = best.encoding
         except Exception:
             pass
 

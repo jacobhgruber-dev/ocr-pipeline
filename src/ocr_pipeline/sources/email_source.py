@@ -7,6 +7,7 @@ Date), body text, and attachments list.
 from __future__ import annotations
 
 import email
+import email.parser
 import email.policy
 import logging
 from email.message import Message
