@@ -6,7 +6,7 @@ Last updated: 2026-07-03
 
 | Metric | Value |
 |---|---|
-| Tests | 327 passing (unit + integration + e2e + sources) |
+| Tests | 373 passing (unit + integration + e2e + sources + language + sidecar) |
 | Lint | ruff clean (56 source + test files) |
 | Format | ruff format clean (56 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
@@ -63,8 +63,14 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | CSV/TSV | `CsvSource` | ✅ clevercsv | ❌ | dialect detection | Markdown table output |
 | Excel | `ExcelSource` | ✅ calamine | ❌ | openpyxl props | One sheet = one page; .xlsx/.xls |
 | PPTX | `PptxSource` | ✅ python-pptx | ❌ | core_properties | One slide = one page; speaker notes |
+| DJVU | `DjvuSource` | ✅ djvutxt CLI | ✅ ddjvu CLI | page dimensions | Internet Archive, HathiTrust; needs djvulibre |
+| Comics | `ComicSource` | ❌ (OCR only) | ✅ PIL | image count | .cbz (ZIP) + .cbr (RAR); one image per page |
 
 **Detect**: `detect_source(path)` factory — extension first, magic bytes fallback. `ConfigError` for unsupported types.
+
+**Utilities**:
+- `language_detect.py` — `detect_language(text)` via langdetect (55 languages, ISO 639-1)
+- `sidecar.py` — `load_sidecar_metadata(path)` reads `{file}.meta.yaml`; `merge_sidecar_metadata()` fills empty fields only
 
 ## Architecture Decisions
 
