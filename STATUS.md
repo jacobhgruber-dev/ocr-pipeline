@@ -6,9 +6,9 @@ Last updated: 2026-07-03
 
 | Metric | Value |
 |---|---|
-| Tests | 258 passing (unit + integration + e2e) |
-| Lint | ruff clean (47 source + test files) |
-| Format | ruff format clean (47 files) |
+| Tests | 285 passing (unit + integration + e2e + sources) |
+| Lint | ruff clean (56 source + test files) |
+| Format | ruff format clean (56 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
 | Python | 3.10+ (CI: 3.10, 3.12) |
 | Version | 0.2.0 |
@@ -40,6 +40,21 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | surya2 | Local Python venv | ✅ | 91 languages, Arabic, layout |
 | google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
 | grobid | Local Docker | ✅ | Academic metadata extraction |
+
+## Supported Input Formats (8)
+
+| Format | Source class | Extract text? | Render to image? | Metadata | Notes |
+|---|---|---|---|---|---|
+| PDF | `PdfSource` | ✅ PyMuPDF | ✅ fitz | GROBID/VLM | Existing pipeline path |
+| Image | `ImageSource` | ❌ (OCR only) | ✅ self | EXIF | PNG/JPG/TIFF/WebP/BMP; multi-page TIFF |
+| EPUB | `EpubSource` | ✅ ebooklib | ❌ | OPF (DC) | One spine item = one page |
+| DOCX | `DocxSource` | ✅ python-docx | ❌ | core_properties | Single page |
+| TXT/MD | `TxtSource` | ✅ charset-normalizer | ❌ | file stats | Encoding auto-detect |
+| CSV/TSV | `CsvSource` | ✅ clevercsv | ❌ | dialect detection | Markdown table output |
+| Excel | `ExcelSource` | ✅ calamine | ❌ | openpyxl props | One sheet = one page; .xlsx/.xls |
+| PPTX | `PptxSource` | ✅ python-pptx | ❌ | core_properties | One slide = one page; speaker notes |
+
+**Detect**: `detect_source(path)` factory — extension first, magic bytes fallback. `ConfigError` for unsupported types.
 
 ## Architecture Decisions
 
