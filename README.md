@@ -144,17 +144,34 @@ This processes the first 3 pages as a trial. Check the output, then adjust the p
 
 ## Features
 
-- **Multi-engine ensemble** — Marker (local, free), Surya 2 (91 languages, layout + tables), Mathpix (API, math-specialized), Google Document AI (API, enterprise). Engines run in parallel.
-- **VLM merge** — Gemini 2.5 Flash (default) or Claude reads all engine outputs plus the page image and produces a final clean transcription. Configurable profiles and system prompts — 6 pre-built profiles for different document types (general, academic, mathematical, legal, technical, books), or use a custom system prompt. Corrects OCR errors, resolves disagreements, preserves formatting.
-- **Formatting preservation** — Footnotes (numbers, asterisks, daggers), italics, bold, tables (as markdown), and all special characters are preserved verbatim.
-- **Table extraction** — VLM instructed to output pipe-delimited markdown tables for all tabular content.
-- **GROBID metadata** — Extract title, authors, DOI, journal, volume, year. Injected as YAML frontmatter in per-document output.
-- **Checkpoint & resume** — Stop and restart at any time. Progress is saved per-page. Checkpoints are keyed by file path + size + modification time (not SHA256), so re-downloaded files are matched correctly.
-- **Budget tracking** — Set a cap in dollars. The pipeline refuses new API work when cumulative cost exceeds the limit.
-- **Self-healing** — Built-in post-processing cleans soft hyphens, em-dash line breaks, whitespace, and ligatures.
-- **MCP server** — 4 tools (`ocr_pdf`, `ocr_page`, `ocr_status`, `ocr_metadata`) for opencode agents.
-- **CLI + library API** — Use as a `uvx` command or `from ocr_pipeline import Pipeline` in Python.
-- **Configurable** — YAML config with environment variable and opencode provider overrides.
+### Input
+- **30 input formats** — PDF, EPUB, DOCX, TXT, Markdown, HTML, LaTeX, JSON, RTF, ODT, Jupyter, CSV, Excel, PPTX, DJVU, images (PNG/JPG/TIFF/HEIC), archives (ZIP/TAR/GZ/7z), email (.eml/.mbox), subtitles (.srt/.vtt), e-books (.azw/.kfx/.mobi), MARC, GeoJSON, DXF, SVG, Apple Pages, FictionBook, TEI XML, audio (.mp3/.wav/.flac), video (.mp4/.mkv), comics (.cbz/.cbr). Auto-detected by extension.
+- **DRM detection** — Adobe DRM (EPUB), Kindle DRM (AZW/AZW3/KFX). Flagged in metadata, with Calibre conversion guidance when tools are available.
+- **Large-file guard** — Warns at 500 MB, refuses at 2 GB (configurable). Text files capped at 100 MB with truncation note.
+
+### OCR + Enhancement
+- **7 engines** — Marker, Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic), Mathpix (LaTeX math), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
+- **VLM merge** — Gemini 2.5 Flash or Claude reads engine outputs + page image, produces clean transcription. Script-aware routing (Cyrillic/CJK/Arabic/Greek → correct model).
+- **6 profiles** — General, Academic, Mathematical, Legal, Technical, Books. Each with research-backed system prompts.
+- **Table extraction** — Dual path: VLM prompt-based + Surya 2 ML TableRecPredictor.
+
+### Output
+- **4 formats** — Markdown (primary, with YAML frontmatter), JSON (structured with bboxes/blocks), ALTO XML v4.4, hOCR XHTML. Both ALTO and hOCR have word-level bounding boxes with confidence scores.
+- **Document assembly** — All 30 formats produce `document.md` with concatenated pages + YAML frontmatter metadata.
+
+### Metadata
+- **5-stage chain** — Format-native → sidecar (.meta.yaml) → VLM → GROBID → DOI/ISBN resolution.
+- **Identifier resolution** — DOI→CrossRef API, ISBN→OpenLibrary API. 429 rate-limit retry.
+- **Language detection** — 55 languages auto-detected via langdetect. ISO 639-1/639-3 mapping.
+- **Audio transcription** — faster-whisper on CPU (tiny model, 39 MB, 99 languages). VAD silence removal.
+- **Image extraction** — PDF embedded images via PyMuPDF. EPUB images via ebooklib. DOCX images via python-docx.
+- **Rendering** — EPUB via Calibre ebook-convert, DOCX/PPTX via LibreOffice --headless. Clear guidance when tools absent.
+
+### Reliability
+- **Checkpoint & resume** — Per-file atomic saves. Stop/restart without losing progress.
+- **Budget tracking** — Per-engine cost estimates. Refuses API work above cap.
+- **Exponential backoff** — All API calls retried with configurable backoff and timeout.
+- **Self-healing post-processing** — Soft hyphens, em-dash line breaks, whitespace, ligature cleanup.
 
 ---
 
@@ -525,8 +542,89 @@ uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker --test
 ```
 
-**What it does:** Processes only the first 3 pages of each PDF. Good for quickly
+**What it does:** Processes only the first 3 pages of each document. Good for quickly
 checking quality before running a full batch.
+
+### Multi-format ingestion (PDF + EPUB + DOCX + images)
+
+```bash
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --input-extensions pdf,epub,docx,jpg,png \
+  --profile general --langs en
+```
+
+**What it does:** Processes all supported files in one directory. Text-based formats
+(EPUB, DOCX) skip OCR entirely and extract text directly. Images go through the
+full OCR pipeline. DRM'd e-books are detected and flagged.
+
+### E-book with DRM detection + Calibre conversion
+
+```bash
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --input-extensions epub,azw,mobi --profile general
+```
+
+**What it does:** Auto-detects Adobe DRM (EPUB) and Kindle DRM (AZW/KFX). DRM-free
+AZW/MOBI files are converted to text via Calibre's `ebook-convert` if installed.
+DRM'd files produce a metadata-only output with DRM flag.
+
+### Audio transcription (interviews, lectures, oral histories)
+
+```bash
+uv run ocr-pipeline --input ./audio/ --output ./transcripts/ \
+  --input-extensions mp3,wav,flac --profile general
+```
+
+**What it does:** Extracts FFprobe metadata + transcribes audio using faster-whisper
+(tiny model, 39 MB, local CPU). VAD removes silence. 99 languages auto-detected.
+No API key needed. Model downloads on first use.
+
+### Handwriting recognition (letters, notes, forms)
+
+```bash
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --engines marker,trocr --profile general --langs en
+```
+
+**What it does:** Runs TrOCR (Microsoft handwriting model, 3.42% CER on IAM) alongside
+Marker. TrOCR handles handwriting regions; Marker handles printed text. Best results
+with both engines + VLM merge enabled.
+
+### Digital library output (ALTO XML + hOCR)
+
+```bash
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --profile general --langs en
+```
+
+Then add to `config.yaml`:
+```yaml
+output_formats:
+  - markdown
+  - alto
+  - hocr
+```
+
+**What it does:** Produces ALTO XML v4.4 and hOCR XHTML in addition to markdown.
+Both include word-level bounding boxes with confidence scores. Compatible with
+HathiTrust, Europeana, Internet Archive ingestion pipelines.
+
+### Sidecar metadata enrichment
+
+Create `mydoc.pdf.meta.yaml` next to your file:
+```yaml
+title: "My Document"
+author: "Jane Researcher"
+doi: "10.1234/example"
+license: "CC BY 4.0"
+extra:
+  collection: "Field Notes 2025"
+```
+
+**What it does:** The pipeline auto-discovers `.meta.yaml` files next to any input.
+Sidecar metadata fills empty fields only — it never overwrites metadata extracted
+from the document itself. DOIs are automatically resolved via CrossRef to enrich
+author, journal, and abstract fields.
 
 ---
 
