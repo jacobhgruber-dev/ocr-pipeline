@@ -143,16 +143,44 @@ class MediaSource(DocumentSource):
 
         for i, stream in enumerate(probe.get("streams", [])):
             if isinstance(stream, dict):
-                lines.append(
-                    f"- Stream {i}: {stream.get('codec_type', '?')} "
-                    f"({stream.get('codec_name', '?')}), "
-                    f"{stream.get('channels', '')} ch"
-                    if stream.get("codec_type") == "audio"
-                    else f"{stream.get('width', '')}x{stream.get('height', '')}"
-                )
+                if stream.get("codec_type") == "audio":
+                    lines.append(
+                        f"- Stream {i}: audio "
+                        f"({stream.get('codec_name', '?')}), "
+                        f"{stream.get('channels', '')} ch"
+                    )
+                elif stream.get("codec_type") == "video":
+                    lines.append(
+                        f"- Stream {i}: video "
+                        f"({stream.get('codec_name', '?')}), "
+                        f"{stream.get('width', '')}x{stream.get('height', '')}"
+                    )
+                else:
+                    lines.append(
+                        f"- Stream {i}: {stream.get('codec_type', '?')} "
+                        f"({stream.get('codec_name', '?')})"
+                    )
 
-        lines.append("")
-        lines.append("*Transcription not available — use whisper or cloud STT service.*")
+        # Attempt transcription for audio formats
+        if self.source_format == "audio":
+            lines.append("")
+            lines.append("## Transcription")
+            lines.append("")
+            try:
+                from ocr_pipeline.transcriber import transcribe_audio
+
+                transcript = transcribe_audio(self.path)
+                if transcript.strip():
+                    lines.append(transcript)
+                else:
+                    lines.append("*Transcription produced no text.*")
+            except Exception:
+                lines.append("*Transcription skipped — install faster-whisper: pip install faster-whisper*")
+
+        elif self.source_format == "video":
+            lines.append("")
+            lines.append("*Video transcription: extract audio with ffmpeg first:*")
+            lines.append(f"*  `ffmpeg -i {self.path.name} -vn -acodec pcm_s16le audio.wav`*")
 
         text = "\n".join(lines)
         output_dir.mkdir(parents=True, exist_ok=True)
