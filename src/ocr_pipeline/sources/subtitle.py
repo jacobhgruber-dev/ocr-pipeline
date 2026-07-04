@@ -84,8 +84,7 @@ class SubtitleSource(DocumentSource):
                 if re.match(r"^\d{2}:\d{2}:\d{2}\.\d{3}\s*-->", line):
                     continue
                 if line.startswith("NOTE") or line.startswith("STYLE"):
-                    in_body = False
-                    continue
+                    continue  # Skip metadata lines, stay in body
                 line = _VTT_TAG.sub("", line).strip()
                 if line and not line.isdigit():
                     vtt_lines.append(line)

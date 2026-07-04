@@ -40,6 +40,7 @@ class EngineName(str, Enum):
     SURYA2 = "surya2"
     GROBID = "grobid"  # metadata extraction, not page-level OCR
     TESSERACT = "tesseract"
+    TROCR = "trocr"  # handwriting recognition
 
 
 # ---------------------------------------------------------------------------

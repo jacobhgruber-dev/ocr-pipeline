@@ -23,6 +23,7 @@ from .marker import MarkerEngine
 from .mathpix import MathpixEngine
 from .surya2 import Surya2Engine
 from .tesseract import TesseractEngine
+from .trocr import TrocrEngine
 
 __all__ = [
     # Base types & infrastructure
@@ -39,6 +40,7 @@ __all__ = [
     "MathpixEngine",
     "Surya2Engine",
     "TesseractEngine",
+    "TrocrEngine",
     # Factory
     "create_engine",
 ]
@@ -52,6 +54,7 @@ _ENGINE_CLASSES: dict[str, type] = {
     EngineName.GROBID: GrobidEngine,
     EngineName.SURYA2: Surya2Engine,
     EngineName.TESSERACT: TesseractEngine,
+    EngineName.TROCR: TrocrEngine,
 }
 
 

@@ -6,10 +6,12 @@ automatically via ``charset-normalizer``.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
-
 from .base import DocumentSource
+
+logger = logging.getLogger(__name__)
 
 
 class TxtSource(DocumentSource):
@@ -38,6 +40,12 @@ class TxtSource(DocumentSource):
         if self._text_cache is not None:
             return self._text_cache
 
+        max_bytes = 100 * 1024 * 1024  # 100 MB cap for safety
+        try:
+            file_size = self.path.stat().st_size
+        except OSError:
+            file_size = 0
+
         try:
             from charset_normalizer import from_path
 
@@ -45,10 +53,19 @@ class TxtSource(DocumentSource):
             if results:
                 self._text_cache = str(results.best())
             else:
-                # Fallback to utf-8
                 self._text_cache = self.path.read_text(encoding="utf-8")
         except Exception:
             self._text_cache = self.path.read_text(encoding="utf-8")
+
+        # Truncate if over cap (prevents OOM on huge files)
+        if file_size > max_bytes:
+            self._text_cache = self._text_cache[:max_bytes]
+            self._text_cache += "\n\n[truncated at 100 MB]"
+            logger.warning(
+                "TxtSource truncated %s to 100 MB (%.0f MB total)",
+                self.path.name, file_size / 1_048_576,
+            )
+
         return self._text_cache
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
