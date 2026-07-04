@@ -591,10 +591,11 @@ PROFILES: dict[str, DocumentProfile] = {
         system_prompt=_GENERAL_PROMPT,
         description=(
             "Generic document. Catch-all with 15 rules covering tables, figures, "
-            "multi-column, headers/footers, lists, and code blocks."
+            "multi-column, headers/footers, lists, and code blocks. Supports all "
+            "30 input formats. Add surya2 for layout analysis + ML table detection."
         ),
         suggested_engines=["marker", "tesseract"],
-        optional_engines=["mathpix", "google_doc_ai"],
+        optional_engines=["surya2", "mathpix", "google_doc_ai", "trocr"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -609,10 +610,12 @@ PROFILES: dict[str, DocumentProfile] = {
         system_prompt=_ACADEMIC_PROMPT,
         description=(
             "Academic publication. Preserves citations (all styles), DOIs, abstracts, "
-            "author affiliations, footnotes, tables with notes, and equations."
+            "author affiliations, footnotes, tables with notes, and equations. "
+            "Add surya2 for layout analysis of multi-column papers. Add grobid "
+            "for structured metadata extraction."
         ),
         suggested_engines=["marker", "mathpix"],
-        optional_engines=["tesseract"],
+        optional_engines=["surya2", "tesseract", "grobid"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -628,10 +631,10 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Mathematical or scientific document. Preserves LaTeX math mode, "
             "blackboard bold, calligraphic letters, theorem/proof blocks, "
-            "and equation numbers."
+            "and equation numbers. Surya2 optional for layout + tables."
         ),
         suggested_engines=["mathpix", "marker", "tesseract"],
-        optional_engines=["tesseract"],
+        optional_engines=["surya2"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -647,11 +650,11 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Legal document. Preserves section symbols, case citations, "
             "paragraph hierarchy, signature blocks, and marginalia. "
-            "Add google_doc_ai engine for forms and structured layouts "
-            "(requires Google Cloud credentials)."
+            "Add google_doc_ai for forms and structured layouts. "
+            "Add trocr for handwritten signatures and annotations."
         ),
         suggested_engines=["marker", "mathpix", "google_doc_ai"],
-        optional_engines=["tesseract", "google_doc_ai"],
+        optional_engines=["surya2", "tesseract", "google_doc_ai", "trocr"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -667,11 +670,11 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Technical or engineering document. Preserves callout boxes, revision "
             "tables, tolerances, part numbers, code blocks with syntax hints, "
-            "diagrams, and procedure steps. Add google_doc_ai engine for "
-            "structured datasheets and form-heavy specs (requires Google Cloud)."
+            "diagrams, and procedure steps. Add google_doc_ai for structured "
+            "datasheets. Add surya2 for ML table detection on complex spec tables."
         ),
         suggested_engines=["marker", "mathpix", "google_doc_ai"],
-        optional_engines=["tesseract", "google_doc_ai"],
+        optional_engines=["surya2", "tesseract", "google_doc_ai"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -687,10 +690,11 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Book page. Preserves front/back matter, block quotes, epigraphs, "
             "dialogue formatting, scene breaks, illustrations with captions, "
-            "cross-references, and multi-column layout."
+            "cross-references, and multi-column layout. Add surya2 for "
+            "layout analysis of complex page designs and illustrations."
         ),
         suggested_engines=["marker", "tesseract"],
-        optional_engines=["tesseract"],
+        optional_engines=["surya2"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
