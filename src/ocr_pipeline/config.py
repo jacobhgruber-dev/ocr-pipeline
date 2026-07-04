@@ -70,7 +70,10 @@ class PipelineConfig:
     max_workers: int = 4
     marker_concurrency: int = 1
     surya2_concurrency: int = 1
-    pdf_concurrency: int = 2
+    file_concurrency: int = 2
+    """Max files processed in parallel.  Increase for many small documents;
+    lower for large documents that use heavy engines.  (Legacy alias
+    ``pdf_concurrency`` still accepted in YAML/env-var for compat.)"""
 
     # -- Retry (applies to ALL API calls) ------------------------------------
     max_retries: int = 3
@@ -152,6 +155,8 @@ class ConfigLoader:
         ("max_workers", "OCR_PIPELINE_MAX_WORKERS", int),
         ("marker_concurrency", "OCR_PIPELINE_MARKER_CONCURRENCY", int),
         ("surya2_concurrency", "OCR_PIPELINE_SURYA2_CONCURRENCY", int),
+        ("file_concurrency", "OCR_PIPELINE_FILE_CONCURRENCY", int),
+        # Legacy: pdf_concurrency still accepted
         ("pdf_concurrency", "OCR_PIPELINE_PDF_CONCURRENCY", int),
         ("max_retries", "OCR_PIPELINE_MAX_RETRIES", int),
         ("retry_base_delay_sec", "OCR_PIPELINE_RETRY_BASE_DELAY_SEC", float),
@@ -334,7 +339,7 @@ class ConfigLoader:
             max_workers=int(raw.get("max_workers", 4)),
             marker_concurrency=int(raw.get("marker_concurrency", 1)),
             surya2_concurrency=int(raw.get("surya2_concurrency", 1)),
-            pdf_concurrency=int(raw.get("pdf_concurrency", 2)),
+            file_concurrency=int(raw.get("file_concurrency") or raw.get("pdf_concurrency", 2)),
             # Retry
             max_retries=int(raw.get("max_retries", 3)),
             retry_base_delay_sec=float(raw.get("retry_base_delay_sec", 1.0)),

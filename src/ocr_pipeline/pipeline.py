@@ -157,7 +157,7 @@ class Pipeline:
     def run(self) -> dict[str, Any]:
         """Process all files matching ``config.input_extensions`` in ``config.input_dir``.
 
-        Files are processed in parallel (controlled by ``pdf_concurrency``,
+        Files are processed in parallel (controlled by ``file_concurrency``).
         default 2).  Each file's pages are processed in parallel internally.
 
         Returns:
@@ -202,11 +202,11 @@ class Pipeline:
             self.config.input_dir,
         )
 
-        pdf_workers = getattr(self.config, "pdf_concurrency", 2)
+        file_workers = getattr(self.config, "file_concurrency", None) or 0 or getattr(self.config, "pdf_concurrency", 2)
         progress = PipelineProgress(total_pages=total_pages, budget=self.budget)
         stats_lock = threading.Lock()
 
-        with ThreadPoolExecutor(max_workers=pdf_workers) as executor:
+        with ThreadPoolExecutor(max_workers=file_workers) as executor:
             future_to_path: dict[Future[dict[str, Any]], Path] = {
                 executor.submit(self.process_one, fp): fp for fp in file_paths
             }

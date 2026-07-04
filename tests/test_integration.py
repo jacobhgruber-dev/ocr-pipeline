@@ -73,7 +73,7 @@ def test_pipeline_config_defaults() -> None:
     c = PipelineConfig(input_dir=Path("/tmp"), output_dir=Path("/tmp"))
     assert c.profile == "general"
     assert c.vlm_model == "gemini-2.5-flash"
-    assert c.pdf_concurrency == 2
+    assert c.file_concurrency == 2
     assert c.vlm_cost_per_call == 0.00015
 
 

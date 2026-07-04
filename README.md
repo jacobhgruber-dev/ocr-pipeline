@@ -32,6 +32,10 @@ uv run ocr-pipeline --input ./docs/ --output ./out/ \
 # For more options, see what's available:
 uv run ocr-pipeline --list-profiles
 
+# Dry-run to see what would be processed:
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --input-extensions pdf,epub,docx --dry-run
+
 # Alternative: use a config file for repeatable runs
 cp config.example.yaml config.yaml
 # Edit config.yaml: set input_dir, output_dir, and add API keys

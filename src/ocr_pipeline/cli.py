@@ -363,6 +363,8 @@ def _dry_run(config: PipelineConfig) -> None:
     print(f"Languages:          {', '.join(config.languages)}")
     print(f"Render DPI:         {config.render_dpi}")
     print(f"Max workers:        {config.max_workers}")
+    fc = getattr(config, "file_concurrency", None) or getattr(config, "pdf_concurrency", 2)
+    print(f"File concurrency:   {fc}")
     if config.budget_cap_usd is not None:
         print(f"Budget cap:         ${config.budget_cap_usd:.2f}")
     print(f"Post-process:       {'enabled' if config.postprocess_enabled else 'disabled'}")
