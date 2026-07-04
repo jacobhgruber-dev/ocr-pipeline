@@ -292,7 +292,7 @@ class Pipeline:
         except OSError as exc:
             raise RenderError(f"Cannot stat file: {file_path}") from exc
 
-        rel_path = str(file_path.relative_to(self.config.input_dir))
+        rel_path = str(file_path.resolve().relative_to(self.config.input_dir.resolve()))
         sha256 = self._compute_sha256(file_path)
         short_sha = sha256[:12]
 
