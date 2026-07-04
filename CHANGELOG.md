@@ -5,7 +5,7 @@ All notable changes to the OCR Pipeline will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] — Unreleased
+## [0.3.0] — 2026-07-04
 
 ### Added
 - **30 input formats**: PDF, EPUB, DOCX, TXT, Markdown, HTML, LaTeX, JSON, RTF, ODT,
@@ -42,6 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **page_count contract**: standardized across all 30 sources (int return, never raises).
 - **Error handling**: `RenderError` consistency, bare `except Exception` replaced with logging.
 - **pyproject.toml**: description and keywords updated for multi-format; Beta status.
+- **EPUB/DOCX/PPTX rendering**: convert→PDF→render pipeline. EPUB via Calibre
+  ebook-convert. DOCX/PPTX via LibreOffice --headless.
+- **Audio/video**: MediaSource with FFprobe metadata. Audio transcription via
+  faster-whisper (CPU, tiny model 39MB, 99 languages).
+- **Large-file guard**: warn at 500 MB, refuse at 2 GB (configurable).
+- **macOS compatibility**: `relative_to()` path resolution handles `/var` symlink.
 
 ### Fixed
 - 42 bugs from 4 thorough code reviews (resource leaks, None guards, DRM false positives,

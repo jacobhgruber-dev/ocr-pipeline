@@ -1,34 +1,21 @@
 # OCR Pipeline — Project Status
 
-Last updated: 2026-07-03
+Last updated: 2026-07-04
 
 ## Build
 
 | Metric | Value |
 |---|---|
-| Tests | 395 passing (unit + integration + e2e + sources + language + sidecar + identifier) |
-| Lint | ruff clean (56 source + test files) |
-| Format | ruff format clean (56 files) |
+| Tests | 408 passing (unit + integration + e2e + sources + language + sidecar + identifier + stress) |
+| Lint | ruff clean (86 source + test + script files) |
+| Format | ruff format clean (86 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
 | Python | 3.10+ (CI: 3.10, 3.12) |
-| Version | 0.2.0 |
+| Version | 0.3.0 (Beta) |
 | License | MIT |
 | CI | GitHub Actions (lint, type check, test on push/PR) |
 | Docker | Dockerfile + docker-compose (GROBID) |
-| Git | 29 commits, direct to main |
-
-## Profiles (6)
-
-| Profile | Engines | Default Model | CJK Model | Rules |
-|---|---|---|---|---|
-| `general` | marker, tesseract, mathpix | gemini-2.5-flash | claude-haiku-4-5 | 13 |
-| `academic` | marker, mathpix | gemini-2.5-flash | claude-haiku-4-5 | 15 |
-| `mathematical` | mathpix, marker, tesseract | gemini-2.5-flash | claude-haiku-4-5 | 15 |
-| `legal` | marker, mathpix, google_doc_ai | gemini-2.5-flash | claude-haiku-4-5 | 15 |
-| `technical` | marker, mathpix, google_doc_ai | gemini-2.5-flash | claude-haiku-4-5 | 14 |
-| `books` | marker, tesseract | gemini-2.5-flash | claude-haiku-4-5 | 17 |
-
-All profiles include: few-shot examples, XML-structured prompts, anti-truncation, `[Header:]/[Footer:]` format, image text OCR. Script-aware routing auto-detects page script and routes CJK → Claude.
+| Git | 56 commits, direct to main |
 
 ## Engines (6)
 
@@ -37,18 +24,22 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | marker | Local Python venv | ✅ | General OCR, prose |
 | tesseract | Local binary | ✅ | Arabic/RTL, Cyrillic, universal fallback |
 | mathpix | API (paid) | 1000 pg/mo free | LaTeX math, equations, Cyrillic |
-| surya2 | Local Python venv | ✅ | 91 languages, Arabic, layout |
+| surya2 | Local Python venv | ✅ | 91 languages, Arabic, layout, table recognition |
 | google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
 | grobid | Local Docker | ✅ | Academic metadata extraction |
 
-## Supported Input Formats (18)
+**VLM merge**: Gemini 2.5 Flash (default), Claude Sonnet 5 (fallback). Script-aware model routing.
 
-| Format | Source class | Extract text? | Render to image? | Metadata | Notes |
+**ML table recognition**: Surya 2 TableRecPredictor (dual path with VLM-based table extraction).
+
+## Supported Input Formats (30)
+
+| Format | Source class | Extract text? | Render? | Metadata | Notes |
 |---|---|---|---|---|---|
 | PDF | `PdfSource` | ✅ PyMuPDF | ✅ fitz | GROBID/VLM | Existing pipeline path |
-| Image | `ImageSource` | ❌ (OCR only) | ✅ self | EXIF | PNG/JPG/TIFF/WebP/BMP; multi-page TIFF |
-| EPUB | `EpubSource` | ✅ ebooklib | ❌ | OPF (DC) | One spine item = one page |
-| DOCX | `DocxSource` | ✅ python-docx | ❌ | core_properties | Single page |
+| Image | `ImageSource` | ❌ (OCR only) | ✅ self | EXIF | PNG/JPG/TIFF/WebP/BMP/HEIC; multi-page TIFF |
+| EPUB | `EpubSource` | ✅ ebooklib | ✅ Calibre→PDF | OPF (DC) + Adobe DRM detection | Spine items = pages |
+| DOCX | `DocxSource` | ✅ python-docx | ✅ LibreOffice→PDF | core_properties | Single page |
 | TXT | `TxtSource` | ✅ charset-normalizer | ❌ | file stats | Encoding auto-detect |
 | Markdown | `MarkdownSource` | ✅ charset-normalizer | ❌ | YAML frontmatter | Title, author, date, license |
 | HTML | `HtmlSource` | ✅ lxml | ❌ | JSON-LD / meta tags | schema.org, citation_*, dc.* |
@@ -62,67 +53,72 @@ All profiles include: few-shot examples, XML-structured prompts, anti-truncation
 | Subtitles | `SubtitleSource` | ✅ text | ❌ | line count | .srt, .vtt — timestamp stripping |
 | CSV/TSV | `CsvSource` | ✅ clevercsv | ❌ | dialect detection | Markdown table output |
 | Excel | `ExcelSource` | ✅ calamine | ❌ | openpyxl props | One sheet = one page; .xlsx/.xls |
-| PPTX | `PptxSource` | ✅ python-pptx | ❌ | core_properties | One slide = one page; speaker notes |
-| DJVU | `DjvuSource` | ✅ djvutxt CLI | ✅ ddjvu CLI | page dimensions | Internet Archive, HathiTrust; needs djvulibre |
-| Comics | `ComicSource` | ❌ (OCR only) | ✅ PIL | image count | .cbz (ZIP) + .cbr (RAR); one image per page |
+| PPTX | `PptxSource` | ✅ python-pptx | ✅ LibreOffice→PDF | core_properties | One slide = one page; speaker notes |
+| DJVU | `DjvuSource` | ✅ djvutxt CLI | ✅ ddjvu CLI | page dimensions | Internet Archive, HathiTrust |
+| Comics | `ComicSource` | ❌ (OCR only) | ✅ PIL | image count | .cbz (ZIP) + .cbr (RAR) |
+| E-book | `EbookSource` | ❌ (DRM-blocked) | ❌ | DRM status, Calibre | .azw/.azw3/.kfx/.mobi; DeDRM detection |
+| MARC | `MarcSource` | ✅ pymarc | ❌ | Title, author, ISBN, LCCN, subjects | Library catalog records |
+| GIS | `GisSource` | ✅ JSON/pyshp | ❌ | Feature count, CRS, geometry types | .geojson, .shp |
+| DXF | `DxfSource` | ✅ DXF parser | ❌ | Drawing title | TEXT/MTEXT entity extraction |
+| SVG | `SvgSource` | ✅ lxml | ❌ | title/desc elements | Vector text extraction |
+| Pages | `PagesSource` | ✅ lxml/ZIP | ❌ | document title | Apple Pages (modern format) |
+| FB2 | `Fb2Source` | ✅ lxml | ❌ | Author, genre, ISBN, publisher, date | FictionBook e-books |
+| TEI | `TeiSource` | ✅ lxml | ❌ | titleStmt, author, publisher, date | Scholarly editions |
+| Audio | `MediaSource` | ✅ faster-whisper | ❌ | FFprobe + transcription | .mp3/.wav/.flac/.ogg; CPU Whisper |
+| Video | `MediaSource` | ❌ (ffmpeg guide) | ❌ | FFprobe metadata | .mp4/.mkv/.avi/.mov/.webm |
 
 **Detect**: `detect_source(path)` factory — extension first, magic bytes fallback. `ConfigError` for unsupported types.
 
 **Utilities**:
 - `language_detect.py` — `detect_language(text)` via langdetect (55 languages, ISO 639-1)
 - `sidecar.py` — `load_sidecar_metadata(path)` reads `{file}.meta.yaml`; `merge_sidecar_metadata()` fills empty fields only
+- `identifier.py` — `resolve_doi()` (CrossRef API), `resolve_isbn()` (OpenLibrary API), `enrich_metadata()`
+- `transcriber.py` — `transcribe_audio()` via faster-whisper (CPU, local, no API key)
+- `file_guard.py` — `check_file_size()` with configurable thresholds (warn@500MB, refuse@2GB)
+- `epub_images.py` — `extract_epub_images()` extracts embedded images from EPUB files
+- `extractor.py` — `extract_page_images()` extracts embedded images from PDF pages
 
-## Architecture Decisions
+## Output Formats
 
-1. **Script-aware model routing** — `_detect_script()` + `model_routing` dict per profile. CJK → Claude Haiku, everything else → Gemini.
-2. **Profiles as single source of truth** — `profiles.py` eliminated duplicate prompt system (211 lines removed from merger.py).
-3. **content_type merged into profile** — single concept, single `--profile` CLI flag.
-4. **Checkpoint v3** — Per-PDF files instead of monolithic JSON. Eliminates O(n²) I/O.
-5. **Research-backed prompts** — XML tags, few-shot examples, anti-truncation, character-level formatting.
-
-## Critical Finding: Script-Dependent Model Behavior
-
-| Script | Gemini 2.5 Flash | Claude Haiku 4-5 | Routed To |
+| Format | Formatter | Extension | Notes |
 |---|---|---|---|
-| Latin + diacritics | ✅ Perfect | — | Gemini |
-| Cyrillic | ✅ Perfect | — | Gemini |
-| Greek (polytonic) | ✅ Perfect | — | Gemini |
-| CJK | ❌ Garbled | ✅ Perfect | Claude Haiku |
-| Arabic RTL | Engine-dep. | — | Tesseract/Surya2 |
-| LaTeX math | ✅ With prompts | — | Gemini |
+| Markdown | `MarkdownFormatter` | `.md` | Primary output, YAML frontmatter |
+| JSON | `JsonFormatter` | `.json` | Structured with blocks, bboxes, engine metadata |
+| ALTO XML | `AltoFormatter` | `.xml` | v4.4 schema, word-level String+SP with WC confidence |
+| hOCR | `HocrFormatter` | `.html` | XHTML with ocr_page/carea/par/line/word classes, x_wconf |
+
+## Metadata Extraction Chain
+
+```
+format-native → sidecar (.meta.yaml) → VLM (Gemini) → GROBID → DOI/ISBN resolution
+```
+
+All stages run. Each only fills empty fields. Sidecar metadata never overrides extracted data. Identifier resolution queries CrossRef and OpenLibrary for DOIs/ISBNs found in metadata.
 
 ## Known Gaps
 
-- Table detection has both VLM-based (prompt) and ML-based (Surya 2 TableRecPredictor) paths — ML path requires surya-ocr >= 0.15.0.
-- Image extraction from PDFs is implemented (`extract_page_images()` in extractor.py). DOCX and EPUB image extraction deferred.
 - Ground truth files exist (12 fixtures) but 11 are derived from pipeline output, not human-curated. Only `general_mixed_format.txt` has been manually curated.
-- hOCR and ALTO XML output use block-level granularity — word-level bounding boxes would require engine changes (only Surya2 produces blocks, and only at layout level).
-- CLI `--input-extensions` flag works but defaults to `["pdf"]`. Users must opt-in to multi-format processing via `--input-extensions` or `input_extensions` in config.
+- DOCX/EPUB image extraction: PDF implemented (`extract_page_images()`), EPUB implemented (`extract_epub_images()`), DOCX deferred.
+- DOCX/PPTX rendering requires LibreOffice (`soffice --headless`) — clear install guidance when absent.
+- Large-file guard warns at 500MB and refuses at 2GB. Streaming/chunked processing for >2GB files not implemented.
+- NumPy mypy stub error is a pre-existing Python 3.14 environment issue, not project code.
 
-## Recent Work (2026-07-03 session)
+## Recent Work (2026-07-03 / 2026-07-04 session)
 
-3 commits from this session:
+24 commits across two days:
 
-| Commit | What |
-|---|---|
-| `eb452ad` | E2E integration tests (stub + real VLM), 12 ground truth files, benchmark script |
-| `28c0f2a` | ALTO XML v4.4 output format (AltoFormatter, page dimension capture, lxml) |
-| `a0fab5b` | Bug fixes: Pillow resource leak, negative bbox clamp, None text guard, extractable-text dimensions, ruff format pass, curated ground truth fix |
-
-## Shipping Infrastructure
-
-| Item | Status |
-|---|---|
-| GitHub Actions CI | ✅ Lint + type check + test on push/PR |
-| Docker | ✅ Dockerfile + docker-compose (GROBID) |
-| Pre-commit hooks | ✅ ruff + mypy |
-| CHANGELOG.md | ✅ v0.2.0 |
-| SECURITY.md | ✅ Vulnerability reporting + API privacy |
-| py.typed (PEP 561) | ✅ |
-| License (MIT) | ✅ |
-| E2E tests (stub + real VLM) | ✅ `pytest -m e2e` — stub runs in CI, real VLM needs API key |
-| Benchmark (12 fixtures) | ✅ `scripts/benchmark.py` — CER/WER against ground truth |
-| Ground truth files (12) | ✅ `tests/fixtures/ground_truth/` — baselines from marker+gemini output |
-| ALTO XML output | ✅ `output_formats: ["markdown", "json", "alto"]` — v4.4 schema, lxml-valid, word-level confidence |
-| Ruff formatting | ✅ 47/47 files clean (`ruff format` pass) |
-| Code review | ✅ Passed — 4 bugs found and fixed, zero regressions |
+| Phase | Commits | What |
+|---|---|---|
+| E2E + Benchmark + ALTO | 4 | Integration tests, ground truth, benchmark, ALTO XML output |
+| Multi-format foundation | 3 | DocumentSource ABC, 8 core formats, extended metadata model |
+| Format expansion | 3 | HTML, LaTeX, Markdown, JSON, RTF, ODT, Notebook, Archive, Email, Subtitles |
+| DJVU + Comics + Language + Sidecar | 2 | Digital library formats, language detection, sidecar metadata |
+| Identifier resolution | 1 | DOI→CrossRef, ISBN→OpenLibrary |
+| Code review fixes | 3 | 42 bugs fixed across 4 code reviews |
+| Architecture v0.3 | 2 | Design review + all 6 blocking issues fixed |
+| Gap closure | 3 | CLI flag, hOCR, image extraction, ML table detection |
+| Deferred features | 2 | Word-level bbox, streaming guard, stress tests, Sphinx docs |
+| Pre-existing issues | 1 | README, config.yaml, deprecated comments — all current |
+| EPUB/DOCX/PPTX rendering | 1 | Calibre + LibreOffice conversion pipeline |
+| Audio transcription | 1 | faster-whisper CPU transcription |
+| macOS symlink fix + ebook-convert fix | 2 | Last platform bugs resolved |
