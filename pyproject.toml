@@ -6,13 +6,13 @@ build-backend = "hatchling.build"
 name = "ocr-pipeline"
 version = "0.2.0"
 authors = [{ name = "Jacob Gruber" }]
-description = "Multi-engine OCR with VLM merge for PDF documents"
+description = "Multi-engine OCR with VLM merge for documents (30 formats: PDF, EPUB, DOCX, images, and more)"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-keywords = ["ocr", "pdf", "document-ai", "vlm", "marker", "mathpix", "surya"]
+keywords = ["ocr", "document-ai", "vlm", "pdf", "epub", "docx", "alto", "hocr", "text-extraction", "metadata"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
