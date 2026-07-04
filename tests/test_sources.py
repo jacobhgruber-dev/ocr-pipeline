@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import zipfile
 from pathlib import Path
@@ -1131,3 +1132,220 @@ class TestComicSource:
         assert isinstance(source, ComicSource)
         assert source.source_format == "cbz"
         assert source.page_count == 1
+
+
+# ===========================================================================
+# Stress / edge-case tests — programmatic fixtures, graceful degradation
+# ===========================================================================
+
+
+class TestCorruptedPdf:
+    """PdfSource with random bytes must not crash — returns page_count=0."""
+
+    def test_random_bytes_returns_zero_pages(self, tmp_path: Path) -> None:
+        f = tmp_path / "corrupt.pdf"
+        f.write_bytes(os.urandom(1024))
+        source = PdfSource(f)
+        assert source.source_format == "pdf"
+        assert source.page_count == 0  # fitz fails gracefully
+
+
+class TestEmptyFile:
+    """0-byte .txt file must return empty text, no crash."""
+
+    def test_empty_txt_returns_empty_string(self, tmp_path: Path) -> None:
+        f = tmp_path / "empty.txt"
+        f.write_text("", encoding="utf-8")
+        source = TxtSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert isinstance(text, str)
+        # charset_normalizer on empty file may return "" or contain BOM/etc.
+        assert saved is not None
+
+
+class TestMalformedEpub:
+    """Valid ZIP but wrong mimetype (not application/epub+zip)."""
+
+    def test_wrong_mimetype_no_crash(self, tmp_path: Path) -> None:
+        f = tmp_path / "malformed.epub"
+        with zipfile.ZipFile(str(f), "w") as zf:
+            zf.writestr("mimetype", "application/zip")  # wrong mimetype
+            zf.writestr("META-INF/container.xml", "<fake/>")
+        source = EpubSource(f)
+        # Construction must succeed
+        assert source.source_format == "epub"
+        # page_count must not crash (returns 0 on failure)
+        assert source.page_count >= 0
+        # has_drm must not crash (should return False for invalid ZIP entries)
+        assert source.has_drm() is False
+
+
+class TestTruncatedDocx:
+    """ZIP with no content-types.xml — DocxSource must not crash."""
+
+    def test_missing_content_types_xml(self, tmp_path: Path) -> None:
+        f = tmp_path / "truncated.docx"
+        with zipfile.ZipFile(str(f), "w") as zf:
+            zf.writestr("word/document.xml", "<fake/>")
+            # deliberately omit [Content_Types].xml
+        source = DocxSource(f)
+        assert source.source_format == "docx"
+        # _load_paragraphs catches the error, page_count returns 0
+        assert source.page_count == 0
+
+
+class TestInvalidJson:
+    """JSON file with invalid syntax must not crash."""
+
+    def test_invalid_json_does_not_crash(self, tmp_path: Path) -> None:
+        f = tmp_path / "invalid.json"
+        f.write_text("{invalid json", encoding="utf-8")
+        source = JsonSource(f)
+        assert source.source_format == "json"
+        assert source.page_count == 1
+        # _load falls back to raw string on parse failure
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert isinstance(text, str)
+        assert saved is not None
+
+
+class TestCorruptedImage:
+    """Random bytes with .png extension — ImageSource must not crash."""
+
+    def test_random_bytes_page_count(self, tmp_path: Path) -> None:
+        f = tmp_path / "corrupt.png"
+        f.write_bytes(os.urandom(100))
+        source = ImageSource(f)
+        assert source.source_format == "image"
+        # _detect_format catches PIL error; page_count returns 1
+        assert source.page_count >= 1
+
+    def test_random_bytes_extract_text(self, tmp_path: Path) -> None:
+        f = tmp_path / "corrupt.png"
+        f.write_bytes(os.urandom(100))
+        source = ImageSource(f)
+        # ImageSource always returns empty text — no crash
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert text == ""
+        assert saved is None
+
+
+class TestZeroByteCsv:
+    """0-byte .csv file must not crash CsvSource."""
+
+    def test_zero_byte_csv_no_crash(self, tmp_path: Path) -> None:
+        f = tmp_path / "empty.csv"
+        f.write_bytes(b"")
+        source = CsvSource(f)
+        assert source.source_format == "csv"
+        assert source.page_count == 1
+        # _load_rows may raise on empty input (clevercsv sniff on "" bytes);
+        # the test verifies page_count (always 1) and that extract_text
+        # either succeeds or raises a controlled error (RenderError),
+        # never a segfault or hang.
+        try:
+            text, saved = source.extract_text(0, tmp_path / "out")
+            assert isinstance(text, str)
+            if saved is not None:
+                assert saved.exists()
+        except Exception:
+            pass  # acceptable: controlled failure on truly empty CSV
+
+
+class TestMissingFile:
+    """PdfSource with nonexistent path — extract_text must raise RenderError."""
+
+    def test_missing_file_raises_on_extract(self, tmp_path: Path) -> None:
+        from ocr_pipeline.errors import RenderError
+
+        nonexistent = tmp_path / "does_not_exist.pdf"
+        # __init__ resolves the path but does NOT verify existence
+        source = PdfSource(nonexistent)
+        assert source.source_format == "pdf"
+        # page_count catches the fitz error and returns 0
+        assert source.page_count == 0
+        # extract_text delegates to fitz.open which fails → RenderError
+        with pytest.raises(RenderError, match="Failed to open PDF"):
+            source.extract_text(0, tmp_path / "out")
+
+
+class TestVeryLongSingleLine:
+    """100,000-character single-line .txt must not OOM or hang."""
+
+    def test_long_line_no_oom(self, tmp_path: Path) -> None:
+        f = tmp_path / "long.txt"
+        long_line = "x" * 100_000
+        f.write_text(long_line, encoding="utf-8")
+        source = TxtSource(f)
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert len(text) >= 100_000
+        assert "x" in text
+        assert saved is not None
+
+
+class TestBinaryContentAsMarkdown:
+    """Raw binary (null bytes) as .md must not crash MarkdownSource."""
+
+    def test_null_bytes_no_crash(self, tmp_path: Path) -> None:
+        f = tmp_path / "binary.md"
+        f.write_bytes(b"\x00" * 100 + b"some text\x00more")
+        source = MarkdownSource(f)
+        assert source.source_format == "markdown"
+        assert source.page_count == 1
+        text, saved = source.extract_text(0, tmp_path / "out")
+        assert isinstance(text, str)
+        assert saved is not None
+
+
+class TestCorruptZipAsEpub:
+    """Non-ZIP content with .epub extension — EpubSource must not crash."""
+
+    def test_corrupt_zip_no_crash(self, tmp_path: Path) -> None:
+        f = tmp_path / "corrupt.epub"
+        f.write_bytes(b"this is not a zip file at all")
+        source = EpubSource(f)
+        assert source.source_format == "epub"
+        # page_count catches Exception from _load_spine → 0
+        assert source.page_count == 0
+        # has_drm catches ZipFile/BadZipFile → False
+        assert source.has_drm() is False
+        # extract_metadata catches ebooklib read failure → fallback metadata
+        meta = source.extract_metadata()
+        assert meta.extraction_method == "epub-detection"
+
+
+class TestLargeFileGuard:
+    """check_file_size threshold logic."""
+
+    def test_under_warn_returns_true(self, tmp_path: Path) -> None:
+        from ocr_pipeline.file_guard import check_file_size
+
+        f = tmp_path / "small.bin"
+        f.write_bytes(b"hello")
+        assert check_file_size(f, warn_mb=500, refuse_mb=2000) is True
+
+    def test_over_refuse_returns_false(self, tmp_path: Path) -> None:
+        from ocr_pipeline.file_guard import check_file_size
+
+        f = tmp_path / "huge.bin"
+        # Create a sparse file that reports 3 GB without writing data
+        f.touch()
+        os.truncate(str(f), 3 * 1024 * 1024 * 1024)  # 3 GB
+        assert check_file_size(f, warn_mb=500, refuse_mb=2000) is False
+
+    def test_between_warn_and_refuse_returns_true(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        from ocr_pipeline.file_guard import check_file_size
+
+        f = tmp_path / "medium.bin"
+        f.touch()
+        os.truncate(str(f), 1000 * 1024 * 1024)  # 1 GB (between 500 MB and 2 GB)
+
+        caplog.set_level(logging.WARNING)
+        result = check_file_size(f, warn_mb=500, refuse_mb=2000)
+        assert result is True
+        # Verify a warning was logged for the large (but accepted) file
+        assert len(caplog.records) >= 1

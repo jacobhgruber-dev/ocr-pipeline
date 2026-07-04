@@ -326,29 +326,45 @@ class AltoFormatter:
         )
         tl = ET.SubElement(tb, "TextLine", **block_bbox)
 
-        # Try word-level splitting for SP elements
-        words = text.split()
-        wc_attr = {}
-        if block.confidence > 0:
-            wc_attr = {"WC": f"{block.confidence:.4f}"}
+        has_word_bboxes = block.words and any(w.bbox is not None for w in block.words)
 
-        if len(words) <= 1:
-            s_attrs = {"CONTENT": text, **block_bbox}
-            s_attrs.update(wc_attr)
-            ET.SubElement(tl, "String", **s_attrs)
+        if has_word_bboxes:
+            # Word-level bbox path — each word gets its own <String> element
+            for i, word in enumerate(block.words):
+                if word.bbox is not None:
+                    word_attrs = AltoFormatter._bbox_to_alto(word.bbox)
+                else:
+                    word_attrs = dict(block_bbox)
+                word_attrs["CONTENT"] = word.text
+                if word.confidence > 0:
+                    word_attrs["WC"] = f"{word.confidence:.4f}"
+                ET.SubElement(tl, "String", **word_attrs)
+                if i < len(block.words) - 1:
+                    ET.SubElement(tl, "SP")
         else:
-            for i, word in enumerate(words):
-                s_attrs = {
-                    "CONTENT": word,
-                    "HPOS": block_bbox["HPOS"],
-                    "VPOS": block_bbox["VPOS"],
-                    "WIDTH": block_bbox["WIDTH"],
-                    "HEIGHT": block_bbox["HEIGHT"],
-                }
+            # Fallback — split text into words with block-level bbox
+            words = text.split()
+            wc_attr = {}
+            if block.confidence > 0:
+                wc_attr = {"WC": f"{block.confidence:.4f}"}
+
+            if len(words) <= 1:
+                s_attrs = {"CONTENT": text, **block_bbox}
                 s_attrs.update(wc_attr)
                 ET.SubElement(tl, "String", **s_attrs)
-                if i < len(words) - 1:
-                    ET.SubElement(tl, "SP")
+            else:
+                for i, word in enumerate(words):
+                    s_attrs = {
+                        "CONTENT": word,
+                        "HPOS": block_bbox["HPOS"],
+                        "VPOS": block_bbox["VPOS"],
+                        "WIDTH": block_bbox["WIDTH"],
+                        "HEIGHT": block_bbox["HEIGHT"],
+                    }
+                    s_attrs.update(wc_attr)
+                    ET.SubElement(tl, "String", **s_attrs)
+                    if i < len(words) - 1:
+                        ET.SubElement(tl, "SP")
 
 
 class HocrFormatter:
@@ -563,6 +579,8 @@ class HocrFormatter:
         bbox_title = f"bbox {x0} {y0} {x1} {y1}"
         confidence = getattr(block, "confidence", 0.0) or 0.0
 
+        has_word_bboxes = block.words and any(w.bbox is not None for w in block.words)
+
         par = ET.SubElement(
             area_div,
             "p",
@@ -581,7 +599,32 @@ class HocrFormatter:
                 "title": bbox_title,
             },
         )
-        self._add_words(line_span, text, x1, y1, confidence)
+
+        if has_word_bboxes:
+            # Word-level bbox path — each word gets its own ocrx_word span
+            for i, word in enumerate(block.words):
+                if word.bbox is not None:
+                    wx0, wy0, wx1, wy1 = (int(v) for v in word.bbox)
+                    word_title = f"bbox {wx0} {wy0} {wx1} {wy1}"
+                else:
+                    word_title = bbox_title
+                if word.confidence > 0:
+                    word_title += f"; x_wconf {int(round(word.confidence * 100))}"
+                span = ET.SubElement(
+                    line_span,
+                    "span",
+                    {
+                        "class": "ocrx_word",
+                        "id": self._next_id("word"),
+                        "title": word_title,
+                    },
+                )
+                span.text = word.text
+                if i < len(block.words) - 1:
+                    span.tail = " "
+        else:
+            # Fallback — split text into words with block-level bbox
+            self._add_words(line_span, text, x1, y1, confidence)
 
     def _add_words(
         self,

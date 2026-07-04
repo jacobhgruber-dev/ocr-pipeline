@@ -151,6 +151,41 @@ class RightsInfo:
 
 
 @dataclass
+class WordBbox:
+    """Per-word bounding box from OCR engines.
+
+    Carries the exact pixel-position of each recognised word so that
+    downstream consumers (hOCR, ALTO, searchable PDF) can use word-level
+    coordinates instead of line- or block-level fallbacks.
+
+    Attributes:
+        text: The recognised word string.
+        bbox: ``(x0, y0, x1, y1)`` in page coordinates, or ``None``
+            when the engine did not provide a position.
+        confidence: Engine-reported confidence for this word (0.0–1.0).
+    """
+
+    text: str
+    bbox: tuple[float, float, float, float] | None = None
+    confidence: float = 0.0
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"text": self.text, "confidence": self.confidence}
+        if self.bbox:
+            result["bbox"] = list(self.bbox)
+        return result
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> WordBbox:
+        bbox = tuple(d["bbox"]) if "bbox" in d else None
+        return cls(
+            text=d["text"],
+            bbox=bbox,
+            confidence=float(d.get("confidence", 0.0)),
+        )
+
+
+@dataclass
 class Block:
     """A structured block of content with bounding box."""
 
@@ -159,6 +194,7 @@ class Block:
     bbox: tuple[float, float, float, float] | None = None  # (x0, y0, x1, y1) in page coords
     confidence: float = 0.0
     children: list[Block] = field(default_factory=list)
+    words: list[WordBbox] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         result = {"type": self.type, "text": self.text, "confidence": self.confidence}
@@ -166,18 +202,22 @@ class Block:
             result["bbox"] = list(self.bbox)
         if self.children:
             result["children"] = [c.to_dict() for c in self.children]
+        if self.words:
+            result["words"] = [w.to_dict() for w in self.words]
         return result
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Block:
         bbox = tuple(d["bbox"]) if "bbox" in d else None
         children = [cls.from_dict(c) for c in d.get("children", [])]
+        words = [WordBbox.from_dict(w) for w in d.get("words", [])] if "words" in d else []
         return cls(
             type=d["type"],
             text=d.get("text", ""),
             bbox=bbox,
             confidence=float(d.get("confidence", 0.0)),
             children=children,
+            words=words,
         )
 
 

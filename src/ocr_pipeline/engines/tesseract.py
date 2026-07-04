@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytesseract
 
-from ..models import EngineName, EngineOutput
+from ..models import Block, EngineName, EngineOutput, WordBbox
 
 logger = logging.getLogger(__name__)
 
@@ -143,11 +143,46 @@ class TesseractEngine:
                 lang=lang_str,
                 config="--psm 3",  # Auto page segmentation
             )
+            text = text.strip()
+
+            # Extract per-word bounding box data
+            data = pytesseract.image_to_data(
+                str(image_path),
+                lang=lang_str,
+                output_type=pytesseract.Output.DICT,
+            )
+            word_bboxes: list[WordBbox] = []
+            n_entries = len(data["text"])
+            for i in range(n_entries):
+                # Tesseract level 5 = word
+                if data["level"][i] != 5:
+                    continue
+                word_text = (data["text"][i] or "").strip()
+                if not word_text:
+                    continue
+                try:
+                    left = float(data["left"][i])
+                    top = float(data["top"][i])
+                    width = float(data["width"][i])
+                    height = float(data["height"][i])
+                except (ValueError, KeyError):
+                    continue
+                conf_val = data["conf"][i]
+                confidence = float(conf_val) / 100.0 if conf_val != "-1" else 0.0
+                word_bboxes.append(
+                    WordBbox(
+                        text=word_text,
+                        bbox=(left, top, left + width, top + height),
+                        confidence=confidence,
+                    )
+                )
+
             duration = time.perf_counter() - t0
             return EngineOutput(
                 engine=self.engine_name,
-                text=text.strip(),
+                text=text,
                 duration_sec=duration,
+                blocks=[Block(type="text", text=text, words=word_bboxes)],
             )
         except Exception as exc:
             duration = time.perf_counter() - t0

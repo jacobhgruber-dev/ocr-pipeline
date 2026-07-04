@@ -270,6 +270,22 @@ class Pipeline:
         if self.config.test_mode:
             page_count = min(page_count, 3)
 
+        # Large-file guard: warn or skip files exceeding configurable thresholds
+        from .file_guard import check_file_size
+
+        if not check_file_size(
+            file_path,
+            warn_mb=getattr(self.config, "file_warn_mb", None) or 0 or 500,
+            refuse_mb=getattr(self.config, "file_refuse_mb", None) or 0 or 2000,
+        ):
+            logger.warning("Skipping %s: file too large", file_path.name)
+            return {
+                "pages_processed": 0,
+                "pages_complete": 0,
+                "pages_failed": 0,
+                "pages_confidence_sum": 0.0,
+            }
+
         # Build file identity
         try:
             st = file_path.stat()

@@ -220,6 +220,7 @@ try:
 
         # Collect text lines whose bbox overlaps this layout box
         block_lines = []
+        block_word_dicts = []
         for line in ocr_result.text_lines:
             line_poly = line.polygon
             if not line_poly or len(line_poly) < 4:
@@ -235,7 +236,24 @@ try:
             ox1 = min(lb_bbox[2], lx1)
             oy1 = min(lb_bbox[3], ly1)
             if ox0 < ox1 and oy0 < oy1:
-                block_lines.append(line.text or "")
+                line_text = line.text or ""
+                block_lines.append(line_text)
+                # Compute word-level bboxes by splitting line width evenly
+                stripped = line_text.strip()
+                if stripped:
+                    words = stripped.split()
+                    num_words = len(words)
+                    line_width = lx1 - lx0
+                    word_width = line_width / num_words
+                    ln_conf = float(line.confidence) if line.confidence else 0.0
+                    for wi, w in enumerate(words):
+                        wx0 = lx0 + wi * word_width
+                        wx1 = lx0 + (wi + 1) * word_width
+                        block_word_dicts.append({{
+                            "text": w,
+                            "bbox": [wx0, ly0, wx1, ly1],
+                            "confidence": ln_conf,
+                        }})
 
         block_text = "\\n".join(block_lines) if block_lines else ""
         confidence = float(lbox.confidence) if lbox.confidence else 0.0
@@ -246,6 +264,7 @@ try:
             "bbox": list(lb_bbox) if lb_bbox else None,
             "confidence": confidence,
             "children": [],
+            "words": block_word_dicts,
         }})
 
     # --- Fallback: if no layout blocks, emit text lines directly --------------
@@ -255,15 +274,37 @@ try:
             if line_poly and len(line_poly) >= 4:
                 xs = [p[0] for p in line_poly]
                 ys = [p[1] for p in line_poly]
-                bbox = [min(xs), min(ys), max(xs), max(ys)]
+                lx0, ly0, lx1, ly1 = min(xs), min(ys), max(xs), max(ys)
+                bbox = [lx0, ly0, lx1, ly1]
             else:
                 bbox = None
+
+            # Compute word-level bboxes by splitting line width evenly
+            word_dicts = []
+            line_text = line.text or ""
+            stripped = line_text.strip()
+            if stripped and bbox is not None:
+                words = stripped.split()
+                num_words = len(words)
+                line_width = lx1 - lx0
+                word_width = line_width / num_words
+                ln_conf = float(line.confidence) if line.confidence else 0.0
+                for wi, w in enumerate(words):
+                    wx0 = lx0 + wi * word_width
+                    wx1 = lx0 + (wi + 1) * word_width
+                    word_dicts.append({{
+                        "text": w,
+                        "bbox": [wx0, ly0, wx1, ly1],
+                        "confidence": ln_conf,
+                    }})
+
             blocks.append({{
                 "type": "text",
                 "text": line.text or "",
                 "bbox": bbox,
                 "confidence": float(line.confidence) if line.confidence else 0.0,
                 "children": [],
+                "words": word_dicts,
             }})
 
     # --- Full text ------------------------------------------------------------
