@@ -182,7 +182,7 @@ class EpubSource(DocumentSource):
         with tempfile.TemporaryDirectory() as td:
             pdf_path = Path(td) / "converted.pdf"
             result = subprocess.run(
-                ["ebook-convert", str(self.path), str(pdf_path), "--to", "pdf"],
+                ["ebook-convert", str(self.path), str(pdf_path)],
                 capture_output=True,
                 text=True,
                 timeout=120,
