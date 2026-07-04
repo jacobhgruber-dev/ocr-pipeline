@@ -1,6 +1,6 @@
 # OCR Pipeline
 
-**Multi-engine OCR with VLM merge for PDF documents.**
+**Multi-engine OCR with VLM merge for documents (30 formats: PDF, EPUB, DOCX, images, and more).**
 
 Multiple OCR engines run in parallel on each page. A Vision Language Model (Gemini or Claude) reads the page image and all engine outputs, then writes a single clean markdown transcription — correcting errors, resolving disagreements, and preserving document structure.
 
@@ -19,11 +19,15 @@ cd ocr-pipeline
 uv sync
 
 # 3. Try it (no config file needed for basic use)
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ --profile general
+uv run ocr-pipeline --input ./docs/ --output ./out/ --profile general
 
-# Or use Claude instead of Gemini (better for diacritics and citations):
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+# Use Claude instead of Gemini (better for diacritics and citations):
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile general --vlm-model claude-sonnet-5
+
+# Process multiple file types (PDFs, EPUBs, DOCX, images, etc.):
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
+  --input-extensions pdf,epub,docx,jpg,png --profile general
 
 # For more options, see what's available:
 uv run ocr-pipeline --list-profiles

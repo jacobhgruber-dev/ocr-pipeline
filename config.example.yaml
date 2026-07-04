@@ -12,12 +12,25 @@
 # Input / Output
 # ---------------------------------------------------------------------------
 
-# Directory containing PDF files to process (can contain subdirectories).
-input_dir: "./pdfs/"
+# Directory containing documents to process (supports 30 formats).
+# Files are auto-detected by extension. Use input_extensions to filter.
+input_dir: "./docs/"
 
-# Directory where processed output is written (one subdir per PDF, one
+# Directory where processed output is written (one subdir per document, one
 # `.md` file per page).
 output_dir: "./output/"
+
+# File extensions to process (without leading dot). Defaults to ["pdf"].
+# Set to a broader list for multi-format ingestion:
+#   input_extensions: [pdf, epub, docx, txt, md, png, jpg, tiff, html, tex]
+# Or set to an empty list to process all files in input_dir.
+# input_extensions:
+#   - pdf
+
+# Maximum file sizes. Files above refuse_mb are skipped. Files above
+# warn_mb produce a warning but are still processed. Defaults shown.
+# file_warn_mb: 500
+# file_refuse_mb: 2000
 
 # Checkpoint directory for resumable runs. Defaults to output_dir/.checkpoint/
 # if not set. Set to "" to disable checkpointing.
@@ -32,7 +45,7 @@ checkpoint_dir: ""  # defaults to output_dir/.checkpoint/
 #   tesseract     — local, free, Arabic/RTL, Cyrillic, fallback
 #   mathpix       — API, best for math-heavy PDFs. Get key at https://mathpix.com
 #   google_doc_ai — API, Google Cloud Document AI. See https://cloud.google.com/document-ai
-#   surya2        — future (not yet implemented)
+#   surya2        — local, free, 91 languages, layout analysis
 engines:
   - marker
   # - mathpix
@@ -152,11 +165,13 @@ engine_cost_per_page:
 # ---------------------------------------------------------------------------
 # Output Formats
 # ---------------------------------------------------------------------------
-# Which output formats to produce. "markdown" is always written; add "json"
-# for structured JSON with bounding boxes, blocks, and engine metadata.
+# Which output formats to produce. "markdown" is always written.
+# Available: "markdown", "json", "alto", "hocr"
 output_formats:
   - markdown
-  # - json  # uncomment for structured JSON with bounding boxes
+  # - json   # structured JSON with bounding boxes, blocks, and engine metadata
+  # - alto   # ALTO XML v4.4 for digital library compatibility
+  # - hocr   # hOCR XHTML for digital library compatibility
 
 # ---------------------------------------------------------------------------
 # Concurrency
