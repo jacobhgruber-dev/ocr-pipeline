@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0">
+  <description>
+    <title-info>
+      <book-title>Test Book</book-title>
+      <author>
+        <first-name>Jane</first-name>
+        <last-name>Author</last-name>
+      </author>
+      <lang>en</lang>
+      <genre>fiction</genre>
+    </title-info>
+    <publish-info>
+      <publisher>Test Publisher</publisher>
+      <year>2025</year>
+      <isbn>978-0-123456-78-9</isbn>
+    </publish-info>
+  </description>
+  <body>
+    <section>
+      <title><p>Chapter 1</p></title>
+      <p>This is the first paragraph.</p>
+      <p>This is the second paragraph.</p>
+    </section>
+  </body>
+</FictionBook>

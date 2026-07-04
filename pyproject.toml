@@ -53,6 +53,8 @@ dependencies = [
     "pymarc>=5.4.0",
     "pyshp>=3.1.4",
     "faster-whisper>=1.2.1",
+    "easyocr>=1.7.2",
+    "bitsandbytes>=0.49.2",
 ]
 
 [project.optional-dependencies]

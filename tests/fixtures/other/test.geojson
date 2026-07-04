@@ -1,0 +1,15 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [ -122.4, 37.8 ] },
+      "properties": { "name": "San Francisco", "population": 870000 }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [ -118.2, 34.1 ] },
+      "properties": { "name": "Los Angeles", "population": 4000000 }
+    }
+  ]
+}
