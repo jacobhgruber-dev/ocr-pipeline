@@ -78,9 +78,45 @@ class PptxSource(DocumentSource):
             return 0
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
-        raise NotImplementedError(
-            "PptxSource.render_page not yet implemented — convert slides to images before OCR."
-        )
+        """Render a PPTX slide to PNG via LibreOffice → fitz.
+
+        Converts to PDF using LibreOffice headless, then renders the slide.
+        """
+        import shutil
+        import subprocess
+        import tempfile
+
+        soffice = shutil.which("soffice")
+        if not soffice:
+            raise NotImplementedError(
+                "PptxSource.render_page requires LibreOffice (https://www.libreoffice.org). "
+                "Install with: brew install libreoffice (macOS) or apt install libreoffice (Linux). "
+                "Without it, use the text extraction path (no rendering needed for text-based PPTX)."
+            )
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        png_path = output_dir / f"page_{page_index + 1:04d}.png"
+        if png_path.exists():
+            return png_path
+
+        with tempfile.TemporaryDirectory() as td:
+            pptx_tmp = Path(td) / self.path.name
+            shutil.copy(str(self.path), str(pptx_tmp))
+            result = subprocess.run(
+                [soffice, "--headless", "--convert-to", "pdf", "--outdir", td, str(pptx_tmp)],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            pdf_path = pptx_tmp.with_suffix(".pdf")
+            if result.returncode != 0 or not pdf_path.exists():
+                raise RenderError(
+                    f"LibreOffice conversion failed for {self.path.name}: {result.stderr[:200]}"
+                )
+
+            from ocr_pipeline.renderer import render_page as _render
+
+            return _render(pdf_path, page_index, output_dir, dpi=dpi)
 
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None

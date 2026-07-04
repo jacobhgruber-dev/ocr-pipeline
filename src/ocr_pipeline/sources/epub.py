@@ -153,13 +153,49 @@ class EpubSource(DocumentSource):
             return 0
 
     def render_page(self, page_index: int, output_dir: Path, dpi: int = 300) -> Path:
-        """Render an EPUB spine item to a PNG via a headless browser.
+        """Render an EPUB page to PNG via Calibre ebook-convert → fitz.
 
-        Falls back to a blank placeholder image when no browser is available.
+        Converts the EPUB to a temporary PDF using Calibre, then renders
+        the requested page via PyMuPDF.  Falls back to NotImplementedError
+        when Calibre is not installed.
         """
-        raise NotImplementedError(
-            "EpubSource.render_page not yet implemented — use a PDF conversion step before OCR."
-        )
+        import shutil
+        import subprocess
+        import tempfile
+
+        if not shutil.which("ebook-convert"):
+            raise NotImplementedError(
+                "EpubSource.render_page requires Calibre (https://calibre-ebook.com). "
+                "Install Calibre for e-book rendering, or pre-convert EPUB to PDF."
+            )
+
+        spine = self._load_spine()
+        if page_index < 0 or page_index >= len(spine):
+            raise RenderError(f"EPUB page index {page_index} out of range ({len(spine)} items)")
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        png_path = output_dir / f"page_{page_index + 1:04d}.png"
+        if png_path.exists():
+            return png_path
+
+        # Convert EPUB → PDF via Calibre
+        with tempfile.TemporaryDirectory() as td:
+            pdf_path = Path(td) / "converted.pdf"
+            result = subprocess.run(
+                ["ebook-convert", str(self.path), str(pdf_path), "--to", "pdf"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode != 0 or not pdf_path.exists():
+                raise RenderError(
+                    f"Calibre conversion failed for {self.path.name}: {result.stderr[:200]}"
+                )
+
+            # Render the requested page from the PDF
+            from ocr_pipeline.renderer import render_page as _render
+
+            return _render(pdf_path, page_index, output_dir, dpi=dpi)
 
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None
