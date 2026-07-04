@@ -7,8 +7,8 @@ Last updated: 2026-07-04
 | Metric | Value |
 |---|---|
 | Tests | 408 passing (unit + integration + e2e + sources + language + sidecar + identifier + stress) |
-| Lint | ruff clean (86 source + test + script files) |
-| Format | ruff format clean (86 files) |
+| Lint | ruff clean (88 source + test + script files) |
+| Format | ruff format clean (88 files) |
 | Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
 | Python | 3.10+ (CI: 3.10, 3.12) |
 | Version | 0.3.0 (Beta) |
@@ -67,7 +67,9 @@ Last updated: 2026-07-04
 | Audio | `MediaSource` | ✅ faster-whisper | ❌ | FFprobe + transcription | .mp3/.wav/.flac/.ogg; CPU Whisper |
 | Video | `MediaSource` | ❌ (ffmpeg guide) | ❌ | FFprobe metadata | .mp4/.mkv/.avi/.mov/.webm |
 
-**Detect**: `detect_source(path)` factory — extension first, magic bytes fallback. `ConfigError` for unsupported types.
+**Rendering (format conversion)**: EPUB via Calibre ebook-convert, DOCX/PPTX via LibreOffice --headless.
+
+**Handwriting recognition**: TrOCR (`microsoft/trocr-base-handwritten`) via `handwriting.py` — 3.42% CER on IAM, MIT license, text-line detection via Surya or EasyOCR, 8-bit quantization for CPU.
 
 **Utilities**:
 - `language_detect.py` — `detect_language(text)` via langdetect (55 languages, ISO 639-1)
@@ -114,11 +116,12 @@ All stages run. Each only fills empty fields. Sidecar metadata never overrides e
 | Format expansion | 3 | HTML, LaTeX, Markdown, JSON, RTF, ODT, Notebook, Archive, Email, Subtitles |
 | DJVU + Comics + Language + Sidecar | 2 | Digital library formats, language detection, sidecar metadata |
 | Identifier resolution | 1 | DOI→CrossRef, ISBN→OpenLibrary |
-| Code review fixes | 3 | 42 bugs fixed across 4 code reviews |
+| Code review fixes | 3 | 43 bugs fixed across 4 code reviews |
 | Architecture v0.3 | 2 | Design review + all 6 blocking issues fixed |
 | Gap closure | 3 | CLI flag, hOCR, image extraction, ML table detection |
 | Deferred features | 2 | Word-level bbox, streaming guard, stress tests, Sphinx docs |
 | Pre-existing issues | 1 | README, config.yaml, deprecated comments — all current |
 | EPUB/DOCX/PPTX rendering | 1 | Calibre + LibreOffice conversion pipeline |
 | Audio transcription | 1 | faster-whisper CPU transcription |
-| macOS symlink fix + ebook-convert fix | 2 | Last platform bugs resolved |
+| Handwriting + real fixtures + hardening | 2 | TrOCR engine, 8 real test files, XML entity bomb protection |
+| macOS symlink + ebook-convert fix | 2 | Last platform bugs resolved |
