@@ -48,6 +48,8 @@ class OdtSource(DocumentSource):
 
         from lxml import etree
 
+        parser = etree.XMLParser(resolve_entities=False, no_network=True)
+
         meta: dict[str, str] = {}
         text_parts: list[str] = []
 
@@ -55,7 +57,7 @@ class OdtSource(DocumentSource):
             # Parse meta.xml
             if "meta.xml" in zf.namelist():
                 try:
-                    meta_xml = etree.fromstring(zf.read("meta.xml"))
+                    meta_xml = etree.fromstring(zf.read("meta.xml"), parser)
                     for el in meta_xml.iter():
                         tag = etree.QName(el.tag).localname
                         if tag in (
@@ -82,7 +84,7 @@ class OdtSource(DocumentSource):
             # Parse content.xml
             if "content.xml" in zf.namelist():
                 try:
-                    content_xml = etree.fromstring(zf.read("content.xml"))
+                    content_xml = etree.fromstring(zf.read("content.xml"), parser)
                     for el in content_xml.iter():
                         if el.tag in (f"{_NS_TEXT}p", f"{_NS_TEXT}h"):
                             if el.text:

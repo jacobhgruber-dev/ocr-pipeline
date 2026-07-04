@@ -46,6 +46,8 @@ class PagesSource(DocumentSource):
 
         from lxml import etree
 
+        parser = etree.XMLParser(resolve_entities=False, no_network=True)
+
         meta: dict[str, str] = {}
         text_parts: list[str] = []
 
@@ -60,7 +62,7 @@ class PagesSource(DocumentSource):
                     return self._text_cache, {}
 
                 xml_bytes = zf.read("index.xml")
-                doc = etree.fromstring(xml_bytes)
+                doc = etree.fromstring(xml_bytes, parser)
 
                 # Extract text from all text storage elements
                 for el in doc.iter():
