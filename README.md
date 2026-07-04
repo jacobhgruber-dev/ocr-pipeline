@@ -44,7 +44,30 @@ cp config.example.yaml config.yaml
 uv run ocr-pipeline --config config.yaml
 ```
 
-That's it. The pipeline discovers all PDFs under `input_dir`, processes them, and writes markdown to `output_dir/`.
+That's it. The pipeline discovers all matching documents under `input_dir`, processes them, and writes markdown to `output_dir/`.
+
+### What it processes (30 formats, auto-detected)
+
+| Category | Formats |
+|---|---|
+| Documents | PDF, EPUB, DOCX, TXT, Markdown, RTF, ODT, Apple Pages |
+| Academic | LaTeX, TEI XML, Jupyter Notebooks |
+| Web | HTML, JSON, FictionBook (.fb2) |
+| Spreadsheets | CSV/TSV, Excel (.xlsx/.xls) |
+| Presentations | PowerPoint (.pptx) |
+| Images | PNG, JPG, TIFF, WebP, BMP, HEIC |
+| E-books | Kindle (.azw/.azw3/.kfx), Mobipocket (.mobi) |
+| Archives | ZIP, TAR, GZ, 7z |
+| Communication | Email (.eml/.mbox), Subtitles (.srt/.vtt) |
+| Geospatial | GeoJSON, Shapefile (.shp) |
+| Engineering | DJVU, DXF (CAD), SVG |
+| Library | MARC records (.mrc) |
+| Media | Audio (.mp3/.wav/.flac) — transcribed via Whisper. Video (.mp4/.mkv) — metadata via FFprobe |
+| Comics | CBZ, CBR |
+
+> Text-based formats skip OCR entirely (fast). Images and PDFs go through multi-engine OCR → VLM merge.
+> Each format auto-extracts its native metadata (OPF for EPUB, EXIF for images, JSON-LD for HTML, etc.).
+> See `STATUS.md` for the complete 30-format table with metadata details.
 
 ---
 
@@ -66,7 +89,7 @@ uv run ocr-pipeline --list-languages
 uv run ocr-pipeline --list-languages-for marker
 
 # See what would run without processing (safe preview)
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ --dry-run
+uv run ocr-pipeline --input ./docs/ --output ./out/ --dry-run
 ```
 
 ---
@@ -94,26 +117,26 @@ Not sure which profile to use? Match your document to this table:
 
 **$0 budget** — free-only mode:
 ```bash
-uv run ocr-pipeline --profile general --no-vlm --input ./pdfs/ --output ./out/
+uv run ocr-pipeline --profile general --no-vlm --input ./docs/ --output ./out/
 ```
 No API keys needed. Uses Marker (or Marker+Surya2) locally. VLM merge disabled.
 
 **Free tier** (Gemini free tier: 1500 req/day):
 ```bash
-uv run ocr-pipeline --profile general --input ./pdfs/ --output ./out/
+uv run ocr-pipeline --profile general --input ./docs/ --output ./out/
 ```
 Add any languages your document uses: `--langs en,fr,de`
 
 **Best quality** (adds Claude for critical profiles):
 ```bash
 uv run ocr-pipeline --profile academic --vlm-model claude-sonnet-5 \
-  --input ./pdfs/ --output ./out/
+  --input ./docs/ --output ./out/
 ```
 Profiles marked "best with Claude" above benefit from it for precision on structured text.
 
 **If you're not sure**, start here:
 ```bash
-uv run ocr-pipeline --profile general --input ./pdfs/ --output ./out/ --test
+uv run ocr-pipeline --profile general --input ./docs/ --output ./out/ --test
 ```
 This processes the first 3 pages as a trial. Check the output, then adjust the profile and re-run.
 
@@ -226,21 +249,21 @@ uv run ocr-pipeline --input ./my_pdfs/ --output ./out/ \
   --vlm-model claude-sonnet-5
 
 # Set a budget cap (stops API work when exceeded)
-uv run ocr-pipeline --input ./pdfs/ --budget 50.0
+uv run ocr-pipeline --input ./docs/ --budget 50.0
 
 # Use a document profile for better accuracy
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile academic --langs en,la
 
 # Override profile suggestions
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile academic --engines mathpix --vlm-model claude-sonnet-5
 
 # Dry run — list files without processing
-uv run ocr-pipeline --input ./pdfs/ --dry-run
+uv run ocr-pipeline --input ./docs/ --dry-run
 
 # Test mode — first 3 pages only
-uv run ocr-pipeline --input ./pdfs/ --test
+uv run ocr-pipeline --input ./docs/ --test
 
 # Resume is automatic — the pipeline detects existing checkpoints and
 # picks up where it left off. No special flag needed.
@@ -319,7 +342,7 @@ print(pipeline.stats)
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `input_dir` | path | `./pdfs/` | Directory containing PDFs to process |
+| `input_dir` | path | `./docs/` | Directory containing documents to process |
 | `output_dir` | path | `./output/` | Where processed markdown is written |
 | `checkpoint_dir` | path | `output_dir/.checkpoint/` | Checkpoint storage for resume |
 | `engines` | list[str] | `["marker"]` | OCR engines to run |
@@ -397,7 +420,7 @@ All examples assume you've set up API keys in `config.yaml` (or as environment v
 ### General document (newspaper, report, book chapter)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile general --langs en
 ```
 
@@ -409,7 +432,7 @@ the results. Good for 90% of documents.
 ### Multilingual academic paper
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker,mathpix \
   --profile academic --langs en,de,fr,la
 ```
@@ -421,7 +444,7 @@ improve accuracy for non-English text.
 ### Technical document (manual, datasheet, spec)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker,google_doc_ai \
   --profile technical --langs en
 ```
@@ -433,7 +456,7 @@ numbers, units, and code blocks.
 ### Books (fiction, textbooks, reference)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile books --langs en
 ```
 
@@ -444,7 +467,7 @@ breaks, and cross-references.
 ### Math-heavy papers (equations, LaTeX)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines mathpix,marker \
   --profile mathematical --langs en
 ```
@@ -456,7 +479,7 @@ LaTeX math mode ($...$ inline, $$...$$ display) for all equations.
 ### Citation-rich document (bibliography, footnotes)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker,mathpix --profile academic \
   --langs en,la --vlm-model claude-sonnet-5
 ```
@@ -469,11 +492,11 @@ for its superior precision on structured citation text.
 
 ```bash
 # Single engine (fastest):
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker --no-vlm --langs en
 
 # Two engines (more accurate, uses more RAM):
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker,surya2 --no-vlm --langs en
 ```
 
@@ -487,7 +510,7 @@ more memory). Output is raw engine text after post-processing cleanup.
 ### Cost-sensitive: cap your spending
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker,mathpix --budget 5.00
 ```
 
@@ -498,7 +521,7 @@ output is used directly instead.
 ### Test before committing (first 3 pages only)
 
 ```bash
-uv run ocr-pipeline --input ./pdfs/ --output ./out/ \
+uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --engines marker --test
 ```
 
