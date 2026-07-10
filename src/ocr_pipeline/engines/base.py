@@ -230,7 +230,7 @@ class CredentialStore:
         if not path.is_file():
             return
         try:
-            data = json.loads(path.read_text())
+            data = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
             return
         # 1. Top-level "credentials" section

@@ -145,7 +145,7 @@ def _find_output_preview(output_dir: Path, max_chars: int = 2000) -> str:
                 continue
             preview_file = item / "page_0001_final.md"
             if preview_file.is_file():
-                text = preview_file.read_text()
+                text = preview_file.read_text(encoding="utf-8")
                 if len(text) > max_chars:
                     text = text[:max_chars] + "\n..."
                 return text
@@ -249,6 +249,33 @@ async def ocr_document(
     except Exception as exc:
         logger.exception("ocr_document failed for %s", file_path)
         return {"status": "error", "message": str(exc)}
+
+
+@mcp.tool()
+async def ocr_pdf(
+    pdf_path: str,
+    output_dir: str | None = None,
+    engines: str = "marker",
+    vlm_model: str = "gemini-2.5-flash",
+    vlm_enabled: bool = True,
+    languages: str = "en",
+    test_mode: bool = False,
+    profile_name: str = "",
+) -> dict[str, Any]:
+    """OCR a PDF file through the full pipeline (alias for ocr_document).
+
+    Backward-compatibility wrapper. Prefer ocr_document for new code.
+    """
+    return await ocr_document(
+        file_path=pdf_path,
+        output_dir=output_dir,
+        engines=engines,
+        vlm_model=vlm_model,
+        vlm_enabled=vlm_enabled,
+        languages=languages,
+        test_mode=test_mode,
+        profile_name=profile_name,
+    )
 
 
 @mcp.tool()

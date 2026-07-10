@@ -730,7 +730,7 @@ def load_user_profiles(profiles_dir: Path) -> dict[str, DocumentProfile]:
     loaded: dict[str, DocumentProfile] = {}
     for yaml_file in sorted(profiles_dir.glob("*.yaml")):
         try:
-            data = yaml.safe_load(yaml_file.read_text())
+            data = yaml.safe_load(yaml_file.read_text(encoding="utf-8"))
             if not isinstance(data, dict) or "name" not in data or "system_prompt" not in data:
                 logger.warning("Skipping %s: missing required 'name' or 'system_prompt'", yaml_file)
                 continue
