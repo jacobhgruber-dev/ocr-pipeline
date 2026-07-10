@@ -1,0 +1,23 @@
+{
+  "page_index": 1,
+  "page_label": "page_0002",
+  "engine_outputs": {
+    "tesseract": {
+      "text": "S. BENEDICTI\n\nIN SSCULORUM CLASSES\nDISTRIBU T A\n\nSAECULUM V.\n\nQUOD EST AB ANNO CHRISTI CM AD M.\n\nColligcre cepit Domnus Lucas »'^ctg x v . Cong. S. Mauri Monachus;\nD.JonaWwNssMas1LLON, cjufdem Congreg.abfolvit, illuftravit,\nediditque , cum Indicibus neceffariis.\n\n& Bin fln gm tel Ars PAhovaaten fenebr LN\n\npm\n\nlor bled. \"V. QE. Aui! phuve De. n d oyl! oyalespyo co.\nLUTECIJA PARISIORUM, 7\nApudd VIDUAM EDMUNDI MARTIN,\n\nET\njOHANNEM BOUDOT ,invia facobca ad Solem aureum.\n\nAnno M DC f XXXV.\nCUM PRIVIL£GIO REGIS , ET PERMISSU S'UPERIORU M.",
+      "error": null,
+      "duration_sec": 1.0062574580078945,
+      "retries": 0
+    },
+    "marker": {
+      "text": "## ACTA SANCTORUM ORDINIS S. BENEDICTI\n\nIN SÆCULORUM CLASSES DISTRIBUTA. SÆCULUM V.\n\nQUOD EST AB ANNO CHRISTI CM AD M.\n\nColligere copit Domnus Lucas D'ACHERY, Cong. S. Mauri Monachus; D. JOHANNES MABILLON, cjusdem Congreg. absolvit, illustravit, ediditque, cum Indicibus necessariis.\n\n![](_page_0_Picture_4.jpeg)\n\nLiberalitate V. C.D. Ludouris more de la ferté ovate pro co. LUTECIÆ PARISIORUM, Apud VIDUAM EDMUNDI MARTIN,\n\nJOHANNEM BOUDOT, in via Jacobea ad Solem aureum. Anno M DC JXXXV.\n\nCUM PRIVILEGIO REGIS, ET PERMISSU SUPERIORUM.",
+      "error": null,
+      "duration_sec": 24.801233750011306,
+      "retries": 0
+    }
+  },
+  "merged_markdown": "## ACTA SANCTORUM ORDINIS S. BENEDICTI\n\nIN SÆCULORUM CLASSES DISTRIBUTA. SÆCULUM V.\n\nQUOD EST AB ANNO CHRISTI CM AD M.\n\nColligere copit Domnus Lucas D'ACHERY, Cong. S. Mauri Monachus; D. JOHANNES MABILLON, cjusdem Congreg. absolvit, illustravit, ediditque, cum Indicibus necessariis.\n\n![](_page_0_Picture_4.jpeg)\n\nLiberalitate V. C.D. Ludouris more de la ferté ovate pro co. LUTECIÆ PARISIORUM, Apud VIDUAM EDMUNDI MARTIN,\n\nJOHANNEM BOUDOT, in via Jacobea ad Solem aureum. Anno M DC JXXXV.\n\nCUM PRIVILEGIO REGIS, ET PERMISSU SUPERIORUM.",
+  "vlm_raw_response": "",
+  "vlm_model": "",
+  "engines_agreement": 0.0,
+  "processed_at": "2026-07-07T17:48:38.854027+00:00"
+}

@@ -357,6 +357,57 @@ def _call_gemini(
     raise MergeError(f"Gemini merge failed after 2 attempts: {last_error}")
 
 
+# ── Grok (xAI) ─────────────────────────────────────────────────────────────
+
+_GROK_RATES: dict[str, tuple[float, float]] = {
+    "grok-4.5": (2.00, 6.00),
+    "grok-4.3": (1.25, 2.50),
+    "grok-3": (3.00, 15.00),
+}
+
+
+def _estimate_cost_grok(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+    model_lower = model.lower()
+    for prefix, (in_r, out_r) in _GROK_RATES.items():
+        if prefix in model_lower:
+            return (prompt_tokens / 1_000_000) * in_r + (completion_tokens / 1_000_000) * out_r
+    return (prompt_tokens / 1_000_000) * 1.25 + (completion_tokens / 1_000_000) * 2.50
+
+
+def _call_grok(model: str, b64_image: str, user_message: str, system_prompt: str, max_tokens: int, timeout_sec: float) -> tuple[str, str, float]:
+    """Call xAI Grok for VLM merge via OpenAI-compatible API."""
+    api_key = os.environ.get("XAI_API_KEY", "")
+    if not api_key:
+        raise MergeError("XAI_API_KEY environment variable is not set")
+
+    from openai import OpenAI
+    client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+
+    messages: list[dict[str, object]] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": [
+        {"type": "text", "text": user_message},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64_image}", "detail": "high"}},
+    ]})
+
+    for attempt in range(2):
+        try:
+            response = client.chat.completions.create(
+                model=model, messages=messages, max_tokens=max_tokens, temperature=0.1)  # type: ignore[arg-type]
+            content = response.choices[0].message.content or ""
+            usage = response.usage
+            pt, ct = (usage.prompt_tokens, usage.completion_tokens) if usage else (0, 0)
+            cost = _estimate_cost_grok(model, pt, ct)
+            return content, json.dumps({"provider": "grok", "model": model, "prompt_tokens": pt, "completion_tokens": ct, "cost_estimated": cost}), cost
+        except Exception as exc:
+            if attempt == 0:
+                time.sleep(2)
+            else:
+                raise MergeError(f"Grok VLM call failed: {exc}") from exc
+    raise MergeError("Grok VLM call failed")
+
+
 # ── Dispatcher ────────────────────────────────────────────────────────────
 
 
@@ -371,7 +422,8 @@ def _call_vlm(
     """Dispatch to the appropriate VLM provider based on the model string.
 
     - Models containing ``"gemini"`` → Google Gemini.
-    - Everything else → Anthropic Claude.
+    - Models containing ``"claude"`` or ``"anthropic"`` → Anthropic Claude.
+    - Models containing ``"grok"`` → xAI Grok (OpenAI-compatible).
 
     Returns:
         ``(result_text, raw_json, cost)``.
@@ -379,35 +431,28 @@ def _call_vlm(
     model_lower = model.lower()
     if "gemini" in model_lower:
         return _call_gemini(
-            model=model,
-            b64_image=b64_image,
-            user_message=user_message,
-            system_prompt=system_prompt,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
+            model=model, b64_image=b64_image, user_message=user_message,
+            system_prompt=system_prompt, max_tokens=max_tokens, timeout_sec=timeout_sec,
         )
     elif any(p in model_lower for p in ("claude", "anthropic")):
         return _call_anthropic(
-            model=model,
-            b64_image=b64_image,
-            user_message=user_message,
-            system_prompt=system_prompt,
-            max_tokens=max_tokens,
-            timeout_sec=timeout_sec,
+            model=model, b64_image=b64_image, user_message=user_message,
+            system_prompt=system_prompt, max_tokens=max_tokens, timeout_sec=timeout_sec,
+        )
+    elif "grok" in model_lower:
+        return _call_grok(
+            model=model, b64_image=b64_image, user_message=user_message,
+            system_prompt=system_prompt, max_tokens=max_tokens, timeout_sec=timeout_sec,
         )
 
     logger.warning(
         "Unknown VLM model '%s' — defaulting to Anthropic API. "
-        "Supported: gemini-*, claude-*, anthropic-*.",
+        "Supported: gemini-*, claude-*, grok-*, anthropic-*.",
         model,
     )
     return _call_anthropic(
-        model=model,
-        b64_image=b64_image,
-        user_message=user_message,
-        system_prompt=system_prompt,
-        max_tokens=max_tokens,
-        timeout_sec=timeout_sec,
+        model=model, b64_image=b64_image, user_message=user_message,
+        system_prompt=system_prompt, max_tokens=max_tokens, timeout_sec=timeout_sec,
     )
 
 

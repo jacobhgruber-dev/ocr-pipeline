@@ -1,0 +1,17 @@
+{
+  "page_index": 1,
+  "page_label": "page_0002",
+  "engine_outputs": {
+    "marker": {
+      "text": "![](_page_0_Picture_0.jpeg)",
+      "error": null,
+      "duration_sec": 23.916285957966466,
+      "retries": 0
+    }
+  },
+  "merged_markdown": "![](_page_0_Picture_0.jpeg)",
+  "vlm_raw_response": "",
+  "vlm_model": "",
+  "engines_agreement": 0.0,
+  "processed_at": "2026-07-07T17:50:33.885784+00:00"
+}

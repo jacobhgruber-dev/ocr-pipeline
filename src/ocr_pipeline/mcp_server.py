@@ -447,7 +447,7 @@ async def ocr_status() -> dict[str, Any]:
     return {
         "engines": statuses,
         "profiles_available": list_profiles(),
-        "vlm_models_available": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "claude-haiku-4-5", "claude-sonnet-5"],
+        "vlm_models_available": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "claude-haiku-4-5", "claude-sonnet-5", "grok-4.5", "grok-4.3"],
     }
 
 

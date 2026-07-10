@@ -1,0 +1,29 @@
+{
+  "page_index": 1,
+  "page_label": "page_0002",
+  "engine_outputs": {
+    "mathpix": {
+      "text": "ADVERTENCIA.\n\nEl singular aprecio que ha dispensado el público á la nueva edicion publicada del Año Cristiano , y los deseos manifestados por muchas personas de adquirir las Dominicas , han movido al editor á emprender su impresion , adoptando cuantos medios han estado á su alcance para que salga con todo el esmero posible.\n\nCon este objeto, pues, ha encargado la traduccion al señor don José María Diaz Jimenez , de cuya erudicion no puede dudarse por la aceptacion que ha merecido la que publicó del Año afectivo , ó sean sentimientos del alma con Dios para todos los dias del año , de la cual los redactores de las Cartas Españolas en su número 63 hicieron el siguiente elogio : « La traduccion está desempeñada con mucho esmero, y quien tal ha hecho, muestra que conoce muy bien las elocuentes plumas de los Leones y Granadas. »",
+      "error": null,
+      "duration_sec": 2.4942028749501333,
+      "retries": 0
+    },
+    "surya2": {
+      "text": "ADVERTENCIA.\nEL singular aprecio que ha dispensado el\npúblico á la nueva edicion publicada del Año\nCristiano, y los deseos manifestados por mu-\nchas personas de adquirir las Dominicas, han\nmovido al editor á emprender su impresion,\nadoptando cuantos medios han estado á su\nalcance para que salga con todo el esmero\nposible.\nCon este objeto, pues, ha encargado la tra-\nduccion al señor don José María Diaz Jimenez,\nde cuya erudicion no puede dudarse por la\naceptacion que ha merecido la que publicó\ndel Año afectivo, ó sean sentimientos del alma\ncon Dios para todos los dias del año, de la cual\nlos redactores de las Cartas Españolas en su\nnúmero 63 hicieron el siguiente elogio : « La\ntraduccion está desempeñada con mucho es-\nmero, y quien tal ha hecho, muestra que\nconoce muy bien las elocuentes plumas de los\nLeones y Granadas. »",
+      "error": null,
+      "duration_sec": 75.22949520789552,
+      "retries": 0
+    },
+    "marker": {
+      "text": "## ADVERTENCIA.\n\nEL singular aprecio que ha dispensado el público á la nueva edicion publicada del Año Cristiano, y los deseos manifestados por muchas personas de adquirir las Dominicas, han movido al editor á emprender su impresion, adoptando cuantos medios han estado á su alcance para que salga con todo el esmero posible.\n\nCon este objeto, pues, ha encargado la traduccion al señor don José María Diaz Jimenez, de cuya erudicion no puede dudarse por la aceptacion que ha merecido la que publicó del Año afectivo, ó sean sentimientos del alma con Dios para todos los dias del año, de la cual los redactores de las Cartas Españolas en su número 63 hicieron el siguiente elogio: « La traduccion está desempeñada con mucho esmero, y quien tal ha hecho, muestra que conoce muy bien las elocuentes plumas de los Leones y Granadas. »",
+      "error": null,
+      "duration_sec": 204.25093729200307,
+      "retries": 1
+    }
+  },
+  "merged_markdown": "## ADVERTENCIA.\n\nEL singular aprecio que ha dispensado el público á la nueva edicion publicada del Año Cristiano, y los deseos manifestados por muchas personas de adquirir las Dominicas, han movido al editor á emprender su impresion, adoptando cuantos medios han estado á su alcance para que salga con todo el esmero posible.\n\nCon este objeto, pues, ha encargado la traduccion al señor don José María Diaz Jimenez, de cuya erudicion no puede dudarse por la aceptacion que ha merecido la que publicó del Año afectivo, ó sean sentimientos del alma con Dios para todos los dias del año, de la cual los redactores de las Cartas Españolas en su número 63 hicieron el siguiente elogio: « La traduccion está desempeñada con mucho esmero, y quien tal ha hecho, muestra que conoce muy bien las elocuentes plumas de los Leones y Granadas. »",
+  "vlm_raw_response": "",
+  "vlm_model": "",
+  "engines_agreement": 0.0,
+  "processed_at": "2026-07-10T08:06:47.268084+00:00"
+}

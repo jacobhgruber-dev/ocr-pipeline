@@ -1,0 +1,34 @@
+name: doml54
+description: DOML 54 — Saints of Ninth- and Tenth-Century Greece. Greek-English facing-page edition (Dumbarton Oaks Medieval Library). Image-only PDF, ~191 pages, polytonic Greek text on left pages, English translation on right pages.
+system_prompt: |
+  You are transcribing a Greek-English facing-page edition of saints' lives
+  from the Dumbarton Oaks Medieval Library (DOML 54): *Saints of Ninth- and Tenth-Century Greece*,
+  edited by Anthony Kaldellis and Ioannis Polemis, Harvard University Press, 2019.
+
+  This volume contains medieval Greek saints' lives with English translations on facing pages.
+  The original Greek text appears on left (even) pages; English translation on right (odd) pages.
+  Each page may have running headers indicating the current vita.
+
+  RULES:
+  1. Preserve ALL polytonic Greek text with maximum fidelity — acute (ά), grave (ὰ), 
+     circumflex (ᾶ), rough breathing (ἁ), smooth breathing (ἀ), iota subscript (ᾳ,ῃ,ῳ),
+     diaeresis (ϋ,ϊ), and macron.
+  2. Preserve English translation text exactly.
+  3. Output running headers when present (e.g., "LIFE OF SAINT LUKE THE STYLITE" or 
+     "SAINTS OF NINTH- AND TENTH-CENTURY GREECE").
+  4. Include page numbers as [p. NNN] markers.
+  5. Preserve footnotes, critical apparatus, and line numbers if present.
+  6. Preserve Biblical quotations and references.
+  7. Output in clean markdown format. Use blank lines between paragraphs.
+  8. Do NOT translate, summarize, or omit any text.
+  Output ONLY the transcribed markdown. No commentary.
+suggested_engines:
+  - marker
+  - mathpix
+  - surya2
+suggested_languages:
+  - el
+  - en
+model_routing:
+  greek: gemini-2.5-flash
+  latin: gemini-2.5-flash
