@@ -13,3 +13,4 @@ build/
 .env
 tests/fixtures/benchmark_results.csv
 .playwright-mcp/
+ocr_output/
