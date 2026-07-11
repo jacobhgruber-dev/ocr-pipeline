@@ -32,14 +32,27 @@ class GoogleDocAiEngine:
         )
 
     def _get_client(self):
-        """Lazy-init the Document AI client."""
+        """Lazy-init the Document AI client.
+
+        Tries API key auth first (``GOOGLE_API_KEY`` env var), then falls
+        back to Application Default Credentials (ADC / service account).
+        """
         if self._client is None:
+            import os
+
             from google.api_core.client_options import ClientOptions
             from google.cloud import documentai
 
-            opts = ClientOptions(
-                api_endpoint=f"{self.location}-documentai.googleapis.com",
-            )
+            api_key = os.environ.get("GOOGLE_API_KEY", "")
+            if api_key:
+                opts = ClientOptions(
+                    api_endpoint=f"{self.location}-documentai.googleapis.com",
+                    api_key=api_key,
+                )
+            else:
+                opts = ClientOptions(
+                    api_endpoint=f"{self.location}-documentai.googleapis.com",
+                )
             self._client = documentai.DocumentProcessorServiceClient(
                 client_options=opts,
             )

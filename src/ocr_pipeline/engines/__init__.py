@@ -107,7 +107,8 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         if not project_id:
             raise ValueError(
                 "GoogleDocAiEngine requires a Google Cloud project.\n"
-                "Set google_cloud_project in config.yaml or GOOGLE_CLOUD_PROJECT env var.\n"
+                "Set google_cloud_project in config.yaml or GOOGLE_CLOUD_PROJECT env var "
+                "(and GOOGLE_API_KEY if not using a service account).\n"
                 "See: https://cloud.google.com/document-ai"
             )
 
