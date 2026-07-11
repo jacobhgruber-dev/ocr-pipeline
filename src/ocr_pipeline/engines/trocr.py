@@ -34,18 +34,17 @@ class TrocrEngine(OcrEngine):
     def engine_name(self) -> EngineName:
         return EngineName.TROCR
 
-    def health_check(self) -> None:
+    def health_check(self) -> bool:
+        """Return True if torch + transformers are importable."""
         try:
             import importlib.util
 
             for mod in ("torch", "transformers"):
                 if importlib.util.find_spec(mod) is None:
-                    raise ImportError(mod)
-        except ImportError as exc:
-            raise RuntimeError(
-                "TrOCR requires transformers and torch. "
-                "Install with: pip install transformers torch"
-            ) from exc
+                    return False
+            return True
+        except Exception:
+            return False
 
     def recognize(
         self,
