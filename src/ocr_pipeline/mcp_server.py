@@ -6,7 +6,9 @@ Multi-format aware: 30 input formats, 7 engines, handwriting, audio transcriptio
 from __future__ import annotations
 
 import asyncio
+import importlib.util
 import logging
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -97,7 +99,16 @@ _SUPPORTED_FORMATS = {
 }
 
 
-def _load_config(pdf_path: str, output_dir: str, engines: str, vlm_model: str, vlm_enabled: bool, languages: str, test_mode: bool, profile_name: str = "") -> PipelineConfig:
+def _load_config(
+    pdf_path: str,
+    output_dir: str,
+    engines: str,
+    vlm_model: str,
+    vlm_enabled: bool,
+    languages: str,
+    test_mode: bool,
+    profile_name: str = "",
+) -> PipelineConfig:
     pdf = Path(pdf_path).resolve()
     if not pdf.is_file():
         raise ValueError(f"File not found: {pdf_path}")
@@ -107,11 +118,27 @@ def _load_config(pdf_path: str, output_dir: str, engines: str, vlm_model: str, v
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        try:
-            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
-        except Exception:
+        # Try config.yaml relative to CWD first, then relative to project root
+        _project_root = Path(__file__).resolve().parent.parent.parent
+        _config_candidates = [
+            Path("config.yaml"),
+            _project_root / "config.yaml",
+        ]
+        cfg = None
+        for cand in _config_candidates:
+            try:
+                cfg = ConfigLoader.from_yaml(cand)
+                break
+            except Exception:
+                continue
+        if cfg is None:
             cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
         ConfigLoader.apply_env_credentials(cfg)
+
+    # Ensure marker can run when installed in this process's venv
+    if not getattr(cfg, "marker_venv", None):
+        if importlib.util.find_spec("marker") is not None:
+            cfg.marker_venv = str(Path(sys.executable).resolve().parent.parent)
 
     _default_engines = "marker"
     _default_vlm_model = "gemini-2.5-flash"
@@ -215,7 +242,16 @@ async def ocr_document(
     output_dir = output_dir or "./ocr_output"
 
     try:
-        cfg = _load_config(file_path, output_dir, engines, vlm_model, vlm_enabled, languages, test_mode, profile_name=profile_name)
+        cfg = _load_config(
+            file_path,
+            output_dir,
+            engines,
+            vlm_model,
+            vlm_enabled,
+            languages,
+            test_mode,
+            profile_name=profile_name,
+        )
     except ValueError as exc:
         return {"status": "error", "message": str(exc)}
     except Exception as exc:
@@ -316,13 +352,25 @@ async def ocr_page(
 
     try:
         t0 = time.perf_counter()
-        result = await asyncio.to_thread(engine_instance.recognize, img, 0, cfg.api_timeout_sec, lang_list)
+        result = await asyncio.to_thread(
+            engine_instance.recognize, img, 0, cfg.api_timeout_sec, lang_list
+        )
         duration = round(time.perf_counter() - t0, 2)
 
         if result.error:
-            return {"status": "error", "engine": engine, "message": result.error, "duration_sec": duration}
+            return {
+                "status": "error",
+                "engine": engine,
+                "message": result.error,
+                "duration_sec": duration,
+            }
 
-        return {"text": result.text, "engine": engine, "duration_sec": duration, "confidence": getattr(result, "confidence", None)}
+        return {
+            "text": result.text,
+            "engine": engine,
+            "duration_sec": duration,
+            "confidence": getattr(result, "confidence", None),
+        }
     except Exception as exc:
         logger.exception("ocr_page failed for %s", image_path)
         return {"status": "error", "engine": engine, "message": str(exc)}
@@ -353,11 +401,17 @@ async def ocr_handwriting(image_path: str) -> dict[str, Any]:
             "status": "ok",
             "text": full_text,
             "lines_detected": len(line_results),
-            "lines": [{"text": ln["text"], "confidence": ln.get("confidence", 0)} for ln in line_results[:20]],
+            "lines": [
+                {"text": ln["text"], "confidence": ln.get("confidence", 0)}
+                for ln in line_results[:20]
+            ],
             "duration_sec": duration,
         }
     except ImportError:
-        return {"status": "error", "message": "TrOCR not available. Install: pip install transformers torch"}
+        return {
+            "status": "error",
+            "message": "TrOCR not available. Install: pip install transformers torch",
+        }
     except Exception as exc:
         logger.exception("ocr_handwriting failed")
         return {"status": "error", "message": str(exc)}
@@ -386,11 +440,24 @@ async def ocr_transcribe(audio_path: str) -> dict[str, Any]:
         duration = round(time.perf_counter() - t0, 2)
 
         if not text.strip():
-            return {"status": "ok", "text": "", "note": "No speech detected or transcription produced empty text.", "duration_sec": duration}
+            return {
+                "status": "ok",
+                "text": "",
+                "note": "No speech detected or transcription produced empty text.",
+                "duration_sec": duration,
+            }
 
-        return {"status": "ok", "text": text[:10000], "char_count": len(text), "duration_sec": duration}
+        return {
+            "status": "ok",
+            "text": text[:10000],
+            "char_count": len(text),
+            "duration_sec": duration,
+        }
     except ImportError:
-        return {"status": "error", "message": "faster-whisper not available. Install: pip install faster-whisper"}
+        return {
+            "status": "error",
+            "message": "faster-whisper not available. Install: pip install faster-whisper",
+        }
     except Exception as exc:
         logger.exception("ocr_transcribe failed")
         return {"status": "error", "message": str(exc)}
@@ -399,7 +466,12 @@ async def ocr_transcribe(audio_path: str) -> dict[str, Any]:
 @mcp.tool()
 async def ocr_formats() -> dict[str, Any]:
     """List supported input formats that the pipeline can process."""
-    return {"formats": [{"extension": k, "description": v} for k, v in sorted(_SUPPORTED_FORMATS.items())], "count": len(_SUPPORTED_FORMATS)}
+    return {
+        "formats": [
+            {"extension": k, "description": v} for k, v in sorted(_SUPPORTED_FORMATS.items())
+        ],
+        "count": len(_SUPPORTED_FORMATS),
+    }
 
 
 @mcp.tool()
@@ -437,14 +509,16 @@ async def ocr_profiles() -> dict[str, Any]:
     """List available document profiles with engine recommendations."""
     result = []
     for profile in PROFILES.values():
-        result.append({
-            "name": profile.name,
-            "description": profile.description,
-            "suggested_engines": profile.suggested_engines,
-            "optional_engines": profile.optional_engines,
-            "suggested_languages": profile.suggested_languages,
-            "suggested_model": profile.suggested_model,
-        })
+        result.append(
+            {
+                "name": profile.name,
+                "description": profile.description,
+                "suggested_engines": profile.suggested_engines,
+                "optional_engines": profile.optional_engines,
+                "suggested_languages": profile.suggested_languages,
+                "suggested_model": profile.suggested_model,
+            }
+        )
     return {"profiles": result}
 
 
@@ -474,7 +548,15 @@ async def ocr_status() -> dict[str, Any]:
     return {
         "engines": statuses,
         "profiles_available": list_profiles(),
-        "vlm_models_available": ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "claude-haiku-4-5", "claude-sonnet-5", "grok-4.5", "grok-4.3"],
+        "vlm_models_available": [
+            "gemini-2.5-flash",
+            "gemini-2.0-flash",
+            "gemini-1.5-pro",
+            "claude-haiku-4-5",
+            "claude-sonnet-5",
+            "grok-4.5",
+            "grok-4.3",
+        ],
     }
 
 
@@ -483,7 +565,10 @@ async def ocr_languages(engine: str | None = None) -> dict[str, Any]:
     """List supported language codes and their names."""
     if engine is not None:
         if engine not in ENGINE_NAMES:
-            return {"status": "error", "message": f"Unknown engine: {engine!r}. Valid: {', '.join(sorted(ENGINE_NAMES.keys()))}"}
+            return {
+                "status": "error",
+                "message": f"Unknown engine: {engine!r}. Valid: {', '.join(sorted(ENGINE_NAMES.keys()))}",
+            }
         try:
             codes = list_languages_for_engine(engine)
         except ValueError as exc:
@@ -537,9 +622,13 @@ async def ocr_metadata(file_path: str) -> dict[str, Any]:
         try:
             from .engines.metadata_vlm import VlmMetadataEngine
 
-            vlm = VlmMetadataEngine(vlm_model=cfg.vlm_metadata_model, api_key=cfg.gemini_api_key, page_count=3)
+            vlm = VlmMetadataEngine(
+                vlm_model=cfg.vlm_metadata_model, api_key=cfg.gemini_api_key, page_count=3
+            )
             vlm_result = await asyncio.to_thread(vlm.extract, fp)
-            if vlm_result.extraction_method == "vlm" and (vlm_result.title or vlm_result.document_type):
+            if vlm_result.extraction_method == "vlm" and (
+                vlm_result.title or vlm_result.document_type
+            ):
                 return _metadata_to_response(vlm_result)
         except Exception as exc:
             logger.warning("VLM metadata failed: %s", exc)

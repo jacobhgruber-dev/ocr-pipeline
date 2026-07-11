@@ -6,7 +6,9 @@ circuit breaker, and a ``create_engine`` factory.
 
 from __future__ import annotations
 
+import importlib.util
 import os
+import sys
 from pathlib import Path
 
 from ..models import EngineName, EngineOutput
@@ -58,6 +60,15 @@ _ENGINE_CLASSES: dict[str, type] = {
 }
 
 
+def _default_venv_path() -> Path:
+    """Use the venv that owns the current Python interpreter.
+
+    ``<venv>/Scripts/python.exe -> <venv>`` (Windows) or
+    ``<venv>/bin/python -> <venv>`` (Unix).
+    """
+    return Path(sys.executable).resolve().parent.parent
+
+
 def create_engine(name: str, config: object | None = None) -> OcrEngine:
     """Instantiate the right engine class for *name*.
 
@@ -76,12 +87,17 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         )
 
     if name == EngineName.MARKER:
-        venv_path = getattr(config, "marker_venv", None) if config is not None else None
-        if venv_path is None:
-            raise ValueError(
-                "MarkerEngine requires a venv_path.\n"
-                "Set marker_venv in config.yaml, or install with: uv sync --extra marker"
-            )
+        venv_path: str | None = getattr(config, "marker_venv", None) if config is not None else None
+        if not venv_path:
+            # Auto-detect: if marker is importable in this Python, use this venv
+            if importlib.util.find_spec("marker") is not None:
+                venv_path = str(_default_venv_path())
+            else:
+                raise ValueError(
+                    "MarkerEngine requires marker installed or marker_venv set.\n"
+                    "Install with: uv sync --extra marker\n"
+                    "Or set marker_venv in config.yaml to a venv with marker-pdf."
+                )
         return MarkerEngine(venv_path=venv_path)
 
     if name == EngineName.MATHPIX:
@@ -143,9 +159,21 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         return TesseractEngine(tesseract_cmd=tesseract_cmd, timeout_sec=timeout)
 
     if name == EngineName.SURYA2:
-        venv = None
+        venv: str | None = None
         if config is not None:
             venv = getattr(config, "surya2_venv", None) or getattr(config, "marker_venv", None)
+        if not venv:
+            if (
+                importlib.util.find_spec("surya") is not None
+                or importlib.util.find_spec("surya_ocr") is not None
+            ):
+                venv = str(_default_venv_path())
+            else:
+                raise ValueError(
+                    "Surya2Engine requires surya-ocr installed or surya2_venv set.\n"
+                    "Install with: uv sync --extra surya2\n"
+                    "Or set surya2_venv in config.yaml."
+                )
         try:
             return Surya2Engine(venv_path=Path(venv) if venv else None)
         except ValueError:
