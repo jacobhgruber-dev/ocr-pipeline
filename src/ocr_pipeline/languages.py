@@ -71,51 +71,19 @@ LANGUAGE_NAMES: dict[str, str] = {
 # Per-engine language support sets
 # ---------------------------------------------------------------------------
 
-# Marker supports ~40 languages via language packs.
-# https://github.com/VikParuchuri/marker
-MARKER_LANGUAGES: set[str] = {
-    "en",
-    "fr",
-    "de",
-    "es",
-    "it",
-    "pt",
-    "nl",
-    "ru",
-    "zh",
-    "ja",
-    "ko",
-    "ar",
-    "he",
-    "sv",
-    "no",
-    "da",
-    "fi",
-    "pl",
-    "cs",
-    "sk",
-    "hu",
-    "ro",
-    "bg",
-    "uk",
-    "tr",
-    "fa",
-    "hi",
-    "th",
-    "vi",
-    "id",
-    "ms",
-    "ca",
-    "el",
-    "sr",
-    "hr",
-    "bn",
-    "ta",
-    "te",
-    "tl",
-    "sw",
-    "am",
-}
+# Marker uses Surya for OCR — same language set.
+# Dynamic import so the list stays accurate across Surya versions.
+try:
+    from surya.recognition.languages import CODE_TO_LANGUAGE as _SURYA_CODES
+    MARKER_LANGUAGES: set[str] = set(_SURYA_CODES.keys())
+except ImportError:
+    MARKER_LANGUAGES: set[str] = {
+        "en", "fr", "de", "es", "it", "pt", "nl", "ru", "zh", "ja",
+        "ko", "ar", "he", "sv", "no", "da", "fi", "pl", "cs", "sk",
+        "hu", "ro", "bg", "uk", "tr", "fa", "hi", "th", "vi", "id",
+        "ms", "ca", "el", "sr", "hr", "bn", "ta", "te", "tl", "sw",
+        "am", "la", "ga",
+    }
 
 # Surya2 OCR supports 91 languages covering most scripts.
 # Includes all LANGUAGE_NAMES codes plus many more.
