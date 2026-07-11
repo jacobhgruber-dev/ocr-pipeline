@@ -153,5 +153,8 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
                 "Set surya2_venv in config.yaml, or install with: uv sync --extra surya2"
             )
 
+    if name == EngineName.TROCR:
+        return TrocrEngine()
+
     # Should never reach here
     raise ValueError(f"Unknown engine: {name!r}")

@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .base import with_api_retry
+from .base import _get_venv_python
 from ..models import Block, EngineName, EngineOutput
 
 logger = logging.getLogger(__name__)
@@ -62,15 +63,20 @@ class Surya2Engine:
             project_root = Path(__file__).resolve().parent.parent.parent.parent.parent
             for candidate_name in (".venv-marker", ".venv-surya"):
                 candidate = project_root / candidate_name
-                if (candidate / "bin" / "python").exists():
+                if _get_venv_python(candidate).exists():
                     venv_path = candidate
                     break
         if venv_path is None:
-            raise ValueError(
-                "No venv with surya-ocr found. Install: uv add surya-ocr (or pip install surya-ocr)"
-            )
+            # Fall back to current Python (e.g., surya installed in same venv)
+            import sys as _sys
+
+            venv_path = Path(_sys.executable).parent.parent  # venv root
         self.venv_path = Path(venv_path)
-        self._python = self.venv_path / "bin" / "python"
+        self._python = _get_venv_python(self.venv_path)
+        if not self._python.exists():
+            import sys as _sys2
+
+            self._python = Path(_sys2.executable)
 
     # -- public API -----------------------------------------------------------
 
@@ -372,20 +378,22 @@ except Exception as e:
 
     def health_check(self) -> bool:
         """Check that the venv exists and surya is importable."""
-        if not self.venv_path.exists():
-            return False
         if not self._python.exists():
             return False
 
+        # Use lightweight find_spec to avoid triggering model downloads
         check_script = (
-            "import surya.foundation, surya.detection, surya.recognition, surya.layout; print('ok')"
+            "import importlib.util; "
+            "ok = all(importlib.util.find_spec(m) is not None "
+            "for m in ('surya.foundation', 'surya.detection', 'surya.recognition', 'surya.layout')); "
+            "print('ok' if ok else 'missing')"
         )
         try:
             result = subprocess.run(
                 [str(self._python), "-c", check_script],
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=15,
                 env={**os.environ},
             )
             return result.returncode == 0 and "ok" in result.stdout

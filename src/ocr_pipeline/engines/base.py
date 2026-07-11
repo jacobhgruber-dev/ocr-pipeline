@@ -59,6 +59,22 @@ class OcrEngine(Protocol):
 
 
 # ---------------------------------------------------------------------------
+# Venv path helpers
+# ---------------------------------------------------------------------------
+
+
+def _get_venv_python(venv_path: Path) -> Path:
+    """Return the python executable inside *venv_path*, handling platform differences.
+
+    On Windows, venvs use ``Scripts/python.exe``; on Unix, ``bin/python``.
+    """
+    if os.name == "nt":  # Windows
+        return venv_path / "Scripts" / "python.exe"
+    else:
+        return venv_path / "bin" / "python"
+
+
+# ---------------------------------------------------------------------------
 # Retry decorator (tenacity-based)
 # ---------------------------------------------------------------------------
 

@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import time
 from pathlib import Path
 
-from .base import with_api_retry
+from .base import _get_venv_python, with_api_retry
 from ..models import EngineName, EngineOutput
 
 
@@ -25,7 +26,11 @@ class MarkerEngine:
         ``PipelineConfig.marker_venv``.
         """
         self.venv_path = Path(venv_path)
-        self._python = self.venv_path / "bin" / "python"
+        self._python = _get_venv_python(self.venv_path)
+        # Fall back to current Python if the venv executable doesn't exist
+        # (e.g., marker is installed in the same venv as the pipeline)
+        if not self._python.exists():
+            self._python = Path(sys.executable)
 
     @property
     def engine_name(self) -> str:
@@ -148,18 +153,22 @@ except Exception as e:
 
     def health_check(self) -> bool:
         """Check that the venv exists and marker is importable."""
-        if not self.venv_path.exists():
-            return False
         if not self._python.exists():
             return False
 
-        check_script = "import marker.converters.pdf, marker.models, marker.output; print('ok')"
+        # Use lightweight find_spec to avoid triggering model downloads
+        check_script = (
+            "import importlib.util; "
+            "ok = all(importlib.util.find_spec(m) is not None "
+            "for m in ('marker.converters.pdf', 'marker.models', 'marker.output')); "
+            "print('ok' if ok else 'missing')"
+        )
         try:
             result = subprocess.run(
                 [str(self._python), "-c", check_script],
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=15,
                 env={**os.environ},
             )
             return result.returncode == 0 and "ok" in result.stdout
