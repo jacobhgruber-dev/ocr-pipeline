@@ -2,7 +2,7 @@
 
 **Multi-engine OCR with VLM merge for documents (30 formats: PDF, EPUB, DOCX, images, and more).**
 
-Multiple OCR engines run in parallel on each page. A Vision Language Model (Gemini or Claude) reads the page image and all engine outputs, then writes a single clean markdown transcription — correcting errors, resolving disagreements, and preserving document structure.
+Multiple OCR engines run in parallel on each page. A Vision Language Model (Gemini, Grok, or Claude) reads the page image and all engine outputs, then writes a single clean markdown transcription — correcting errors, resolving disagreements, and preserving document structure.
 
 Built-in checkpoint/resume means you can stop and restart without losing progress. Budget tracking prevents surprise API bills. Every API call gets exponential-backoff retry. The pipeline is both a CLI tool and a Python library.
 
@@ -102,14 +102,14 @@ Not sure which profile to use? Match your document to this table:
 |---|---|---|---|---|
 | Letters, reports, novels, general text | `general` | Clean markdown, basic formatting | Free with Gemini |
 | Academic paper with citations and footnotes | `academic` | Citation preservation (all styles), DOIs, abstracts, author affiliations | Free (best with Claude) |
-| Math, physics, chemistry papers | `mathematical` | LaTeX math mode, blackboard bold, theorem/proof blocks, equation numbers | Free with Gemini |
+| Math, physics, chemistry papers | `mathematical` | LaTeX math mode, blackboard bold, theorem/proof blocks, equation numbers | Paid (~$0.006/page, Grok) |
 | Legal documents, contracts, statutes | `legal` | Section symbols, statute references, case citations, signature blocks. Add google_doc_ai engine for forms. | Free (best with Claude) |
-| Technical manuals, datasheets, specs | `technical` | Callout boxes, tables, tolerances, code blocks. Add google_doc_ai engine for structured layouts. | Free with Gemini |
+| Technical manuals, datasheets, specs | `technical` | Callout boxes, tables, tolerances, code blocks. Add google_doc_ai engine for structured layouts. | Paid (~$0.006/page, Grok) |
 | Books (fiction, textbooks, reference) | `books` | Front/back matter, epigraphs, dialogue, scene breaks, index entries | Free with Gemini |
-| Chinese/Japanese/Korean documents | `general` or `academic` + `--vlm-model claude-sonnet-5` | CJK ideograph preservation (Gemini fails on these scripts) | Paid (Claude only)
+| Chinese/Japanese/Korean documents | `general` or `academic` + `--vlm-model grok-4.3` | CJK ideograph preservation (Gemini fails on these scripts — Grok is the only working option) | Paid (~$0.006/page)
 
 > **Model notes:** "(best with Claude)" means Claude improves citation or diacritic accuracy
-> but Gemini works fine for most pages. Only CJK scripts REQUIRE Claude — Gemini
+> but Gemini works fine for most pages. Only CJK scripts REQUIRE Grok — Gemini
 > produces garbled output on Chinese/Japanese/Korean. For all other scripts (including
 > Cyrillic, Greek, and Latin with diacritics), Gemini is equal or better.
 
@@ -151,7 +151,7 @@ This processes the first 3 pages as a trial. Check the output, then adjust the p
 
 ### OCR + Enhancement
 - **7 engines** — Marker, Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic), Mathpix (LaTeX math), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
-- **VLM merge** — Gemini 2.5 Flash or Claude reads engine outputs + page image, produces clean transcription. Script-aware routing (Cyrillic/CJK/Arabic/Greek → correct model).
+- **VLM merge** — Gemini 2.5 Flash (default, ~$0.001/page), Grok, or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves formatting. Per-script model routing: Grok for CJK/math/technical, Gemini for books/literary.
 - **6 profiles** — General, Academic, Mathematical, Legal, Technical, Books. Each with research-backed system prompts.
 - **Table extraction** — Dual path: VLM prompt-based + Surya 2 ML TableRecPredictor.
 
@@ -399,21 +399,22 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 
 ### VLM Model Reference
 
-| Model | Provider | Cost (input/output per 1M tokens) | Best for |
-|---|---|---|---|---|
-| `gemini-2.5-flash` | Google | $0.15 / $0.60 | Default — best for Latin, Cyrillic, Greek, and LaTeX math |
-| `gemini-2.0-flash` | Google | $0.10 / $0.40 | Cheapest option |
-| `gemini-2.5-pro` | Google | $1.25 / $10.00 | Higher quality, larger context |
-| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | CJK and high-precision citations (see note below) |
-| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | **Recommended for CJK** — 3x cheaper than Sonnet, equal quality |
-| `claude-3.5-haiku` | Anthropic | $1.00 / $5.00 | Older fast Claude |
-| `claude-3.5-sonnet` | Anthropic | $3.00 / $15.00 | Older quality Claude |
+| Model | Provider | Cost (input/output per 1M tokens) | Cost/page | Best for |
+|---|---|---|---|---|---|
+| `gemini-2.5-flash` | Google | $0.15 / $0.60 | ~$0.001 | Default — best for Latin, Cyrillic, Greek, LaTeX math, books, legal |
+| `grok-4.3` | xAI | $1.25 / $2.50 | ~$0.006 | **CJK, mathematical, technical, multilingual** — only model that handles Chinese correctly |
+| `grok-4.5` | xAI | ~$2.50 / $5.00 | ~$0.013 | Academic, mathematical (premium) — 80% MMMU-Pro benchmark |
+| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | ~$0.008 | General (fallback), good quality at low cost |
+| `gemini-2.0-flash` | Google | $0.10 / $0.40 | ~$0.0005 | Cheapest option |
+| `gemini-2.5-pro` | Google | $1.25 / $10.00 | ~$0.003 | Higher quality, larger context |
+| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | ~$0.029 | Legal, complex documents — highest quality, very slow (214s E2E) |
 
 > **Script awareness:** Testing across Latin, Cyrillic, Greek, CJK, and French
 > diacritics shows that model quality is **script-dependent**. Gemini 2.5 Flash
-> handles most scripts perfectly but fails on Chinese/Japanese/Korean. Claude
-> handles CJK perfectly but replaces Cyrillic with Latin lookalikes. If your
-> document contains multiple scripts, run a test page first to verify output.
+> handles most scripts perfectly but fails on Chinese/Japanese/Korean. Grok
+> handles CJK perfectly and excels at mathematical/technical documents. Claude
+> is best for legal and complex layout documents with structured citations.
+> If your document contains multiple scripts, run a test page first to verify output.
 > 
 > **Arabic/Persian/Urdu (RTL scripts):** Not currently supported by Marker or
 > Surya2 OCR engines. Requires Google Document AI with Arabic processor 
@@ -424,7 +425,7 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 | Script | Model to Use | Notes |
 |---|---|---|
 | Latin, Cyrillic, Greek | gemini-2.5-flash | Perfect — free tier available |
-| Chinese, Japanese, Korean | claude-haiku-4-5 | Gemini produces garbled or awkward output. Haiku is 3x cheaper than Sonnet with equal CJK quality |
+| Chinese, Japanese, Korean | grok-4.3 | Gemini produces garbled or awkward output. Grok is the only working option. Claude Haiku is a fallback |
 | Arabic, Persian, Urdu | Google Doc AI only | Marker/Surya don't support RTL; needs Google Cloud setup |
 
 ---
@@ -640,6 +641,8 @@ Pre-built system prompt profiles tailored to specific document types. Profiles c
 | legal | Legal documents — section symbols, statute references, case citations, paragraph hierarchy, signature blocks, defined terms. |
 | technical | Technical/engineering — callout boxes, revision tables, tolerances, part numbers, code blocks with syntax hints, diagrams, procedure steps. |
 | books | Books — front/back matter, block quotes, epigraphs, dialogue, scene breaks, illustrations with captions, cross-references, multi-column layout. |
+| grok-value | Cost-optimized Grok pipeline — uses grok-4.3 for all scripts. Best for CJK, mathematical, technical, and multilingual documents on a budget. ~$0.006/page. |
+| grok-quality | Premium Grok pipeline — uses grok-4.5 for all scripts. Higher quality at ~2× cost of grok-value. ~$0.013/page. |
 
 Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can also provide a fully custom system prompt via `vlm.system_prompt` in config.yaml. Create custom profiles by adding YAML files to the `./profiles/` directory (see `profiles/README.md`).
 
@@ -657,6 +660,47 @@ Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can a
 | **GROBID** | Local (Docker) | Free | Academic metadata extraction | Extracts title, authors, DOI, journal metadata. `docker run -p 8070:8070 lfoppiano/grobid:0.8.1` |
 
 Use Marker as your default. Add Tesseract for Arabic/RTL scripts or as a fallback (recommended for general + books profiles). Add Mathpix for math-heavy documents.
+
+---
+
+## VLM Merge Models
+
+The VLM merge step reads the page image and all engine outputs, then produces a single clean markdown transcription. Choose based on document type and budget:
+
+| Model | Provider | Cost/page | Best For | Notes |
+|---|---|---|---|---|
+| **Gemini 2.5 Flash** | Google | ~$0.001 | General, books, legal (Latin script) | Default. Rich semantic markup (blockquotes, headers, footnotes). Free tier: 1500 req/day. |
+| **Grok 4.3** | xAI | ~$0.006 | CJK, mathematical, technical, multilingual | Only model that handles Chinese correctly. Better equation numbering than Gemini. 1M context window. |
+| **Grok 4.5** | xAI | ~$0.013 | Academic, mathematical (premium) | 80% MMMU-Pro vision benchmark. Fastest E2E response (19s). Competitive with Gemini 3.5 Flash. |
+| **Claude Haiku 4.5** | Anthropic | ~$0.008 | General (fallback) | Good quality at low cost. 200k context. |
+| **Claude Sonnet 5** | Anthropic | ~$0.029 | Legal, complex documents | Highest quality for complex layouts. Very slow (214s E2E). Use for final-pass refinement. |
+
+### Model Selection by Document Type
+
+| Document Type | Recommended Model | Why |
+|---|---|---|
+| General (Latin) | Gemini 2.5 Flash | Best value, rich semantic markup |
+| Chinese / CJK | **Grok 4.3** | Gemini produces garbage on CJK — Grok is the only working option |
+| Mathematical | **Grok 4.3** | Correct equation numbering inside `$$`, italic theorem statements |
+| Technical | **Grok 4.3** | More detail on figures, tables, and diagrams |
+| Legal | Gemini 2.5 Flash | Good section symbol and citation handling |
+| Books / Literary | Gemini 2.5 Flash | Blockquotes, header/footer semantic markup superior |
+| Multilingual | **Grok 4.3** | Handles Cyrillic + LaTeX, polytonic Greek (with BHG profile) |
+| Polytonic Greek | **Grok 4.3 + BHG profile** | Preserves breathing marks, circumflex, iota subscript |
+| Premium (all) | Grok 4.5 | Higher quality at 2× cost of Grok 4.3 |
+
+### Setting the VLM Model
+
+```bash
+# Via CLI
+uv run ocr-pipeline --vlm-model grok-4.3 --input ./docs/
+
+# Via profile (auto-routes per script)
+uv run ocr-pipeline --profile mathematical  # auto-uses grok-4.3
+
+# Via environment
+export XAI_API_KEY="xai-..."  # required for Grok
+```
 
 ---
 
@@ -768,6 +812,14 @@ Or via environment:
 export GOOGLE_CLOUD_PROJECT="your-project-id"
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
+### xAI Grok (VLM merge alternative)
+
+1. Go to https://x.ai/api
+2. Sign up and get an API key
+3. Pay-as-you-go pricing: $1.25/M input, $2.50/M output (grok-4.3)
+
+Set via environment: `export XAI_API_KEY="xai-..."`
+
 ---
 
 ## Architecture
@@ -794,8 +846,9 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
               └─────────────────┼─────────────────┘
                                 │
                      ┌──────────▼───────────┐
-                     │    VLM Merge          │
-                     │  Gemini / Claude      │
+                      │    VLM Merge          │
+                      │  Gemini / Grok /      │
+                      │  Claude               │
                      │  reads image + all     │
                      │  engine outputs       │
                      └──────────┬───────────┘
@@ -815,7 +868,7 @@ export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 
 1. **Renderer** converts each PDF page to a PNG image and attempts fast text extraction.
 2. **Engines** run in parallel: Marker (local), Mathpix (API), Google Doc AI (API). Each produces its best transcription.
-3. **VLM Merge** sends the page image and all engine outputs to Gemini or Claude, which produces a single corrected markdown transcription.
+3. **VLM Merge** sends the page image and all engine outputs to Gemini, Grok, or Claude, which produces a single corrected markdown transcription.
 4. **Post-Processing** cleans up text-extractable pages (soft hyphens, whitespace, ligatures).
 5. **Output** is one markdown file per page, plus per-PDF concatenation.
 

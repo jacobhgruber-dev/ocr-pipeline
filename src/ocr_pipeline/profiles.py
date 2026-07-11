@@ -592,7 +592,8 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Generic document. Catch-all with 15 rules covering tables, figures, "
             "multi-column, headers/footers, lists, and code blocks. Supports all "
-            "30 input formats. Add surya2 for layout analysis + ML table detection."
+            "30 input formats. Add surya2 for layout analysis + ML table detection. "
+            "Uses Grok-4.3 for CJK script documents."
         ),
         suggested_engines=["marker", "tesseract"],
         optional_engines=["surya2", "mathpix", "google_doc_ai", "trocr"],
@@ -600,7 +601,7 @@ PROFILES: dict[str, DocumentProfile] = {
         model_routing={
             "latin": "gemini-2.5-flash",
             "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
         },
@@ -620,7 +621,7 @@ PROFILES: dict[str, DocumentProfile] = {
         model_routing={
             "latin": "gemini-2.5-flash",
             "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
         },
@@ -631,15 +632,16 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Mathematical or scientific document. Preserves LaTeX math mode, "
             "blackboard bold, calligraphic letters, theorem/proof blocks, "
-            "and equation numbers. Surya2 optional for layout + tables."
+            "and equation numbers. Grok-4.3 recommended for best LaTeX equation "
+            "formatting. Surya2 optional for layout + tables."
         ),
         suggested_engines=["mathpix", "marker", "tesseract"],
         optional_engines=["surya2"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
-            "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "latin": "grok-4.3",
+            "cyrillic": "grok-4.3",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
         },
@@ -659,7 +661,7 @@ PROFILES: dict[str, DocumentProfile] = {
         model_routing={
             "latin": "gemini-2.5-flash",
             "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
         },
@@ -671,15 +673,16 @@ PROFILES: dict[str, DocumentProfile] = {
             "Technical or engineering document. Preserves callout boxes, revision "
             "tables, tolerances, part numbers, code blocks with syntax hints, "
             "diagrams, and procedure steps. Add google_doc_ai for structured "
-            "datasheets. Add surya2 for ML table detection on complex spec tables."
+            "datasheets, complex spec tables. Grok-4.3 recommended for detailed "
+            "figure and table extraction."
         ),
         suggested_engines=["marker", "mathpix", "google_doc_ai"],
         optional_engines=["surya2", "tesseract", "google_doc_ai"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
+            "latin": "grok-4.3",
             "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
         },
@@ -691,7 +694,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "Book page. Preserves front/back matter, block quotes, epigraphs, "
             "dialogue formatting, scene breaks, illustrations with captions, "
             "cross-references, and multi-column layout. Add surya2 for "
-            "layout analysis of complex page designs and illustrations."
+            "layout analysis of complex page designs and illustrations. "
+            "Uses Gemini for rich blockquote/header markup on Latin script."
         ),
         suggested_engines=["marker", "tesseract"],
         optional_engines=["surya2"],
@@ -699,9 +703,51 @@ PROFILES: dict[str, DocumentProfile] = {
         model_routing={
             "latin": "gemini-2.5-flash",
             "cyrillic": "gemini-2.5-flash",
-            "cjk": "claude-haiku-4-5",
+            "cjk": "grok-4.3",
             "arabic": "gemini-2.5-flash",
             "greek": "gemini-2.5-flash",
+        },
+    ),
+    "grok-value": DocumentProfile(
+        name="grok-value",
+        system_prompt=_GENERAL_PROMPT,
+        description=(
+            "Cost-optimized Grok pipeline. Uses grok-4.3 ($0.006/page) for all "
+            "scripts — 78% MMMU-Pro vision benchmark at the lowest cost among "
+            "competitive VLMs. Best for: CJK documents, batch processing, "
+            "cost-sensitive pipelines. Skip for: books with complex blockquote "
+            "structure (Gemini is semantically richer)."
+        ),
+        suggested_engines=["marker", "tesseract"],
+        optional_engines=["surya2", "mathpix", "google_doc_ai", "trocr"],
+        suggested_languages=["en"],
+        model_routing={
+            "latin": "grok-4.3",
+            "cyrillic": "grok-4.3",
+            "cjk": "grok-4.3",
+            "arabic": "grok-4.3",
+            "greek": "grok-4.3",
+        },
+    ),
+    "grok-quality": DocumentProfile(
+        name="grok-quality",
+        system_prompt=_GENERAL_PROMPT,
+        description=(
+            "Maximum-quality Grok pipeline. Uses grok-4.5 ($0.013/page, 80% "
+            "MMMU-Pro) — Grok's flagship model with fastest end-to-end response "
+            "(19.2s), competitive with Gemini 3.5 Flash on vision benchmarks. "
+            "Best for: academic publications, mathematical proofs, technical "
+            "specifications where merge quality justifies the premium."
+        ),
+        suggested_engines=["marker", "tesseract", "mathpix"],
+        optional_engines=["surya2", "google_doc_ai", "trocr"],
+        suggested_languages=["en"],
+        model_routing={
+            "latin": "grok-4.5",
+            "cyrillic": "grok-4.5",
+            "cjk": "grok-4.5",
+            "arabic": "grok-4.5",
+            "greek": "grok-4.5",
         },
     ),
 }
