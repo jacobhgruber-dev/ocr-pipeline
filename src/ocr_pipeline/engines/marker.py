@@ -156,11 +156,22 @@ except Exception as e:
         if not self._python.exists():
             return False
 
-        # Use lightweight find_spec to avoid triggering model downloads
+        modules = ("marker.converters.pdf", "marker.models", "marker.output")
+
+        # Same interpreter as this process → check in-process (avoids MCP
+        # subprocess/env/timeout issues that produced false negatives).
+        try:
+            if self._python.resolve() == Path(sys.executable).resolve():
+                import importlib.util
+
+                return all(importlib.util.find_spec(m) is not None for m in modules)
+        except Exception:
+            pass
+
         check_script = (
             "import importlib.util; "
-            "ok = all(importlib.util.find_spec(m) is not None "
-            "for m in ('marker.converters.pdf', 'marker.models', 'marker.output')); "
+            f"mods={modules!r}; "
+            "ok = all(importlib.util.find_spec(m) is not None for m in mods); "
             "print('ok' if ok else 'missing')"
         )
         try:
@@ -168,7 +179,7 @@ except Exception as e:
                 [str(self._python), "-c", check_script],
                 capture_output=True,
                 text=True,
-                timeout=15,
+                timeout=30,
                 env={**os.environ},
             )
             return result.returncode == 0 and "ok" in result.stdout

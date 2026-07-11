@@ -528,20 +528,35 @@ async def ocr_status() -> dict[str, Any]:
     engine_names = ["marker", "tesseract", "mathpix", "surya2", "google_doc_ai", "grobid", "trocr"]
     statuses: dict[str, bool | str] = {}
 
+    # Same config resolution as document tools: env → project config.yaml → bare
     try:
         cfg = ConfigLoader.from_env()
     except Exception:
-        try:
-            cfg = ConfigLoader.from_yaml(Path("config.yaml"))
-        except Exception:
+        cfg = None
+        project_root = Path(__file__).resolve().parent.parent.parent
+        for cand in (Path("config.yaml"), project_root / "config.yaml"):
+            try:
+                cfg = ConfigLoader.from_yaml(cand)
+                break
+            except Exception:
+                continue
+        if cfg is None:
             cfg = PipelineConfig(input_dir=Path("."), output_dir=Path("./ocr_output"))
         ConfigLoader.apply_env_credentials(cfg)
+
+    # Seed marker_venv when packages live in this process's venv
+    if not getattr(cfg, "marker_venv", None):
+        import importlib.util
+        import sys as _sys
+
+        if importlib.util.find_spec("marker") is not None:
+            cfg.marker_venv = str(Path(_sys.executable).resolve().parent.parent)
 
     for name in engine_names:
         try:
             engine_inst = create_engine(name, cfg)
             ok = engine_inst.health_check()
-            statuses[name] = ok
+            statuses[name] = bool(ok)
         except Exception as exc:
             statuses[name] = f"unavailable: {exc}"
 

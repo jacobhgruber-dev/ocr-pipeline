@@ -381,11 +381,29 @@ except Exception as e:
         if not self._python.exists():
             return False
 
-        # Use lightweight find_spec to avoid triggering model downloads
+        modules = (
+            "surya.foundation",
+            "surya.detection",
+            "surya.recognition",
+            "surya.layout",
+        )
+
+        # Same interpreter as this process → check in-process (avoids MCP
+        # subprocess/env/timeout false negatives).
+        try:
+            import sys as _sys
+
+            if self._python.resolve() == Path(_sys.executable).resolve():
+                import importlib.util
+
+                return all(importlib.util.find_spec(m) is not None for m in modules)
+        except Exception:
+            pass
+
         check_script = (
             "import importlib.util; "
-            "ok = all(importlib.util.find_spec(m) is not None "
-            "for m in ('surya.foundation', 'surya.detection', 'surya.recognition', 'surya.layout')); "
+            f"mods={modules!r}; "
+            "ok = all(importlib.util.find_spec(m) is not None for m in mods); "
             "print('ok' if ok else 'missing')"
         )
         try:
@@ -393,7 +411,7 @@ except Exception as e:
                 [str(self._python), "-c", check_script],
                 capture_output=True,
                 text=True,
-                timeout=15,
+                timeout=30,
                 env={**os.environ},
             )
             return result.returncode == 0 and "ok" in result.stdout
