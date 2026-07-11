@@ -218,19 +218,26 @@ column_layout: "auto"
 # (Marker, Surya2) for improved character recognition.
 languages:
   - en
-  # - la
-  # - de
-  # - fr
-  # - gle  # Irish
+  - la   # Latin (Marker via Surya; Tesseract: lat)
+  - de
+  - es
+  - ga   # Irish (Tesseract pack: gle)
+  - it
+  - el
+  - fr
 
 # ---------------------------------------------------------------------------
-# Marker Engine (advanced)
+# Marker / Surya2 Engine (optional dedicated venvs)
 # ---------------------------------------------------------------------------
-# Path to a dedicated Python virtual environment for Marker.
-# Marker is installed in isolation to avoid PyTorch/CUDA version conflicts.
-# When relative, resolved against the config file's directory.
-# Set to "" to disable Marker.
+# Path to a Python virtual environment with marker-pdf / surya-ocr installed.
+# When empty or omitted, create_engine() AUTO-DETECTS: if packages are
+# importable in the current interpreter (e.g. after `uv sync --extra marker`),
+# the current venv is used.  This is required for MCP tools that often run
+# without loading this file (CWD ≠ project root).
+# Set an absolute path only if Marker lives in a separate isolated venv.
+# Optional env override: OCR_PIPELINE_MARKER_VENV
 marker_venv: ""
+# surya2_venv: ""  # falls back to marker_venv / auto-detect
 
 # Google Document AI processor ID. Defaults to Google's pre-built OCR processor.
 # Create your own at https://console.cloud.google.com/ai/document-ai

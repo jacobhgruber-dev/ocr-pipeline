@@ -1,34 +1,33 @@
 # OCR Pipeline — Project Status
 
-Last updated: 2026-07-04
+Last updated: 2026-07-11
 
 ## Build
 
 | Metric | Value |
 |---|---|
-| Tests | 408 passing (unit + integration + e2e + sources + language + sidecar + identifier + stress) |
-| Lint | ruff clean (88 source + test + script files) |
-| Format | ruff format clean (88 files) |
-| Types | mypy pass on project code (1 pre-existing numpy stub issue, unrelated) |
+| Tests | 408+ (baseline from 0.3.0; local Windows verify engines health True ×6) |
+| Lint | ruff clean on changed engine/MCP files |
 | Python | 3.10+ (CI: 3.10, 3.12) |
-| Version | 0.3.0 (Beta) |
+| Version | 0.3.0 (Beta) + Unreleased template/MCP fixes |
 | License | MIT |
 | CI | GitHub Actions (lint, type check, test on push/PR) |
-| Docker | Dockerfile + docker-compose (GROBID) |
-| Git | 56 commits, direct to main |
+| Docker | Dockerfile + docker-compose (GROBID) — optional |
+| Git | main, direct push |
 
-## Engines (6)
+## Engines (7)
 
-| Engine | Type | Free? | Best for |
-|---|---|---|---|
-| marker | Local Python venv | ✅ | General OCR, prose |
-| tesseract | Local binary | ✅ | Arabic/RTL, Cyrillic, universal fallback |
-| mathpix | API (paid) | 1000 pg/mo free | LaTeX math, equations, Cyrillic |
-| surya2 | Local Python venv | ✅ | 91 languages, Arabic, layout, table recognition |
-| google_doc_ai | API (paid) | 500 pg/mo free | Forms, structured docs |
-| grobid | Local Docker | ✅ | Academic metadata extraction |
+| Engine | Type | Free? | Best for | Template note |
+|---|---|---|---|---|
+| marker | Local (same venv OK) | ✅ | General OCR, prose | Auto-detect venv if `marker-pdf` importable |
+| tesseract | Local binary | ✅ | Arabic/RTL, Cyrillic, fallback | Install OS package + language packs |
+| mathpix | API | freemium | LaTeX math | `MATHPIX_APP_ID` / `MATHPIX_APP_KEY` |
+| surya2 | Local (same venv OK) | ✅ | Multilingual + layout/tables | Auto-detect if `surya` importable |
+| google_doc_ai | API | freemium | Forms | `GOOGLE_CLOUD_PROJECT` + ADC or `GOOGLE_API_KEY` |
+| grobid | Docker | ✅ | Academic metadata | Optional; VLM metadata can substitute |
+| trocr | Local | ✅ | Handwriting | Needs `transformers` + `torch`; health returns bool |
 
-**VLM merge**: Gemini 2.5 Flash (default), Claude Sonnet 5 (fallback). Script-aware model routing.
+**VLM merge**: Gemini 2.5 Flash (default), Grok 4.3/4.5, Claude. Per-script routing in profiles (Grok for CJK/math/technical).
 
 **ML table recognition**: Surya 2 TableRecPredictor (dual path with VLM-based table extraction).
 
@@ -104,6 +103,39 @@ All stages run. Each only fills empty fields. Sidecar metadata never overrides e
 - DOCX/PPTX rendering requires LibreOffice (`soffice --headless`) — clear install guidance when absent.
 - Large-file guard warns at 500MB and refuses at 2GB. Streaming/chunked processing for >2GB files not implemented.
 - NumPy mypy stub error is a pre-existing Python 3.14 environment issue, not project code.
+
+## Session record (2026-07-11) — Windows host + MCP template hardening
+
+### What was wrong in the published template (v0.3.0 clone)
+
+| Failure mode | Root cause | Fix |
+|---|---|---|
+| Marker/Surya `unavailable: requires venv_path` | `create_engine` hard-required `marker_venv`; MCP often loads bare config (from_env fails; `config.yaml` only searched in CWD) | Auto-detect current venv when packages importable; MCP loads project-root config |
+| Marker/Surya health = **`false`** (not unavailable) | Subprocess `find_spec` health under MCP timed out / false-negatived | In-process health when engine Python == `sys.executable` |
+| TrOCR never loaded | `health_check` returned `None` on success; pipeline uses `if health_check()` | Return `bool` |
+| TrOCR unknown engine | Missing factory branch | Register TrocrEngine in `create_engine` |
+| Grok breaks after sync | `openai` not in `pyproject.toml` | Add dependency |
+| Latin/Irish “unsupported” by Marker | Stale 40-lang hardcoded list | Import Surya’s 94-lang set |
+| Profiles fail on Windows | `read_text()` without UTF-8 | Force `encoding="utf-8"` |
+| Google Doc AI needs service account only | No API key path | `GOOGLE_API_KEY` via ClientOptions |
+| Docs said empty `marker_venv` disables Marker | Wrong comment in config.example | Document auto-detect |
+
+### What a fresh clone should do now
+
+```bash
+git clone https://github.com/jacobhgruber-dev/ocr-pipeline.git
+cd ocr-pipeline
+uv sync --extra marker   # or: uv pip install marker-pdf surya-ocr
+cp config.example.yaml config.yaml
+# Optional: system env vars for APIs (preferred over opencode env block)
+uv run ocr-pipeline-mcp   # MCP: no marker_venv required if packages installed
+```
+
+Windows: use **CPU torch** if no CUDA (`uv pip install torch --index-url https://download.pytorch.org/whl/cpu`). First Marker/Surya page downloads HuggingFace models (slow once).
+
+### Verified engine health (this host, bare PipelineConfig)
+
+marker/surya2/tesseract/mathpix/google_doc_ai/trocr → **True**; grobid → False (Docker not running).
 
 ## Recent Work (2026-07-03 / 2026-07-04 session)
 

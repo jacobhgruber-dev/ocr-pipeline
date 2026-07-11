@@ -5,6 +5,34 @@ All notable changes to the OCR Pipeline will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 2026-07-11
+
+### Fixed (template / MCP usability — clone-and-run)
+
+These bugs made a fresh clone or MCP-hosted run report Marker/Surya2 as
+`unavailable` or `false` even when packages were installed:
+
+- **`create_engine("marker"|"surya2")`**: auto-detect current venv when packages
+  are importable; no longer hard-requires `marker_venv` in config.
+- **MCP `ocr_status` / document tools**: load `config.yaml` from project root
+  (not only CWD); seed `marker_venv` when packages live in this process.
+- **Marker/Surya2 `health_check`**: prefer in-process `importlib` when engine
+  Python == `sys.executable` (subprocess checks under MCP returned false negatives).
+- **TrOCR `health_check`**: return `bool` True/False (was `None` on success →
+  pipeline skipped TrOCR via `if engine.health_check()`).
+- **TrOCR factory**: register constructor in `create_engine`.
+- **Windows**: cross-platform venv python path (`Scripts/` vs `bin/`).
+- **`MARKER_LANGUAGES`**: derive from Surya (94 langs) instead of stale 40-lang list
+  (restored Latin `la` and Irish `ga`).
+- **`read_text()` encoding**: UTF-8 on Windows for profiles, credentials, previews.
+- **`ocr_pdf`**: restored as backward-compat alias for `ocr_document`.
+- **Grok VLM**: add `openai` dependency; API key via system env (`XAI_API_KEY`).
+- **Google Document AI**: support `GOOGLE_API_KEY` ClientOptions auth.
+
+### Added
+- Profiles `grok-value` / `grok-quality` and Grok model routing for CJK/math/technical.
+- README VLM model selection tables from empirical Grok vs Gemini testing.
+
 ## [0.3.0] — 2026-07-04
 
 ### Added

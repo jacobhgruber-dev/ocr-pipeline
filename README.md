@@ -150,9 +150,9 @@ This processes the first 3 pages as a trial. Check the output, then adjust the p
 - **Large-file guard** — Warns at 500 MB, refuses at 2 GB (configurable). Text files capped at 100 MB with truncation note.
 
 ### OCR + Enhancement
-- **7 engines** — Marker, Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic), Mathpix (LaTeX math), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
+- **7 engines** — Marker (94 languages, via Surya), Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic, 11 installed language packs), Mathpix (LaTeX math), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
 - **VLM merge** — Gemini 2.5 Flash (default, ~$0.001/page), Grok, or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves formatting. Per-script model routing: Grok for CJK/math/technical, Gemini for books/literary.
-- **6 profiles** — General, Academic, Mathematical, Legal, Technical, Books. Each with research-backed system prompts.
+- **8 profiles** — General, Academic, Mathematical, Legal, Technical, Books, plus `grok-value` / `grok-quality`. Each with research-backed system prompts and per-script VLM routing.
 - **Table extraction** — Dual path: VLM prompt-based + Surya 2 ML TableRecPredictor.
 
 ### Output
@@ -383,7 +383,7 @@ print(pipeline.stats)
 | `api_timeout_sec` | float | `120.0` | Per-call timeout |
 | `profile` | str | `"general"` | Document profile for VLM prompt. One of: `general`, `academic`, `mathematical`, `legal`, `technical`, `books` |
 | `column_layout` | str | `"auto"` | Column layout hint |
-| `languages` | list[str] | `["en"]` | Document languages. Language hints are passed to OCR engines (Marker, Surya2) for improved character recognition accuracy. |
+| `languages` | list[str] | `["en", "la", "de", "es", "ga", "it", "el", "fr"]` | Document languages. Language hints are passed to OCR engines (Marker, Surya2, Tesseract) for improved character recognition accuracy. Default config includes 8 languages. |
 
 ### Environment variable overrides
 
@@ -652,8 +652,8 @@ Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can a
 
 | Engine | Type | Cost | Best For | Notes |
 |---|---|---|---|---|
-| **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. |
-| **Tesseract** | Local | Free | Arabic/RTL, Cyrillic, fallback | The most widely deployed OCR engine. 6x faster than Marker for Cyrillic. Only working engine for Arabic. |
+| **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. 94 languages (via Surya). |
+| **Tesseract** | Local | Free | Arabic/RTL, Cyrillic, fallback | The most widely deployed OCR engine. 6x faster than Marker for Cyrillic. Only working engine for Arabic. 11 language packs installed: eng, deu, ell, fra, gle, grc, ita, lat, spa, osd, syr. |
 | **Mathpix** | API | $0.005/page | Math-heavy PDFs | Best math/equation OCR available. Free tier: 1000 pages/month. |
 | **Google Document AI** | API | $0.0015/page | Enterprise, forms | Google Cloud processor setup required. Free tier: 500 pages/month. |
 | **Surya 2** | Local | Free | Multilingual documents, layout analysis | 91-language VLM OCR. Requires `uv sync --extra surya2`. |
