@@ -634,7 +634,7 @@ async def ocr_metadata(file_path: str) -> dict[str, Any]:
             from .engines.metadata_vlm import VlmMetadataEngine
 
             vlm = VlmMetadataEngine(
-                vlm_model=cfg.vlm_metadata_model, api_key=cfg.gemini_api_key, page_count=3
+                vlm_model=cfg.vlm_metadata_model, page_count=3
             )
             vlm_result = await asyncio.to_thread(vlm.extract, fp)
             if vlm_result.extraction_method == "vlm" and (

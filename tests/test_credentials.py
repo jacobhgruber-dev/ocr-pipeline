@@ -236,14 +236,10 @@ def test_resolve_unconfigured_returns_empty(monkeypatch: pytest.MonkeyPatch) -> 
     _yaml_cache.clear()
     _opencode_cache.clear()
 
-    # Use a non-existent YAML path to avoid picking up a real config.yaml.
-    result = resolve_credential("NOT_SET_KEY", config_yaml_paths=[Path("/nonexistent/config.yaml")])
-
-    # opencode.json may or may not exist — we mock home to a temp dir without it.
+    # Mock Path.home so we don't read the developer's real opencode.json.
     with mock.patch.object(Path, "home", return_value=Path("/nonexistent/home")):
-        result2 = resolve_credential("NOT_SET_KEY", config_yaml_paths=[Path("/nonexistent/config.yaml")])
+        result = resolve_credential("NOT_SET_KEY", config_yaml_paths=[Path("/nonexistent/config.yaml")])
     assert result == ""
-    assert result2 == ""
 
 
 def test_missing_files_dont_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

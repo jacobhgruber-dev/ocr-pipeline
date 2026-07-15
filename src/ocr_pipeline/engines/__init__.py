@@ -112,7 +112,7 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
                 "or set MATHPIX_APP_ID and MATHPIX_APP_KEY env vars.\n"
                 "Get keys at: https://mathpix.com"
             )
-        return MathpixEngine()
+        return MathpixEngine(app_id=app_id, app_key=app_key)
 
     if name == EngineName.GOOGLE_DOC_AI:
         project_id = (

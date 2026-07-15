@@ -524,7 +524,6 @@ class Pipeline:
         try:
             vlm = VlmMetadataEngine(
                 vlm_model=self.config.vlm_metadata_model,
-                api_key=self.config.gemini_api_key,
                 page_count=3,
             )
             result = vlm.extract(pdf_path)

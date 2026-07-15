@@ -140,11 +140,13 @@ def _load_opencode(path: Path) -> dict[str, Any] | None:
 # OpenCode JSON section readers
 # ---------------------------------------------------------------------------
 
-# Provider-to-standard-key mapping used by both CredentialStore and resolver.
+# Provider-to-standard-key mapping used by the credential resolver.
 _PROVIDER_MAP: dict[str, dict[str, str]] = {
     "google": {"apiKey": "GEMINI_API_KEY"},
     "anthropic": {"apiKey": "ANTHROPIC_API_KEY"},
     "mathpix": {"appId": "MATHPIX_APP_ID", "appKey": "MATHPIX_APP_KEY"},
+    "xai": {"apiKey": "XAI_API_KEY"},
+    "grok": {"apiKey": "XAI_API_KEY"},
 }
 
 
