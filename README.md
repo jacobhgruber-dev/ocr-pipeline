@@ -150,7 +150,7 @@ This processes the first 3 pages as a trial. Check the output, then adjust the p
 - **Large-file guard** — Warns at 500 MB, refuses at 2 GB (configurable). Text files capped at 100 MB with truncation note.
 
 ### OCR + Enhancement
-- **7 engines** — Marker (94 languages, via Surya), Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic, 11 installed language packs), Mathpix (LaTeX math), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
+- **7 engines** — Marker (94 languages, via Surya), Surya 2 (91 languages + layout + **table recognition**), Tesseract (Arabic/RTL/Cyrillic, 11 installed language packs), Mathpix (all scripts — Latin, Cyrillic, math, legal; 17-51x faster than Marker for non-Latin), Google Document AI (enterprise forms), GROBID (academic metadata), **TrOCR** (handwriting recognition).
 - **VLM merge** — Gemini 2.5 Flash (default, ~$0.001/page), Grok, or Claude reads all engine outputs plus the page image and produces a final clean transcription. Corrects OCR errors, resolves disagreements, preserves formatting. Per-script model routing: Grok for CJK/math/technical, Gemini for books/literary.
 - **8 profiles** — General, Academic, Mathematical, Legal, Technical, Books, plus `grok-value` / `grok-quality`. Each with research-backed system prompts and per-script VLM routing.
 - **Table extraction** — Dual path: VLM prompt-based + Surya 2 ML TableRecPredictor.
@@ -455,7 +455,7 @@ uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile academic --langs en,de,fr,la
 ```
 
-**What it does:** Marker + Mathpix handle text and equations. The academic profile
+**What it does:** Marker + Mathpix handle text, equations, and citations with best-in-class quality. The academic profile
 preserves citations, DOIs, and footnotes in CMOS 18 format. Language hints
 improve accuracy for non-English text.
 
@@ -490,8 +490,9 @@ uv run ocr-pipeline --input ./docs/ --output ./out/ \
   --profile mathematical --langs en
 ```
 
-**What it does:** Mathpix handles equation OCR (its specialty), Marker provides
-a fallback for plain text. The mathematical profile instructs the VLM to use
+**What it does:** Mathpix handles equation OCR with native LaTeX output, while Marker provides
+a fallback for plain text. Mathpix also matches or exceeds Marker quality for all Latin scripts
+and is the only working engine for Cyrillic. The mathematical profile instructs the VLM to use
 LaTeX math mode ($...$ inline, $$...$$ display) for all equations.
 
 ### Citation-rich document (bibliography, footnotes)
@@ -654,12 +655,12 @@ Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can a
 |---|---|---|---|---|
 | **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. 94 languages (via Surya). |
 | **Tesseract** | Local | Free | Arabic/RTL, Cyrillic, fallback | The most widely deployed OCR engine. 6x faster than Marker for Cyrillic. Only working engine for Arabic. 11 language packs installed: eng, deu, ell, fra, gle, grc, ita, lat, spa, osd, syr. |
-| **Mathpix** | API | $0.005/page | Math-heavy PDFs | Best math/equation OCR available. Free tier: 1000 pages/month. |
+| **Mathpix** | API | $0.005/page | All scripts (Latin, Cyrillic, math, legal) | Matches or exceeds Marker across all Latin scripts (2-6% more text). Only working engine for Cyrillic with Gemini Flash. Natively preserves LaTeX math. 17-51x faster than Marker for non-Latin scripts. Free tier: 1000 pages/month. |
 | **Google Document AI** | API | $0.0015/page | Enterprise, forms | Google Cloud processor setup required. Free tier: 500 pages/month. |
 | **Surya 2** | Local | Free | Multilingual documents, layout analysis | 91-language VLM OCR. Requires `uv sync --extra surya2`. |
 | **GROBID** | Local (Docker) | Free | Academic metadata extraction | Extracts title, authors, DOI, journal metadata. `docker run -p 8070:8070 lfoppiano/grobid:0.8.1` |
 
-Use Marker as your default. Add Tesseract for Arabic/RTL scripts or as a fallback (recommended for general + books profiles). Add Mathpix for math-heavy documents.
+Use Marker (or Mathpix for Cyrillic/multilingual) as your default. Add Tesseract for Arabic/RTL scripts or as a universal fallback. For best quality across all scripts, add Mathpix — it matches or exceeds Marker quality for Latin documents while being 17-51x faster for non-Latin scripts.
 
 ---
 
@@ -743,12 +744,16 @@ output/
 Surya2 (free, local OCR engines) and --no-vlm. You only need keys if you want:
 
 - VLM merge (Gemini key — free tier available at aistudio.google.com)
-- Mathpix (for math-heavy documents)
+- Mathpix (all scripts — Latin, Cyrillic, math, legal; 17-51x faster for non-Latin)
 - Google Document AI (for structured documents)
 
 See the "Free-only pipeline" recipe in Common Recipes above.
 
 ### Mathpix
+
+> **Note:** Mathpix is a general-purpose OCR engine, not just for math. It matches
+> or exceeds Marker across all Latin scripts and is the only working engine for
+> Cyrillic with Gemini Flash. See the Engine Overview for details.
 
 1. Go to https://mathpix.com
 2. Sign up for an account

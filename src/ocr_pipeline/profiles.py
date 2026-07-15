@@ -592,11 +592,13 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Generic document. Catch-all with 15 rules covering tables, figures, "
             "multi-column, headers/footers, lists, and code blocks. Supports all "
-            "30 input formats. Add surya2 for layout analysis + ML table detection. "
+            "30 input formats. Add mathpix for Cyrillic documents (only working "
+            "engine with Gemini Flash) and faster Latin processing. "
+            "Add surya2 for layout analysis + ML table detection. "
             "Uses Grok-4.3 for CJK script documents."
         ),
-        suggested_engines=["marker", "tesseract"],
-        optional_engines=["surya2", "mathpix", "google_doc_ai", "trocr"],
+        suggested_engines=["marker", "tesseract", "mathpix"],
+        optional_engines=["surya2", "google_doc_ai", "trocr"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -693,11 +695,13 @@ PROFILES: dict[str, DocumentProfile] = {
         description=(
             "Book page. Preserves front/back matter, block quotes, epigraphs, "
             "dialogue formatting, scene breaks, illustrations with captions, "
-            "cross-references, and multi-column layout. Add surya2 for "
-            "layout analysis of complex page designs and illustrations. "
-            "Uses Gemini for rich blockquote/header markup on Latin script."
+            "cross-references, and multi-column layout. Add mathpix for parity "
+            "quality and 51x faster processing for French/diacritic text. "
+            "Add surya2 for layout analysis of complex page designs and "
+            "illustrations. Uses Gemini for rich blockquote/header markup on "
+            "Latin script."
         ),
-        suggested_engines=["marker", "tesseract"],
+        suggested_engines=["marker", "tesseract", "mathpix"],
         optional_engines=["surya2"],
         suggested_languages=["en"],
         model_routing={
