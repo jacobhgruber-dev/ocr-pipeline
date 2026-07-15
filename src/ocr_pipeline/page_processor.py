@@ -340,9 +340,10 @@ class PageProcessor:
             ctx.merged_markdown = self._pick_best(usable)
             return
 
-        # Run VLM merge even with a single engine (single-engine output is
-        # a reasonable first draft but VLM polish with the page image as
-        # ground truth always improves quality).
+        if len(usable) == 1:
+            # Single engine — use output directly (no VLM needed)
+            ctx.merged_markdown = usable[0].text
+            return
 
         # Multi-engine ensemble path
         ctx.agreement = compute_engine_agreement(ctx.engine_outputs)
