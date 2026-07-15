@@ -422,10 +422,10 @@ _ENGINE_INFO: dict[str, dict[str, str]] = {
         "cost": "free",
     },
     "mathpix": {
-        "header": "API. Math-specialized OCR.",
-        "best_for": "math-heavy PDFs, equations, LaTeX.",
+        "header": "API. General-purpose OCR (Latin, Cyrillic, math, legal).",
+        "best_for": "All scripts. Matches/exceeds Marker for Latin, only working engine for Cyrillic.",
         "requires": "MATHPIX_APP_ID and MATHPIX_APP_KEY",
-        "free_tier": "1000 pages/month. Paid: ~$0.005/page",
+        "free_tier": "$19.99 one-time setup, then $0.005/page (0-1M). $29 testing credit.",
     },
     "surya2": {
         "header": "Local, free. Next-gen VLM-based OCR (91 languages).",

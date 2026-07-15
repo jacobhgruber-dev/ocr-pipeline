@@ -655,7 +655,7 @@ Select a profile via `--profile` CLI flag or `profile` in config.yaml. You can a
 |---|---|---|---|---|
 | **Marker** | Local | Free | General documents | Requires PyTorch. Good accuracy on most PDFs. 94 languages (via Surya). |
 | **Tesseract** | Local | Free | Arabic/RTL, Cyrillic, fallback | The most widely deployed OCR engine. 6x faster than Marker for Cyrillic. Only working engine for Arabic. 11 language packs installed: eng, deu, ell, fra, gle, grc, ita, lat, spa, osd, syr. |
-| **Mathpix** | API | $0.005/page | All scripts (Latin, Cyrillic, math, legal) | Matches or exceeds Marker across all Latin scripts (2-6% more text). Only working engine for Cyrillic with Gemini Flash. Natively preserves LaTeX math. 17-51x faster than Marker for non-Latin scripts. Free tier: 1000 pages/month. |
+| **Mathpix** | API | $0.005/page | All scripts (Latin, Cyrillic, math, legal) | Matches or exceeds Marker across all Latin scripts (2-6% more text). Only working engine for Cyrillic with Gemini Flash. Natively preserves LaTeX math. 17-51x faster than Marker for non-Latin scripts. One-time $19.99 setup fee, then pay-as-you-go ($0.005/page up to 1M, $0.0035 after). $29 testing credit. |
 | **Google Document AI** | API | $0.0015/page | Enterprise, forms | Google Cloud processor setup required. Free tier: 500 pages/month. |
 | **Surya 2** | Local | Free | Multilingual documents, layout analysis | 91-language VLM OCR. Requires `uv sync --extra surya2`. |
 | **GROBID** | Local (Docker) | Free | Academic metadata extraction | Extracts title, authors, DOI, journal metadata. `docker run -p 8070:8070 lfoppiano/grobid:0.8.1` |
@@ -758,7 +758,7 @@ See the "Free-only pipeline" recipe in Common Recipes above.
 1. Go to https://mathpix.com
 2. Sign up for an account
 3. Get your App ID and App Key from the dashboard
-4. Free tier: 1000 pages/month
+4. One-time $19.99 setup fee. Pay-as-you-go: $0.005/page (first 1M), $0.0035/page (1M+). $29 testing credit included.
 
 Set in config.yaml:
 ```yaml
