@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-import json
 import logging
 import os
 import threading
@@ -16,11 +15,6 @@ if TYPE_CHECKING:
     from ..models import EngineOutput  # used in OcrEngine Protocol type hints
 
 # EngineName and EngineOutput live in models.py (single source of truth).
-
-try:
-    import yaml
-except ImportError:
-    yaml = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -194,122 +188,3 @@ class CircuitBreaker:
         with self._lock:
             return engine in self._open
 
-
-# ---------------------------------------------------------------------------
-# Credential store
-# ---------------------------------------------------------------------------
-
-
-class CredentialStore:
-    """Loads credentials from opencode config, falling back to env vars.
-
-    Priority order:
-    1. Environment variables (highest — opencode injects these for MCP servers)
-    2. ``~/.config/opencode/opencode.json`` → ``credentials`` section
-    3. Project ``.opencode/opencode.json`` → ``credentials`` section
-    4. Legacy: ``ocr_pipeline/config.yaml`` (for non-opencode users)
-    """
-
-    _OPENCODE_GLOBAL = Path.home() / ".config" / "opencode" / "opencode.json"
-    _LEGACY_CONFIG = Path(__file__).resolve().parent.parent.parent / "config.yaml"
-
-    def __init__(self) -> None:
-        self._data: dict[str, str] = {}
-        self._load_opencode_global()
-        self._load_opencode_project()
-        self._load_legacy_yaml()
-
-    # -- opencode config ---------------------------------------------------
-
-    @staticmethod
-    def _find_project_root() -> Path | None:
-        """Walk up from this source file to find .opencode/opencode.json."""
-        current = Path(__file__).resolve().parent
-        for _ in range(12):
-            candidate = current / ".opencode" / "opencode.json"
-            if candidate.is_file():
-                return candidate
-            if current.parent == current:
-                break
-            current = current.parent
-        return None
-
-    def _load_opencode_global(self) -> None:
-        self._load_json_credentials(self._OPENCODE_GLOBAL)
-
-    def _load_opencode_project(self) -> None:
-        proj = self._find_project_root()
-        if proj:
-            self._load_json_credentials(proj)
-
-    def _load_json_credentials(self, path: Path) -> None:
-        if not path.is_file():
-            return
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return
-        # 1. Top-level "credentials" section
-        creds = data.get("credentials", {})
-        if isinstance(creds, dict):
-            for k, v in creds.items():
-                if v is not None and v != "" and k not in self._data:
-                    self._data[str(k)] = str(v)
-        # 2. provider.*.options → map to standard key names
-        providers = data.get("provider", {})
-        if isinstance(providers, dict):
-            provider_map = {
-                "google": {"apiKey": "GEMINI_API_KEY"},
-                "anthropic": {"apiKey": "ANTHROPIC_API_KEY"},
-                "mathpix": {"appId": "MATHPIX_APP_ID", "appKey": "MATHPIX_APP_KEY"},
-            }
-            for name, field_map in provider_map.items():
-                prov = providers.get(name, {})
-                if isinstance(prov, dict):
-                    opts = prov.get("options", {})
-                    if isinstance(opts, dict):
-                        for src_field, target_key in field_map.items():
-                            val = opts.get(src_field, "")
-                            if val and target_key not in self._data:
-                                self._data[target_key] = str(val)
-        # 3. MCP server env sections
-        mcp = data.get("mcp", {})
-        if isinstance(mcp, dict):
-            for _server, cfg in mcp.items():
-                if not isinstance(cfg, dict):
-                    continue
-                env = cfg.get("environment", cfg.get("env", {}))
-                if isinstance(env, dict):
-                    for k, v in env.items():
-                        if v is not None and v != "" and k not in self._data:
-                            self._data[str(k)] = str(v)
-
-    # -- legacy YAML (non-opencode users) ----------------------------------
-
-    def _load_legacy_yaml(self) -> None:
-        if not self._LEGACY_CONFIG.is_file():
-            return
-        try:
-            with open(self._LEGACY_CONFIG) as fh:
-                raw = yaml.safe_load(fh)
-            if isinstance(raw, dict):
-                creds_section = raw.get("credentials", {})
-                if isinstance(creds_section, dict):
-                    for k, v in creds_section.items():
-                        if v is not None and v != "" and k not in self._data:
-                            self._data[str(k)] = str(v)
-        except Exception:
-            logger.warning(
-                "Failed to parse %s",
-                self._LEGACY_CONFIG,
-                exc_info=True,
-            )
-
-    # -- public API --------------------------------------------------------
-
-    def get(self, key: str) -> str | None:
-        """Return the credential value for *key* or ``None``.
-
-        Environment variables take priority over all config files.
-        """
-        return os.environ.get(key) or self._data.get(key)

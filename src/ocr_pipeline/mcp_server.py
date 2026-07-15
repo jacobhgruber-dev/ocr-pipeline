@@ -133,7 +133,6 @@ def _load_config(
                 continue
         if cfg is None:
             cfg = PipelineConfig(input_dir=pdf.parent, output_dir=out)
-        ConfigLoader.apply_env_credentials(cfg)
 
     # Ensure marker can run when installed in this process's venv
     if not getattr(cfg, "marker_venv", None):
@@ -340,7 +339,6 @@ async def ocr_page(
             cfg = ConfigLoader.from_yaml(Path("config.yaml"))
         except Exception:
             cfg = PipelineConfig(input_dir=img.parent, output_dir=Path("./ocr_output"))
-        ConfigLoader.apply_env_credentials(cfg)
 
     try:
         engine_instance = create_engine(engine, cfg)
@@ -542,7 +540,6 @@ async def ocr_status() -> dict[str, Any]:
                 continue
         if cfg is None:
             cfg = PipelineConfig(input_dir=Path("."), output_dir=Path("./ocr_output"))
-        ConfigLoader.apply_env_credentials(cfg)
 
     # Seed marker_venv when packages live in this process's venv
     if not getattr(cfg, "marker_venv", None):
@@ -617,7 +614,6 @@ async def ocr_metadata(file_path: str) -> dict[str, Any]:
             cfg = ConfigLoader.from_yaml(Path("config.yaml"))
         except Exception:
             cfg = PipelineConfig(input_dir=fp.parent, output_dir=Path("./ocr_output"))
-        ConfigLoader.apply_env_credentials(cfg)
 
     # Try format-native metadata first (works for all 30 formats)
     try:

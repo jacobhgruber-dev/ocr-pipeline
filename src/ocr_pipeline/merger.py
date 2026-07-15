@@ -11,7 +11,6 @@ from __future__ import annotations
 import base64
 import json
 import logging
-import os
 import time
 from pathlib import Path
 from typing import Protocol, runtime_checkable
@@ -19,6 +18,7 @@ from typing import Protocol, runtime_checkable
 from .errors import MergeError
 from .models import EngineName, EngineOutput
 from .profiles import get_profile
+from ocr_pipeline.credentials import resolve_credential
 
 logger = logging.getLogger(__name__)
 
@@ -172,16 +172,7 @@ def _call_anthropic(
     """
     import anthropic
 
-    # Check CredentialStore (config.yaml) first, then environment
-    api_key = None
-    try:
-        from .engines.base import CredentialStore
-
-        api_key = CredentialStore().get("ANTHROPIC_API_KEY")
-    except Exception:
-        pass
-    if not api_key:
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = resolve_credential("ANTHROPIC_API_KEY")
     if not api_key:
         raise MergeError(
             "ANTHROPIC_API_KEY is not set. Add it to ocr_pipeline/config.yaml "
@@ -284,16 +275,7 @@ def _call_gemini(
     """
     from google import genai
 
-    # Check CredentialStore (opencode config) first, then environment
-    api_key = None
-    try:
-        from .engines.base import CredentialStore
-
-        api_key = CredentialStore().get("GEMINI_API_KEY")
-    except Exception:
-        pass
-    if not api_key:
-        api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = resolve_credential("GEMINI_API_KEY")
     if not api_key:
         raise MergeError(
             "GEMINI_API_KEY is not set. Add it to ~/.config/opencode/opencode.json "
@@ -376,9 +358,9 @@ def _estimate_cost_grok(model: str, prompt_tokens: int, completion_tokens: int) 
 
 def _call_grok(model: str, b64_image: str, user_message: str, system_prompt: str, max_tokens: int, timeout_sec: float) -> tuple[str, str, float]:
     """Call xAI Grok for VLM merge via OpenAI-compatible API."""
-    api_key = os.environ.get("XAI_API_KEY", "")
+    api_key = resolve_credential("XAI_API_KEY")
     if not api_key:
-        raise MergeError("XAI_API_KEY environment variable is not set")
+        raise MergeError("XAI_API_KEY is not set")
 
     from openai import OpenAI
     client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")

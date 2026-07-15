@@ -5,6 +5,7 @@ from pathlib import Path
 
 from .base import with_api_retry
 from ..models import EngineName, EngineOutput
+from ocr_pipeline.credentials import resolve_credential
 
 
 class GoogleDocAiEngine:
@@ -38,12 +39,10 @@ class GoogleDocAiEngine:
         back to Application Default Credentials (ADC / service account).
         """
         if self._client is None:
-            import os
-
             from google.api_core.client_options import ClientOptions
             from google.cloud import documentai
 
-            api_key = os.environ.get("GOOGLE_API_KEY", "")
+            api_key = resolve_credential("GOOGLE_API_KEY")
             if api_key:
                 opts = ClientOptions(
                     api_endpoint=f"{self.location}-documentai.googleapis.com",

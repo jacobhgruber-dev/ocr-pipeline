@@ -7,15 +7,14 @@ circuit breaker, and a ``create_engine`` factory.
 from __future__ import annotations
 
 import importlib.util
-import os
 import sys
 from pathlib import Path
 
 from ..models import EngineName, EngineOutput
+from ocr_pipeline.credentials import resolve_credential
 
 from .base import (
     CircuitBreaker,
-    CredentialStore,
     OcrEngine,
     with_api_retry,
 )
@@ -30,7 +29,6 @@ from .trocr import TrocrEngine
 __all__ = [
     # Base types & infrastructure
     "CircuitBreaker",
-    "CredentialStore",
     "EngineName",
     "EngineOutput",
     "OcrEngine",
@@ -104,9 +102,9 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
         app_id = getattr(config, "mathpix_app_id", "") if config is not None else ""
         app_key = getattr(config, "mathpix_app_key", "") if config is not None else ""
         if not app_id:
-            app_id = os.environ.get("MATHPIX_APP_ID", "")
+            app_id = resolve_credential("MATHPIX_APP_ID")
         if not app_key:
-            app_key = os.environ.get("MATHPIX_APP_KEY", "")
+            app_key = resolve_credential("MATHPIX_APP_KEY")
         if not app_id or not app_key:
             raise ValueError(
                 "MathpixEngine requires credentials.\n"
@@ -119,7 +117,7 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
     if name == EngineName.GOOGLE_DOC_AI:
         project_id = (
             getattr(config, "google_cloud_project", None) if config is not None else None
-        ) or os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+        ) or resolve_credential("GOOGLE_CLOUD_PROJECT")
         if not project_id:
             raise ValueError(
                 "GoogleDocAiEngine requires a Google Cloud project.\n"

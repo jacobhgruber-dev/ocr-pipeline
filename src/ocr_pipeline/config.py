@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import warnings
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -32,6 +33,7 @@ class PipelineConfig:
     vlm_model: str = "gemini-2.5-flash"
     vlm_fallback_model: str = "claude-sonnet-5"
     vlm_system_prompt: str = ""  # empty = use built-in default
+    xai_api_key: str = ""
     vlm_agreement_threshold: float = 0.97  # skip VLM when engines agree >= this
     vlm_max_tokens: int = 8192
     vlm_cost_per_call: float = 0.00015  # Gemini 2.5 Flash per-page estimate (~$0.00013 actual)
@@ -127,7 +129,7 @@ class PipelineConfig:
     mathpix_app_key: str = ""
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
-    google_application_credentials: str = ""  # path to service-account JSON
+    google_api_key: str = ""
     google_cloud_project: str = ""
 
 
@@ -179,8 +181,9 @@ class ConfigLoader:
         ("mathpix_app_key", "MATHPIX_APP_KEY", str),
         ("anthropic_api_key", "ANTHROPIC_API_KEY", str),
         ("gemini_api_key", "GEMINI_API_KEY", str),
-        ("google_application_credentials", "GOOGLE_APPLICATION_CREDENTIALS", str),
+        ("google_api_key", "GOOGLE_API_KEY", str),
         ("google_cloud_project", "GOOGLE_CLOUD_PROJECT", str),
+        ("xai_api_key", "XAI_API_KEY", str),
     ]
 
     @classmethod
@@ -363,8 +366,9 @@ class ConfigLoader:
             mathpix_app_key=str(raw.get("mathpix_app_key", "")),
             anthropic_api_key=str(raw.get("anthropic_api_key", "")),
             gemini_api_key=str(raw.get("gemini_api_key", "")),
-            google_application_credentials=str(raw.get("google_application_credentials", "")),
+            google_api_key=str(raw.get("google_api_key", "")),
             google_cloud_project=str(raw.get("google_cloud_project", "")),
+            xai_api_key=str(raw.get("xai_api_key", "")),
         )
 
     @staticmethod
@@ -403,6 +407,9 @@ class ConfigLoader:
     def apply_env_credentials(cfg: PipelineConfig) -> None:
         """Read credential / connection env vars and apply them to *cfg*.
 
+        .. deprecated::
+            Use ``resolve_credential()`` from ``ocr_pipeline.credentials`` instead.
+
         Designed for the MCP-server fallback path, where
         ``from_env()`` fails (required dirs not set) but we still
         want to pick up API keys from the environment.
@@ -410,13 +417,20 @@ class ConfigLoader:
         Only sets fields when the corresponding env var is present
         and non-empty.
         """
+        warnings.warn(
+            "apply_env_credentials is deprecated; use resolve_credential() "
+            "from ocr_pipeline.credentials instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         _CREDENTIAL_ENV_MAP: list[tuple[str, str]] = [
             ("mathpix_app_id", "MATHPIX_APP_ID"),
             ("mathpix_app_key", "MATHPIX_APP_KEY"),
             ("anthropic_api_key", "ANTHROPIC_API_KEY"),
             ("gemini_api_key", "GEMINI_API_KEY"),
+            ("google_api_key", "GOOGLE_API_KEY"),
             ("google_cloud_project", "GOOGLE_CLOUD_PROJECT"),
-            ("google_application_credentials", "GOOGLE_APPLICATION_CREDENTIALS"),
+            ("xai_api_key", "XAI_API_KEY"),
             ("grobid_url", "GROBID_URL"),
         ]
         for field_name, env_var in _CREDENTIAL_ENV_MAP:

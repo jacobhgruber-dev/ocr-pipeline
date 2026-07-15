@@ -4,8 +4,9 @@ import json
 import time
 from pathlib import Path
 
-from .base import CredentialStore, with_api_retry
+from .base import with_api_retry
 from ..models import EngineName, EngineOutput
+from ocr_pipeline.credentials import resolve_credential
 
 
 class MathpixEngine:
@@ -20,16 +21,10 @@ class MathpixEngine:
 
         Resolution order (first wins):
         1. Explicit *app_id* / *app_key* args.
-        2. ``CredentialStore`` (from the package ``config.yaml``).
-        3. Environment variables ``MATHPIX_APP_ID`` / ``MATHPIX_APP_KEY``.
+        2. ``resolve_credential`` (env, config.yaml, opencode.json).
         """
-        if app_id and app_key:
-            self._app_id: str = app_id
-            self._app_key: str = app_key
-        else:
-            store = CredentialStore()
-            self._app_id = app_id or store.get("MATHPIX_APP_ID") or ""  # type: ignore[assignment]
-            self._app_key = app_key or store.get("MATHPIX_APP_KEY") or ""  # type: ignore[assignment]
+        self._app_id = app_id or resolve_credential("MATHPIX_APP_ID")
+        self._app_key = app_key or resolve_credential("MATHPIX_APP_KEY")
 
     # -- Protocol requirements -------------------------------------------------
 
