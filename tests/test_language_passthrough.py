@@ -79,7 +79,7 @@ class TestMathpixEngineLanguages:
         assert sig.parameters["languages"].default is None
 
     def test_instantiate_without_args(self):
-        """MathpixEngine can be constructed without args (uses CredentialStore)."""
+        """MathpixEngine can be constructed without args (uses resolve_credential)."""
         engine = MathpixEngine()
         assert engine.engine_name == "mathpix"
 

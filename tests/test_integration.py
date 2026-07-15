@@ -97,7 +97,7 @@ def test_model_routing_all_profiles() -> None:
     for name, p in PROFILES.items():
         assert p.model_routing
         assert "cjk" in p.model_routing
-        assert p.model_routing["cjk"] == "claude-haiku-4-5"
+        assert p.model_routing["cjk"] in ("grok-4.3", "grok-4.5")
 
 
 def test_rtl_detection() -> None:

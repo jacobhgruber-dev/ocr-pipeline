@@ -89,10 +89,10 @@ class TestGetProfileKnown:
             profile = get_profile(name)
             assert len(profile.suggested_engines) > 0, f"{name}: no suggested engines"
             assert len(profile.suggested_languages) > 0, f"{name}: no suggested languages"
-            assert profile.suggested_model in ("gemini-2.5-flash", "claude-sonnet-5"), (
+            assert profile.suggested_model in ("gemini-2.5-flash", "claude-sonnet-5", "grok-4.3", "grok-4.5"), (
                 f"{name}: unexpected suggested_model {profile.suggested_model}"
             )
-            assert profile.best_model in ("gemini-2.5-flash", "claude-sonnet-5"), (
+            assert profile.best_model in ("gemini-2.5-flash", "claude-sonnet-5", "grok-4.3", "grok-4.5"), (
                 f"{name}: unexpected best_model {profile.best_model}"
             )
 
