@@ -22,6 +22,7 @@ from .google_doc_ai import GoogleDocAiEngine
 from .grobid import GrobidEngine
 from .marker import MarkerEngine
 from .mathpix import MathpixEngine
+from .mistral import MistralEngine
 from .surya2 import Surya2Engine
 from .tesseract import TesseractEngine
 from .trocr import TrocrEngine
@@ -38,6 +39,7 @@ __all__ = [
     "GrobidEngine",
     "MarkerEngine",
     "MathpixEngine",
+    "MistralEngine",
     "Surya2Engine",
     "TesseractEngine",
     "TrocrEngine",
@@ -50,6 +52,7 @@ __all__ = [
 _ENGINE_CLASSES: dict[str, type] = {
     EngineName.GOOGLE_DOC_AI: GoogleDocAiEngine,
     EngineName.MATHPIX: MathpixEngine,
+    EngineName.MISTRAL: MistralEngine,
     EngineName.MARKER: MarkerEngine,
     EngineName.GROBID: GrobidEngine,
     EngineName.SURYA2: Surya2Engine,
@@ -113,6 +116,32 @@ def create_engine(name: str, config: object | None = None) -> OcrEngine:
                 "Get keys at: https://mathpix.com"
             )
         return MathpixEngine(app_id=app_id, app_key=app_key)
+
+    if name == EngineName.MISTRAL:
+        api_key = resolve_credential("MISTRAL_API_KEY")
+        if not api_key:
+            raise ValueError(
+                "MistralEngine requires a Mistral API key.\n"
+                "Set MISTRAL_API_KEY env var, or add it to config.yaml credentials.\n"
+                "Get a key at: https://console.mistral.ai"
+            )
+        return MistralEngine(
+            api_key=api_key,
+            model=getattr(config, "mistral_model", "mistral-ocr-latest")
+            if config
+            else "mistral-ocr-latest",
+            endpoint=getattr(config, "mistral_endpoint", "https://api.mistral.ai")
+            if config
+            else "https://api.mistral.ai",
+            include_blocks=getattr(config, "mistral_include_blocks", True) if config else True,
+            confidence_granularity=getattr(config, "mistral_confidence_granularity", "page")
+            if config
+            else "page",
+            extract_headers=getattr(config, "mistral_extract_headers", False) if config else False,
+            extract_footers=getattr(config, "mistral_extract_footers", False) if config else False,
+            table_format=getattr(config, "mistral_table_format", None) if config else None,
+            timeout_sec=getattr(config, "api_timeout_sec", 120.0) if config else 120.0,
+        )
 
     if name == EngineName.GOOGLE_DOC_AI:
         project_id = (

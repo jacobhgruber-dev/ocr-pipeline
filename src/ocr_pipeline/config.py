@@ -62,6 +62,7 @@ class PipelineConfig:
         default_factory=lambda: {
             "google_doc_ai": 0.0015,
             "mathpix": 0.005,
+            "mistral": 0.004,
             "marker": 0.0,
             "surya2": 0.0,
             "tesseract": 0.0,
@@ -98,6 +99,15 @@ class PipelineConfig:
     # -- Engine-specific paths / IDs -----------------------------------------
     marker_venv: str | None = None  # path to Marker's isolated venv, resolved at load time
     surya2_venv: str | None = None  # path to Surya 2's isolated venv (falls back to marker_venv)
+
+    # -- Mistral OCR ----------------------------------------------------------
+    mistral_model: str = "mistral-ocr-latest"
+    mistral_endpoint: str = "https://api.mistral.ai"
+    mistral_include_blocks: bool = True
+    mistral_confidence_granularity: str = "page"
+    mistral_extract_headers: bool = False
+    mistral_extract_footers: bool = False
+    mistral_table_format: str | None = None
     google_processor_id: str = ""  # Google Doc AI processor ID
     grobid_url: str = "http://localhost:8070"  # GROBID REST API URL
     vlm_metadata_model: str = "gemini-2.5-flash"  # VLM model for metadata extraction
@@ -169,6 +179,8 @@ class ConfigLoader:
         ("output_formats", "OCR_PIPELINE_OUTPUT_FORMATS", None),  # comma-separated -> list
         ("marker_venv", "OCR_PIPELINE_MARKER_VENV", str),
         ("surya2_venv", "OCR_PIPELINE_SURYA2_VENV", str),
+        ("mistral_model", "MISTRAL_MODEL", str),
+        ("mistral_endpoint", "MISTRAL_ENDPOINT", str),
         ("google_processor_id", "OCR_PIPELINE_GOOGLE_PROCESSOR_ID", str),
         ("grobid_url", "GROBID_URL", str),
         ("vlm_metadata_model", "OCR_PIPELINE_VLM_METADATA_MODEL", str),
@@ -357,6 +369,14 @@ class ConfigLoader:
             # Engine-specific
             marker_venv=raw.get("marker_venv"),  # None if not configured
             surya2_venv=raw.get("surya2_venv"),  # None if not configured
+            # Mistral OCR
+            mistral_model=str(raw.get("mistral_model", "mistral-ocr-latest")),
+            mistral_endpoint=str(raw.get("mistral_endpoint", "https://api.mistral.ai")),
+            mistral_include_blocks=bool(raw.get("mistral_include_blocks", True)),
+            mistral_confidence_granularity=str(raw.get("mistral_confidence_granularity", "page")),
+            mistral_extract_headers=bool(raw.get("mistral_extract_headers", False)),
+            mistral_extract_footers=bool(raw.get("mistral_extract_footers", False)),
+            mistral_table_format=raw.get("mistral_table_format"),  # None passthrough
             google_processor_id=str(raw.get("google_processor_id", "")),
             grobid_url=str(raw.get("grobid_url", "http://localhost:8070")),
             vlm_metadata_model=str(raw.get("vlm_metadata_model", "gemini-2.5-flash")),

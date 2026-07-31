@@ -41,6 +41,7 @@ class EngineName(str, Enum):
     GROBID = "grobid"  # metadata extraction, not page-level OCR
     TESSERACT = "tesseract"
     TROCR = "trocr"  # handwriting recognition
+    MISTRAL = "mistral"  # Mistral OCR cloud API
 
 
 # ---------------------------------------------------------------------------

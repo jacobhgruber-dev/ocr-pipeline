@@ -598,7 +598,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "Uses Grok-4.3 for CJK script documents."
         ),
         suggested_engines=["marker", "tesseract", "mathpix"],
-        optional_engines=["surya2", "google_doc_ai", "trocr"],
+        optional_engines=["surya2", "google_doc_ai", "trocr", "mistral"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -618,7 +618,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "for structured metadata extraction."
         ),
         suggested_engines=["marker", "mathpix"],
-        optional_engines=["surya2", "tesseract", "grobid"],
+        optional_engines=["surya2", "tesseract", "grobid", "mistral"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
@@ -702,7 +702,7 @@ PROFILES: dict[str, DocumentProfile] = {
             "Latin script."
         ),
         suggested_engines=["marker", "tesseract", "mathpix"],
-        optional_engines=["surya2"],
+        optional_engines=["surya2", "mistral"],
         suggested_languages=["en"],
         model_routing={
             "latin": "gemini-2.5-flash",
