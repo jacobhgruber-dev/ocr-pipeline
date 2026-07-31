@@ -1,12 +1,12 @@
 # OCR Pipeline — Project Status
 
-Last updated: 2026-07-11
+Last updated: 2026-07-31
 
 ## Build
 
 | Metric | Value |
 |---|---|
-| Tests | 408+ (baseline from 0.3.0; local Windows verify engines health True ×6) |
+| Tests | 429+ (8 engines; all health checks pass) |
 | Lint | ruff clean on changed engine/MCP files |
 | Python | 3.10+ (CI: 3.10, 3.12) |
 | Version | 0.3.0 (Beta) + Unreleased template/MCP fixes |
@@ -15,7 +15,7 @@ Last updated: 2026-07-11
 | Docker | Dockerfile + docker-compose (GROBID) — optional |
 | Git | main, direct push |
 
-## Engines (7)
+## Engines (8)
 
 | Engine | Type | Free? | Best for | Template note |
 |---|---|---|---|---|
@@ -24,6 +24,7 @@ Last updated: 2026-07-11
 | mathpix | API | freemium | LaTeX math | `MATHPIX_APP_ID` / `MATHPIX_APP_KEY` |
 | surya2 | Local (same venv OK) | ✅ | Multilingual + layout/tables | Auto-detect if `surya` importable |
 | google_doc_ai | API | freemium | Forms | `GOOGLE_CLOUD_PROJECT` + ADC or `GOOGLE_API_KEY` |
+| mistral | API | freemium | Complex layouts, tables, math, 170 languages | `MISTRAL_API_KEY`; `uv sync --extra mistral` |
 | grobid | Docker | ✅ | Academic metadata | Optional; VLM metadata can substitute |
 | trocr | Local | ✅ | Handwriting | Needs `transformers` + `torch`; health returns bool |
 
@@ -103,6 +104,14 @@ All stages run. Each only fills empty fields. Sidecar metadata never overrides e
 - DOCX/PPTX rendering requires LibreOffice (`soffice --headless`) — clear install guidance when absent.
 - Large-file guard warns at 500MB and refuses at 2GB. Streaming/chunked processing for >2GB files not implemented.
 - NumPy mypy stub error is a pre-existing Python 3.14 environment issue, not project code.
+
+## Recent Work (2026-07-31) — Mistral OCR engine
+
+- Added `MistralEngine` (API, 170 languages, structured blocks, $4/1K pages)
+- Per-page PNG via base64 data URL; 13 block types with normalized coords
+- Config: `mistral_model`, `mistral_endpoint`, `mistral_include_blocks`, etc.
+- Profiles: added to `optional_engines` for general, academic, books
+- Optional dep: `uv sync --extra mistral`
 
 ## Session record (2026-07-11) — Windows host + MCP template hardening
 
