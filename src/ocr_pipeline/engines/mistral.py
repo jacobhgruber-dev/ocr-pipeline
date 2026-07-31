@@ -121,7 +121,7 @@ class MistralEngine:
 
         # --- Guard: SDK available? ---
         try:
-            from mistralai import Mistral  # noqa: F401
+            from mistralai.client import Mistral  # noqa: F401
         except ImportError:
             elapsed = time.perf_counter() - t0
             return EngineOutput(
@@ -170,7 +170,7 @@ class MistralEngine:
         self, data_url: str, timeout_sec: float
     ) -> tuple[str, list[Block] | None, float | None]:
         """POST the base64 image to the Mistral OCR API — raises on failure."""
-        from mistralai import Mistral  # noqa: F811
+        from mistralai.client import Mistral  # noqa: F811
 
         client = Mistral(api_key=self._api_key)
 
