@@ -16,3 +16,7 @@ tests/fixtures/benchmark_results.csv
 ocr_output/
 config.hagiography.yaml.bak
 *.bak
+
+# Bake-off staging (binaries; keep scripts/results schemas)
+bakeoff/samples/
+bakeoff/work/

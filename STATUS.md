@@ -168,3 +168,12 @@ marker/surya2/tesseract/mathpix/google_doc_ai/trocr → **True**; grobid → Fal
 | Audio transcription | 1 | faster-whisper CPU transcription |
 | Handwriting + real fixtures + hardening | 2 | TrOCR engine, 8 real test files, XML entity bomb protection |
 | macOS symlink + ebook-convert fix | 2 | Last platform bugs resolved |
+
+## P0 bake-off (2026-10-07)
+
+- Corpus staged under Academic Research `data/jstor_md/bakeoff/samples/` (PDF/EPUB/DOCX/TIFF/PNG/JPG).
+- Harness in `bakeoff/`; docs: `docs/API-KEYS.md`, `docs/AI-HARNESS.md`.
+- OpenCode MCP env: Mathpix + Gemini + Marker venv **only** (no missing Anthropic `{file:}` refs).
+- `handbook_pe` reserved; PE sample deferred.
+- Updated: 2026-10-07 12:34 EDT
+

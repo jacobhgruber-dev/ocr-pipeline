@@ -80,6 +80,73 @@ whole-book VLM. Prefer Marker `--disable_ocr`, profile `jstor_fotc`, and
 Hagiography / image-only Latin: `--config config.hagiography.yaml` (VLM on).
 
 
+
+## API keys (required vs optional)
+
+| Key | Need it? | Purpose |
+|---|---|---|
+| **Gemini** (`GEMINI_API_KEY`) | Recommended when VLM is on | Default VLM merge / selective repair |
+| **Mathpix** (`MATHPIX_APP_ID` + `MATHPIX_APP_KEY`) | Optional | Equations / STEM |
+| **Anthropic** (`ANTHROPIC_API_KEY`) | Optional | Claude VLM fallback |
+| Marker venv path | Local install | `OCR_PIPELINE_MARKER_VENV` |
+
+Store Mac secrets as one-line files under `~/.secrets/` (mode `600`), or export the same names as env vars.
+
+**OpenCode MCP — working env (do not invent missing files):**
+
+```json
+"environment": {
+  "MATHPIX_APP_ID": "{file:~/.secrets/mathpix-app-id}",
+  "MATHPIX_APP_KEY": "{file:~/.secrets/mathpix-app-key}",
+  "GEMINI_API_KEY": "{file:~/.secrets/gemini-api-key}",
+  "OCR_PIPELINE_MARKER_VENV": "/Users/jacobgruber/Projects/ocr-pipeline/.marker-venv"
+}
+```
+
+Never add `"ANTHROPIC_API_KEY": "{file:~/.secrets/anthropic-api-key}"` unless that file **already exists** — a missing `{file:}` path breaks desktop OpenCode (`ConfigInvalidError`). Full guide: [`docs/API-KEYS.md`](docs/API-KEYS.md).
+
+## When to use Marker vs VLM
+
+| Situation | Path |
+|---|---|
+| Born-digital / JSTOR PDF with a real text layer (`pdffonts` shows Type 1/TrueType; `pdftotext` has substance) | **Marker** `--disable_ocr` (or profile `jstor_fotc`, `vlm_enabled: false`) |
+| EPUB / DOCX / HTML / TeX | **Native extract** — skip OCR entirely |
+| Image-only scan, dirty OCR layer, handwriting | Multi-engine OCR + **VLM merge** |
+| Mostly good book with a few bad pages | Marker/text-layer first, then **selective** `ocr_page` / VLM on failures only |
+
+Default config ships with **`vlm_enabled: false`**. Turn VLM on for hard scans (`config.hagiography.yaml`) or explicit CLI/MCP flags — not for every JSTOR PDF.
+
+## Research-grade QA gates
+
+Before indexing markdown into a research DB:
+
+1. **Page map** — printed `[p. N]` (not raw PDF index alone).
+2. **Footnotes / endnotes** — anchors + bodies; no orphan placeholders.
+3. **Italics / emphasis** — titles and foreign lemmas not flattened.
+4. **Reflow** — mid-sentence wraps joined; verse/lists kept.
+5. **Garbage rate** — glyph noise (`tha~`-class) below threshold or flagged for selective repair.
+6. **Cleanup** — delete `renders/*.png` and other page images after the run.
+
+Fail closed: leave the volume PDF-only until gates pass.
+
+## Paths (this workspace)
+
+| Role | Path |
+|---|---|
+| Repo | `/Users/jacobgruber/Projects/ocr-pipeline` |
+| JSTOR MD staging / queue | `…/Academic Research/data/jstor_md/` |
+| Bake-off samples | `…/Academic Research/data/jstor_md/bakeoff/samples/` (binaries); `ocr-pipeline/bakeoff/` (scripts + results) |
+| Drive JSTOR finals | Formal Drive `JSTOR/<Press> Books/Books/` (canonical PDFs) |
+
+## Profiles
+
+Built-in: `general`, `academic`, `mathematical`, `legal`, `technical`, `books`, `grok-value`, `grok-quality`.  
+User YAML: `jstor_fotc`, `doml54`, `latin_martyrology`, `spanish_devotional`.  
+**Planned:** `handbook_pe` — PE / electrical handbooks & manuals (tables, equations, callouts, numbered procedures). *Slot reserved; ships after bake-off sample + evidence.*
+
+Agent / OpenCode rules: [`docs/AI-HARNESS.md`](docs/AI-HARNESS.md).
+
+
 ## Discovering What's Available
 
 Before configuring, explore what the pipeline offers:
@@ -401,6 +468,7 @@ All API keys and settings can be set via environment variables (which take prece
 ```bash
 export MATHPIX_APP_ID="your_id"
 export MATHPIX_APP_KEY="your_key"
+# optional — only if you have a key (never invent OpenCode {file:} for a missing path)
 export ANTHROPIC_API_KEY="sk-ant-..."
 export GEMINI_API_KEY="AIza..."
 export GOOGLE_CLOUD_PROJECT="your-project-id"

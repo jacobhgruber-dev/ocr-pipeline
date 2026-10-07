@@ -47,7 +47,7 @@ ocr_document(…, engines="marker,mathpix", vlm_enabled=true,
 ```
 
 Citation-critical repair pages: `vlm_model="claude-sonnet-5-5"` (needs
-`ANTHROPIC_API_KEY` via `~/.secrets/anthropic-api-key`).
+Anthropic only if already authenticated — **never** a missing `{file:~/.secrets/anthropic-api-key}` in OpenCode).
 
 ## Selective repair (after QA fail)
 

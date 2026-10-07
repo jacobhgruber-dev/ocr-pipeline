@@ -1,0 +1,6 @@
+{"sample_id": "S11_responsory", "engine": "tesseract", "format": "image", "md_chars": 2486, "md_words": 602, "elapsed_s": 10, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:46-0400"}
+{"sample_id": "S11b_god_come_to_my_assistance", "engine": "tesseract", "format": "image", "md_chars": 2421, "md_words": 502, "elapsed_s": 2, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:48-0400"}
+{"sample_id": "S11c_veni_creator_spiritus", "engine": "tesseract", "format": "image", "md_chars": 1199, "md_words": 318, "elapsed_s": 1, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:49-0400"}
+{"sample_id": "S11d_obr2_doc_scan", "engine": "tesseract", "format": "image", "md_chars": 0, "md_words": 0, "elapsed_s": 0, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:49-0400"}
+{"sample_id": "S11e_parishes_pittsburgh_2026", "engine": "tesseract", "format": "image", "md_chars": 0, "md_words": 0, "elapsed_s": 0, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:50-0400"}
+{"sample_id": "S11f_2012_photo", "engine": "tesseract", "format": "image", "md_chars": 194, "md_words": 38, "elapsed_s": 0, "route": "image_tesseract_smoke", "phase": "P0_image", "ts": "2026-10-07T12:32:50-0400"}

@@ -10,9 +10,9 @@ Research-backed refresh (audit → implement → GitHub). No mass engine rewrite
 
 ## What changed
 
-1. OpenCode MCP: `OCR_PIPELINE_MARKER_VENV` + `ANTHROPIC_API_KEY={file:~/.secrets/anthropic-api-key}`
+1. OpenCode MCP: `OCR_PIPELINE_MARKER_VENV` + Mathpix + Gemini file refs only (**do not** add `ANTHROPIC_API_KEY={file:~/.secrets/anthropic-api-key}` — that path does not exist and breaks desktop OpenCode with ConfigInvalidError). Anthropic stays on existing auth if/when used.
 2. `vlm_enabled` default **False**
-3. Models: `gemini-3.8-flash` / `claude-sonnet-5-5`
+3. Models: `gemini-3.8-flash` / `claude-sonnet-5-5` (Claude only when Anthropic auth is already available)
 4. Config split: hagiography / jstor / default
 5. `jstor_fotc` + `docs/JSTOR-ROUTING.md`
 6. Project-root profiles load
@@ -28,7 +28,6 @@ Research-backed refresh (audit → implement → GitHub). No mass engine rewrite
     "MATHPIX_APP_ID": "{file:~/.secrets/mathpix-app-id}",
     "MATHPIX_APP_KEY": "{file:~/.secrets/mathpix-app-key}",
     "GEMINI_API_KEY": "{file:~/.secrets/gemini-api-key}",
-    "ANTHROPIC_API_KEY": "{file:~/.secrets/anthropic-api-key}",
     "OCR_PIPELINE_MARKER_VENV": "/Users/jacobgruber/Projects/ocr-pipeline/.marker-venv"
   }
 }
@@ -36,10 +35,7 @@ Research-backed refresh (audit → implement → GitHub). No mass engine rewrite
 
 ## Manual
 
-```bash
-chmod 600 ~/.secrets/anthropic-api-key  # after creating one-line key file
-# Restart OpenCode
-```
+Restart OpenCode after MCP env changes. Do **not** invent `~/.secrets/anthropic-api-key` for OpenCode — missing `{file:…}` refs invalidate the whole config.
 
 ## Intentionally NOT changed
 

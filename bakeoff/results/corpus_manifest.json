@@ -1,0 +1,73 @@
+{
+  "phase": "P0",
+  "created": "2026-10-07T12:31:00-0400",
+  "updated": "2026-10-07T12:32:57-0400",
+  "pe_handbook": "deferred",
+  "ar_samples_dir": "/Users/jacobgruber/Projects/Academic Research/data/jstor_md/bakeoff/samples",
+  "staged_files": [
+    "S01_fotc96_chrysostom_repentance.pdf",
+    "S02_sbl_baur_christ_party.pdf",
+    "S07_haile_emip_catalogue1.pdf",
+    "S08_fotc130_ephraem_hymns.pdf",
+    "S10_schlueter_sklaverei_de.pdf",
+    "S11_responsory.tif",
+    "S11b_god_come_to_my_assistance.tif",
+    "S11c_veni_creator_spiritus.tif",
+    "S11d_obr2_doc_scan.tiff",
+    "S11e_parishes_pittsburgh_2026.png",
+    "S11f_2012_photo.jpg",
+    "S12_burrus_seducing_augustine.pdf",
+    "S13_abbey_psalms_canticles.epub",
+    "S13b_everyday_loth.epub",
+    "S14_evening_prayer_booklet.docx",
+    "S14b_archangel_gabriel.docx"
+  ],
+  "counts": {
+    "pdf": 6,
+    "epub": 2,
+    "docx": 2,
+    "tif_tiff": 4,
+    "png": 1,
+    "jpg": 1
+  },
+  "gaps": [
+    "PE handbook",
+    "HTML article",
+    "TeX source",
+    "legacy DJVU",
+    "WEBP/HEIC staged optional (not yet)",
+    "full VLM bake-off"
+  ],
+  "image_path_notes": {
+    "claimed_in_mcp": [
+      "png",
+      "jpg",
+      "jpeg",
+      "tiff",
+      "webp",
+      "bmp",
+      "heic"
+    ],
+    "sources_registry": [
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".tiff",
+      ".tif",
+      ".webp",
+      ".heic",
+      ".heics"
+    ],
+    "p0_staged": [
+      "tif",
+      "tiff",
+      "png",
+      "jpg"
+    ],
+    "p0_not_staged": [
+      "webp",
+      "heic"
+    ],
+    "p0_test": "tesseract smoke only \u2014 not full ocr-pipeline ImageSource+VLM yet"
+  }
+}

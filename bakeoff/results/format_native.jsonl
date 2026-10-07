@@ -1,0 +1,4 @@
+{"sample_id": "S14_evening_prayer_booklet", "format": "docx", "engine": "python-docx", "md_chars": 9939, "md_words": 1794, "elapsed_s": 0.02, "route": "format_native_no_ocr", "phase": "P0_native", "ts": "2026-10-07T12:33:28-0400"}
+{"sample_id": "S14b_archangel_gabriel", "format": "docx", "engine": "python-docx", "md_chars": 15815, "md_words": 2726, "elapsed_s": 0.01, "route": "format_native_no_ocr", "phase": "P0_native", "ts": "2026-10-07T12:33:28-0400"}
+{"sample_id": "S13_abbey_psalms_canticles", "format": "epub", "engine": "zip_html_strip", "md_chars": 82477, "md_words": 12732, "elapsed_s": 0.01, "route": "format_native_no_ocr", "phase": "P0_native", "ts": "2026-10-07T12:33:29-0400"}
+{"sample_id": "S13b_everyday_loth", "format": "epub", "engine": "zip_html_strip", "md_chars": 196902, "md_words": 34309, "elapsed_s": 0.01, "route": "format_native_no_ocr", "phase": "P0_native", "ts": "2026-10-07T12:33:29-0400"}

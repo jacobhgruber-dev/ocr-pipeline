@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Bake-off harness (`bakeoff/`) with P0 smokes: pdftotext/pdffonts, Marker `--disable_ocr` slices, native EPUB/DOCX extract, tesseract image smoke.
+- Docs: `docs/API-KEYS.md`, `docs/AI-HARNESS.md` — OpenCode MCP env must not reference missing `{file:}` secrets; working set is Mathpix + Gemini + Marker venv.
+- README sections: API keys, Marker vs VLM, QA gates, workspace paths, `handbook_pe` reserved slot.
+- Errata on `docs/CONFIG-APPLIED-2026-10-07.md` / `docs/AUDIT-2026-10-07.md`: never add absent Anthropic secrets file to OpenCode.
+
+### Notes
+- PE handbook sample deferred; WEBP/HEIC optional (not staged in P0).
+- Image path: claimed PNG/JPG/TIFF/WEBP/HEIC; P0 validated TIFF/PNG/JPG via tesseract smoke only (not full VLM ImageSource yet).
+
+
 All notable changes to the OCR Pipeline will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
