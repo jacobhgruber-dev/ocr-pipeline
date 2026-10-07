@@ -478,8 +478,8 @@ def merge_with_vlm(
     page_index: int,
     pdf_identifier: str,
     system_prompt: str = "",
-    model: str = "gemini-2.5-flash",
-    fallback_model: str = "claude-sonnet-5",
+    model: str = "gemini-3.8-flash",
+    fallback_model: str = "claude-sonnet-5-5",
     max_tokens: int = 4096,
     timeout_sec: float = 120.0,
 ) -> tuple[str, str, str, float]:
@@ -497,9 +497,9 @@ def merge_with_vlm(
         pdf_identifier: Short identifier for the source PDF.
         system_prompt: VLM system prompt. If empty, uses
                        :data:`DEFAULT_SYSTEM_PROMPT`.
-        model: VLM model ID. Default: ``"gemini-2.5-flash"``.
+        model: VLM model ID. Default: ``"gemini-3.8-flash"``.
         fallback_model: Model to use if primary model output is low quality.
-                        Default: ``"claude-sonnet-5"``.
+                        Default: ``"claude-sonnet-5-5"``.
         max_tokens: Max output tokens.
         timeout_sec: Timeout for the API call.
 

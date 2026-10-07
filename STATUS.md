@@ -1,4 +1,6 @@
-# OCR Pipeline — Project Status
+# Status
+
+> **2026-10-07 config refresh (0.3.1):** VLM off by default; `jstor_fotc` profile; models → `gemini-3.8-flash` / `claude-sonnet-5-5`; hagiography config isolated. See `docs/JSTOR-ROUTING.md` and `CHANGELOG.md`. Engines unchanged.
 
 Last updated: 2026-07-31
 

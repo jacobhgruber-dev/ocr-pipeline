@@ -140,7 +140,7 @@ def _load_config(
             cfg.marker_venv = str(Path(sys.executable).resolve().parent.parent)
 
     _default_engines = "marker"
-    _default_vlm_model = "gemini-2.5-flash"
+    _default_vlm_model = "gemini-3.8-flash"
     _default_languages = "en"
     if profile_name:
         profile = get_profile(profile_name)
@@ -212,8 +212,8 @@ async def ocr_document(
     file_path: str,
     output_dir: str | None = None,
     engines: str = "marker",
-    vlm_model: str = "gemini-2.5-flash",
-    vlm_enabled: bool = True,
+    vlm_model: str = "gemini-3.8-flash",
+    vlm_enabled: bool = False,
     languages: str = "en",
     test_mode: bool = False,
     profile_name: str = "",
@@ -233,7 +233,7 @@ async def ocr_document(
         output_dir: Directory for output (default: ./ocr_output/).
         engines: Comma-separated engine names (marker, tesseract, mathpix, surya2, google_doc_ai, trocr).
         vlm_model: VLM model for merge.
-        vlm_enabled: Whether to use VLM merge.
+        vlm_enabled: Whether to use VLM merge (default False; set True for image-only / hard scans).
         languages: Comma-separated language codes.
         test_mode: Process only first 3 pages.
         profile_name: Document profile (auto-fills engines, model, languages).
@@ -291,8 +291,8 @@ async def ocr_pdf(
     pdf_path: str,
     output_dir: str | None = None,
     engines: str = "marker",
-    vlm_model: str = "gemini-2.5-flash",
-    vlm_enabled: bool = True,
+    vlm_model: str = "gemini-3.8-flash",
+    vlm_enabled: bool = False,
     languages: str = "en",
     test_mode: bool = False,
     profile_name: str = "",
@@ -561,9 +561,10 @@ async def ocr_status() -> dict[str, Any]:
         "engines": statuses,
         "profiles_available": list_profiles(),
         "vlm_models_available": [
+            "gemini-3.8-flash",
+            "gemini-3.5-flash-lite",
             "gemini-2.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-pro",
+            "claude-sonnet-5-5",
             "claude-haiku-4-5",
             "claude-sonnet-5",
             "grok-4.5",

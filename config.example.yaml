@@ -1,6 +1,12 @@
 # OCR Pipeline Configuration
 # Copy this file to config.yaml and fill in your API keys.
 #
+# Local layout after 2026-10-07 refresh:
+#   config.yaml              — default (VLM off; safe for JSTOR text-layer)
+#   config.jstor.yaml        — JSTOR / FOTC paths + jstor_fotc profile
+#   config.hagiography.yaml  — Latin hagiography always-VLM (prior default)
+#   docs/JSTOR-ROUTING.md    — when to use Marker --disable_ocr vs full VLM
+#
 # Every field can also be set via environment variable (OVERRIDES this file):
 #   MATHPIX_APP_ID
 #   MATHPIX_APP_KEY
@@ -59,25 +65,28 @@ engines:
 # output directly.
 
 vlm:
-  enabled: true
+  # Default false in project config.yaml (2026-10-07). Keep true for image-only
+  # scans / hagiography (see config.hagiography.yaml). For JSTOR text-layer
+  # books ALWAYS leave false unless doing selective page repair.
+  enabled: false
 
   # Model to use for merging. Cheapest option shown first.
-  model: "gemini-2.5-flash"
-  # Alternative models:
-  #   gemini-2.0-flash-001         - cheaper, lower quality
-  #   gemini-2.5-pro               - higher quality, higher cost
-  #   gemini-1.5-pro               - larger context window
-  #   claude-haiku-4-5              - fast, cheap Claude
-  #   claude-sonnet-5             - higher quality Claude
-  #   claude-3.5-haiku              - older fast Claude
-  #   claude-3.5-sonnet             - older quality Claude
-  # Get your Gemini API key at https://aistudio.google.com (free tier: 1500 req/day).
+  model: "gemini-3.8-flash"
+  # Alternative models (2026-10):
+  #   gemini-3.5-flash-lite       - cheaper high-volume
+  #   gemini-2.5-flash            - legacy (still served for prior users)
+  #   claude-sonnet-5-5           - citation-critical academic QA
+  #   claude-haiku-4-5            - fast cheap Claude
+  #   claude-sonnet-5             - legacy Claude
+  #   grok-4.3 / grok-4.5         - CJK / premium math
+  # Gemini key: https://aistudio.google.com
 
   # Fallback model if the primary model fails.
-  fallback_model: "claude-sonnet-5"
+  fallback_model: "claude-sonnet-5-5"
 
   # Skip VLM when all engines produce near-identical output (0.0–1.0).
-  # 0.97 = 97% similarity threshold. Set to 1.0 to always use VLM.
+  # 0.97 = 97% similarity threshold. Set to 1.0 to always use VLM
+  # (hagiography config uses 1.0).
   agreement_threshold: 0.97
 
   # Maximum tokens for the VLM response.
@@ -145,9 +154,11 @@ postprocess:
   #   stray_control_chars  — strip non-printable control characters
   steps:
     - soft_hyphens
+    - dehyphenate
     - em_dash_breaks
     - whitespace_normalize
-    - ligature_expand
+    # ligature_expand expands ﬁ/ﬂ AND æ/œ — omit for Latin/Greek scholarly text
+    # - ligature_expand
     - stray_control_chars
 
 # ---------------------------------------------------------------------------

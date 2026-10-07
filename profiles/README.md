@@ -23,3 +23,11 @@ suggested_languages:
 suggested_model: gemini-2.5-flash
 best_model: gemini-2.5-flash
 ```
+
+## JSTOR / FOTC
+
+- `jstor_fotc.yaml` — JSTOR merged text-layer scholarly books (CUA Fathers of
+  the Church). Use with **VLM off** by default; see `docs/JSTOR-ROUTING.md`.
+- Hagiography always-VLM settings are in `../config.hagiography.yaml`, not in
+  the default `../config.yaml`.
+

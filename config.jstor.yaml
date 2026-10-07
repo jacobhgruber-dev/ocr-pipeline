@@ -1,0 +1,52 @@
+# OCR Pipeline — JSTOR / FOTC text-layer config
+# Use: uv run ocr-pipeline --config config.jstor.yaml ...
+# Or MCP: profile_name="jstor_fotc", engines="marker", vlm_enabled=false
+#
+# Do NOT force whole-book VLM on good JSTOR text layers.
+# Selective page VLM only after QA flags garbage / unanchored notes.
+
+input_dir: "/Users/jacobgruber/Projects/Academic Research/data/jstor_md/staging/"
+output_dir: "/Users/jacobgruber/Projects/Academic Research/data/jstor_md/ocr_output/"
+
+engines:
+  - marker
+
+vlm:
+  enabled: false
+  model: "gemini-3.8-flash"
+  fallback_model: "claude-sonnet-5-5"
+  agreement_threshold: 0.97
+  max_tokens: 8192
+  vlm_cost_per_call: 0.00015
+  system_prompt: ""
+
+marker_venv: "/Users/jacobgruber/Projects/ocr-pipeline/.marker-venv"
+
+render_dpi: 150
+max_workers: 1
+marker_concurrency: 1
+file_concurrency: 1
+
+profile: jstor_fotc
+languages:
+  - en
+  - la
+  - el
+output_formats:
+  - markdown
+
+postprocess:
+  enabled: true
+  steps:
+    - soft_hyphens
+    - dehyphenate
+    - em_dash_breaks
+    - whitespace_normalize
+    - stray_control_chars
+
+test_mode: false
+budget_cap_usd: null
+
+google_cloud_project: "general-opencode"
+google_processor_id: "8081d1d423002a96"
+grobid_url: "http://localhost:8070"

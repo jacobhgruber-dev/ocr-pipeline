@@ -71,6 +71,15 @@ That's it. The pipeline discovers all matching documents under `input_dir`, proc
 
 ---
 
+
+## JSTOR / scholarly text-layer books
+
+Born-digital JSTOR merges (e.g. CUA *Fathers of the Church*) should **not** force
+whole-book VLM. Prefer Marker `--disable_ocr`, profile `jstor_fotc`, and
+`vlm_enabled=false`. See [`docs/JSTOR-ROUTING.md`](docs/JSTOR-ROUTING.md).
+Hagiography / image-only Latin: `--config config.hagiography.yaml` (VLM on).
+
+
 ## Discovering What's Available
 
 Before configuring, explore what the pipeline offers:
@@ -129,7 +138,7 @@ Add any languages your document uses: `--langs en,fr,de`
 
 **Best quality** (adds Claude for critical profiles):
 ```bash
-uv run ocr-pipeline --profile academic --vlm-model claude-sonnet-5 \
+uv run ocr-pipeline --profile academic --vlm-model claude-sonnet-5-5 \
   --input ./docs/ --output ./out/
 ```
 Profiles marked "best with Claude" above benefit from it for precision on structured text.
@@ -295,7 +304,7 @@ Usage: ocr-pipeline [OPTIONS]
   --input PATH           PDF input directory
   --output PATH          Output directory
   --engines LIST         Comma-separated: marker,tesseract,mathpix,surya2,google_doc_ai
-  --vlm-model MODEL      VLM model for merge (gemini-2.5-flash, claude-sonnet-5, etc.)
+  --vlm-model MODEL      VLM model for merge (gemini-3.8-flash, claude-sonnet-5-5, etc.)
   --no-vlm               Disable VLM merge
   --vlm-agreement FLOAT  Agreement threshold to skip VLM (default: 0.97)
   --budget FLOAT         Budget cap in USD
@@ -335,7 +344,7 @@ config = PipelineConfig(
     input_dir=Path("./my_pdfs/"),
     output_dir=Path("./output/"),
     engines=["marker", "mathpix"],
-    vlm_model="claude-sonnet-5",
+    vlm_model="claude-sonnet-5-5",
     budget_cap_usd=50.0,
     postprocess_enabled=True,
 )
@@ -364,8 +373,8 @@ print(pipeline.stats)
 | `checkpoint_dir` | path | `output_dir/.checkpoint/` | Checkpoint storage for resume |
 | `engines` | list[str] | `["marker"]` | OCR engines to run |
 | `vlm.enabled` | bool | `true` | Enable VLM merge step |
-| `vlm.model` | str | `gemini-2.5-flash` | VLM model ID |
-| `vlm.fallback_model` | str | `claude-sonnet-5` | Fallback if primary fails |
+| `vlm.model` | str | `gemini-3.8-flash` | VLM model ID |
+| `vlm.fallback_model` | str | `claude-sonnet-5-5` | Fallback if primary fails |
 | `vlm.agreement_threshold` | float | `0.97` | Skip VLM when engines agree |
 | `vlm.max_tokens` | int | `8192` | Max tokens for VLM response |
 | `vlm.system_prompt` | str | `""` | Custom prompt (empty = built-in) |
@@ -401,13 +410,15 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 
 | Model | Provider | Cost (input/output per 1M tokens) | Cost/page | Best for |
 |---|---|---|---|---|---|
-| `gemini-2.5-flash` | Google | $0.15 / $0.60 | ~$0.001 | Default — best for Latin, Cyrillic, Greek, LaTeX math, books, legal |
-| `grok-4.3` | xAI | $1.25 / $2.50 | ~$0.006 | **CJK, mathematical, technical, multilingual** — only model that handles Chinese correctly |
-| `grok-4.5` | xAI | ~$2.50 / $5.00 | ~$0.013 | Academic, mathematical (premium) — 80% MMMU-Pro benchmark |
-| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | ~$0.008 | General (fallback), good quality at low cost |
-| `gemini-2.0-flash` | Google | $0.10 / $0.40 | ~$0.0005 | Cheapest option |
+| `gemini-3.8-flash` | Google | $0.75 / $3.75* | ~$0.004 | **Default (2026-10)** — current Flash for Latin/Cyrillic/Greek; *intro pricing thru 2026-12-31 |
+| `gemini-3.5-flash-lite` | Google | $0.25 / $1.50 | ~$0.001 | Cheaper high-volume alternative |
+| `gemini-2.5-flash` | Google | $0.15 / $0.60 | ~$0.001 | Legacy — still served for prior users; prefer 3.8 for new work |
+| `grok-4.3` | xAI | $1.25 / $2.50 | ~$0.006 | **CJK, mathematical, technical, multilingual** |
+| `grok-4.5` | xAI | ~$2.50 / $5.00 | ~$0.013 | Academic / premium math |
+| `claude-haiku-4-5` | Anthropic | $1.00 / $5.00 | ~$0.008 | Fast cheap Claude fallback |
+| `claude-sonnet-5-5` | Anthropic | $2.00 / $10.00 | ~$0.02 | Citation-critical academic QA / selective repair |
 | `gemini-2.5-pro` | Google | $1.25 / $10.00 | ~$0.003 | Higher quality, larger context |
-| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | ~$0.029 | Legal, complex documents — highest quality, very slow (214s E2E) |
+| `claude-sonnet-5` | Anthropic | $3.00 / $15.00 | ~$0.029 | Legacy Sonnet 5 — prefer `claude-sonnet-5-5` |
 
 > **Script awareness:** Testing across Latin, Cyrillic, Greek, CJK, and French
 > diacritics shows that model quality is **script-dependent**. Gemini 2.5 Flash
@@ -424,7 +435,7 @@ export GOOGLE_CLOUD_PROJECT="your-project-id"
 
 | Script | Model to Use | Notes |
 |---|---|---|
-| Latin, Cyrillic, Greek | gemini-2.5-flash | Perfect — free tier available |
+| Latin, Cyrillic, Greek | gemini-3.8-flash | Default; `gemini-2.5-flash` still OK for prior users |
 | Chinese, Japanese, Korean | grok-4.3 | Gemini produces garbled or awkward output. Grok is the only working option. Claude Haiku is a fallback |
 | Arabic, Persian, Urdu | Google Doc AI only | Marker/Surya don't support RTL; needs Google Cloud setup |
 

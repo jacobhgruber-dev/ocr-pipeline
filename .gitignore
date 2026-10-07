@@ -14,3 +14,5 @@ build/
 tests/fixtures/benchmark_results.csv
 .playwright-mcp/
 ocr_output/
+config.hagiography.yaml.bak
+*.bak

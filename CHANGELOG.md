@@ -5,6 +5,24 @@ All notable changes to the OCR Pipeline will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-10-07
+
+### Changed
+- **Defaults:** `vlm_enabled=false` (CLI/MCP/PipelineConfig). Do not force whole-book VLM on text-layer PDFs.
+- **Models:** primary `gemini-3.8-flash`, fallback `claude-sonnet-5-5`. Keep `gemini-2.5-flash` / `claude-sonnet-5` as legacy options.
+- **Config split:** default `config.yaml` is VLM-off; Latin hagiography always-VLM moved to `config.hagiography.yaml`; JSTOR paths in `config.jstor.yaml`.
+- **Profile:** `profiles/jstor_fotc.yaml` for JSTOR / CUA Fathers of the Church scholarly markdown.
+- **Postprocess default steps:** omit `ligature_expand` in new configs so scholarly æ/œ survive.
+- **Profiles loader:** also loads project-root `profiles/` (MCP-safe).
+
+### Docs
+- `docs/JSTOR-ROUTING.md` — Marker `--disable_ocr` → postprocess → QA; selective VLM only on fail pages.
+- `docs/AUDIT-2026-10-07.md` — audit + applied section.
+- README model tables and JSTOR pointer updated.
+
+### Not changed
+- Engine implementations (Marker/Surya/Mathpix/etc.), merger core, checkpoint/budget machinery.
+
 ## [Unreleased] — 2026-07-11
 
 ### Fixed (template / MCP usability — clone-and-run)

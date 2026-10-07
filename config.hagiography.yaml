@@ -1,0 +1,35 @@
+# Isolated 2026-10-07 from former config.yaml (Latin hagiography always-VLM).
+# Use: uv run ocr-pipeline --config config.hagiography.yaml …
+# Default MCP/CLI config is now config.yaml (VLM off). See docs/JSTOR-ROUTING.md.
+
+input_dir: "/Users/jacobgruber/Projects/Academic Research/data/hagiography_sources/ocr_queue/"
+output_dir: "/Users/jacobgruber/Projects/Academic Research/data/hagiography_sources/ocr_output/"
+
+vlm:
+  enabled: true
+  model: "gemini-2.5-flash"
+  fallback_model: "gemini-2.5-flash"
+  agreement_threshold: 1.0
+  max_tokens: 8192
+  vlm_cost_per_call: 0.0
+  system_prompt: |
+    You are transcribing a Latin hagiographical text. PRESERVE WITH MAXIMUM FIDELITY: ALL italics in *asterisks*, ALL bold in **double asterisks**, page numbers as [p. NNN] at top, footnotes separated with ---, all BHL/Anal.Boll./Acta SS. citations, ligatures and diacritics, calendar notation (KAL., ID., NON.). Illegible text marked as [?]. NEVER summarize or omit. Output ONLY formatted markdown.
+
+marker_venv: ".marker-venv"
+
+render_dpi: 150
+max_workers: 1
+content_type: "theological"
+languages:
+  - la
+output_formats:
+  - markdown
+test_mode: false
+
+# Google Document AI — free tier: 500 pages/month
+# Project ID from https://console.cloud.google.com
+google_cloud_project: "general-opencode"
+google_processor_id: "8081d1d423002a96"
+
+# GROBID metadata extraction
+grobid_url: "http://localhost:8070"

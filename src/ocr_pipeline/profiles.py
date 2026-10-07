@@ -52,12 +52,12 @@ class DocumentProfile:
     @property
     def suggested_model(self) -> str:
         """DEPRECATED: Use model_routing instead. Returns latin model as fallback."""
-        return self.model_routing.get("latin", "gemini-2.5-flash")
+        return self.model_routing.get("latin", "gemini-3.8-flash")
 
     @property
     def best_model(self) -> str:
         """DEPRECATED: Returns the model_routing value for latin."""
-        return self.model_routing.get("latin", "gemini-2.5-flash")
+        return self.model_routing.get("latin", "gemini-3.8-flash")
 
 
 # ── Profile prompt definitions ─────────────────────────────────────────────
@@ -601,11 +601,11 @@ PROFILES: dict[str, DocumentProfile] = {
         optional_engines=["surya2", "google_doc_ai", "trocr", "mistral"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
-            "cyrillic": "gemini-2.5-flash",
+            "latin": "gemini-3.8-flash",
+            "cyrillic": "gemini-3.8-flash",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "academic": DocumentProfile(
@@ -621,11 +621,11 @@ PROFILES: dict[str, DocumentProfile] = {
         optional_engines=["surya2", "tesseract", "grobid", "mistral"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
-            "cyrillic": "gemini-2.5-flash",
+            "latin": "gemini-3.8-flash",
+            "cyrillic": "gemini-3.8-flash",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "mathematical": DocumentProfile(
@@ -644,8 +644,8 @@ PROFILES: dict[str, DocumentProfile] = {
             "latin": "grok-4.3",
             "cyrillic": "grok-4.3",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "legal": DocumentProfile(
@@ -661,11 +661,11 @@ PROFILES: dict[str, DocumentProfile] = {
         optional_engines=["surya2", "tesseract", "google_doc_ai", "trocr"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
-            "cyrillic": "gemini-2.5-flash",
+            "latin": "gemini-3.8-flash",
+            "cyrillic": "gemini-3.8-flash",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "technical": DocumentProfile(
@@ -683,10 +683,10 @@ PROFILES: dict[str, DocumentProfile] = {
         suggested_languages=["en"],
         model_routing={
             "latin": "grok-4.3",
-            "cyrillic": "gemini-2.5-flash",
+            "cyrillic": "gemini-3.8-flash",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "books": DocumentProfile(
@@ -705,11 +705,11 @@ PROFILES: dict[str, DocumentProfile] = {
         optional_engines=["surya2", "mistral"],
         suggested_languages=["en"],
         model_routing={
-            "latin": "gemini-2.5-flash",
-            "cyrillic": "gemini-2.5-flash",
+            "latin": "gemini-3.8-flash",
+            "cyrillic": "gemini-3.8-flash",
             "cjk": "grok-4.3",
-            "arabic": "gemini-2.5-flash",
-            "greek": "gemini-2.5-flash",
+            "arabic": "gemini-3.8-flash",
+            "greek": "gemini-3.8-flash",
         },
     ),
     "grok-value": DocumentProfile(
@@ -801,9 +801,28 @@ def load_user_profiles(profiles_dir: Path) -> dict[str, DocumentProfile]:
 
 
 def _init_user_profiles() -> None:
-    """Load user profiles from ``./profiles/`` (relative to CWD)."""
+    """Load user profiles from ``./profiles/`` and project-root ``profiles/``.
+
+    CWD-relative load preserves prior behavior; project-root fallback ensures
+    MCP / ``uv run --directory`` always see custom YAMLs (e.g. ``jstor_fotc``)
+    even if the process CWD is elsewhere.
+    """
     global _USER_PROFILES
-    _USER_PROFILES = load_user_profiles(Path("profiles"))
+    loaded: dict[str, DocumentProfile] = {}
+    candidates: list[Path] = []
+    cwd_profiles = Path("profiles")
+    project_profiles = Path(__file__).resolve().parent.parent.parent / "profiles"
+    for cand in (cwd_profiles, project_profiles):
+        try:
+            resolved = cand.resolve()
+        except OSError:
+            resolved = cand
+        if resolved in candidates:
+            continue
+        candidates.append(resolved)
+    for d in candidates:
+        loaded.update(load_user_profiles(d))
+    _USER_PROFILES = loaded
 
 
 # ── Public API ──────────────────────────────────────────────────────────────

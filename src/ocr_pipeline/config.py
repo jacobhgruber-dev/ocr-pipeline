@@ -29,9 +29,9 @@ class PipelineConfig:
     # Valid: "google_doc_ai", "mathpix", "marker", "surya2", "tesseract"
 
     # -- VLM merge -----------------------------------------------------------
-    vlm_enabled: bool = True
-    vlm_model: str = "gemini-2.5-flash"
-    vlm_fallback_model: str = "claude-sonnet-5"
+    vlm_enabled: bool = False
+    vlm_model: str = "gemini-3.8-flash"
+    vlm_fallback_model: str = "claude-sonnet-5-5"
     vlm_system_prompt: str = ""  # empty = use built-in default
     xai_api_key: str = ""
     vlm_agreement_threshold: float = 0.97  # skip VLM when engines agree >= this
@@ -110,7 +110,7 @@ class PipelineConfig:
     mistral_table_format: str | None = None
     google_processor_id: str = ""  # Google Doc AI processor ID
     grobid_url: str = "http://localhost:8070"  # GROBID REST API URL
-    vlm_metadata_model: str = "gemini-2.5-flash"  # VLM model for metadata extraction
+    vlm_metadata_model: str = "gemini-3.8-flash"  # VLM model for metadata extraction
     include_metadata_per_page: bool = True
     """Prepend a metadata comment to each page file so standalone pages
     identify their document (title, author, language, page number)."""
@@ -313,9 +313,9 @@ class ConfigLoader:
             # Engine selection
             engines=_coerce_str_list(raw.get("engines", ["marker"])),
             # VLM
-            vlm_enabled=bool(raw.get("vlm_enabled", True)),
-            vlm_model=str(raw.get("vlm_model", "gemini-2.5-flash")),
-            vlm_fallback_model=str(raw.get("vlm_fallback_model", "claude-sonnet-5")),
+            vlm_enabled=bool(raw.get("vlm_enabled", False)),
+            vlm_model=str(raw.get("vlm_model", "gemini-3.8-flash")),
+            vlm_fallback_model=str(raw.get("vlm_fallback_model", "claude-sonnet-5-5")),
             vlm_system_prompt=str(raw.get("vlm_system_prompt", "")),
             vlm_agreement_threshold=float(raw.get("vlm_agreement_threshold", 0.97)),
             vlm_max_tokens=int(raw.get("vlm_max_tokens", 8192)),
@@ -379,7 +379,7 @@ class ConfigLoader:
             mistral_table_format=raw.get("mistral_table_format"),  # None passthrough
             google_processor_id=str(raw.get("google_processor_id", "")),
             grobid_url=str(raw.get("grobid_url", "http://localhost:8070")),
-            vlm_metadata_model=str(raw.get("vlm_metadata_model", "gemini-2.5-flash")),
+            vlm_metadata_model=str(raw.get("vlm_metadata_model", "gemini-3.8-flash")),
             include_metadata_per_page=bool(raw.get("include_metadata_per_page", True)),
             # Credentials
             mathpix_app_id=str(raw.get("mathpix_app_id", "")),

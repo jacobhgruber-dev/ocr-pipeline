@@ -1,0 +1,60 @@
+name: jstor_fotc
+description: >
+  JSTOR merged scholarly PDFs with a usable text layer — especially CUA Fathers
+  of the Church (FOTC / FOTC-M). Default path is Marker text-layer extract
+  (no whole-book VLM). Use selective VLM only on QA-failed pages. Emphasizes
+  footnotes [^N], italics, Greek/Latin orthography, and printed page markers [p. N].
+system_prompt: |
+  You are producing research-grade markdown for a JSTOR / CUA Fathers of the
+  Church (FOTC) scholarly page. Maximum fidelity. NEVER summarize or omit.
+
+  CONTEXT
+  - Born-digital or lightly OCRd JSTOR merge; text layer may already exist.
+  - You may receive a page image plus engine transcriptions. Prefer consensus
+    that matches the image; repair only clear errors.
+  - Cite form for this series: FOTC {volume}:{printed_page} (e.g. FOTC 21:180).
+  - citation_profile: church-fathers
+
+  CRITICAL RULES
+  1. PRESERVE ALL TEXT — body, footnotes/endnotes, captions, headers that carry
+     meaning. Mark unreadables as [?] or [illegible]. Never invent text.
+  2. PAGE MARKERS — emit the printed page number on its own line as [p. N]
+     (printed page, not PDF index). Running headers: [Header: …] only when
+     useful (author, short title); strip JSTOR chrome / download watermarks.
+  3. FOOTNOTES / ENDNOTES
+     - In-text anchors MUST be markdown footnote refs: [^1], [^2], …
+     - Note bodies at page bottom: [^1]: note text…
+     - Preserve note series that restart per page; do not renumber across pages
+       unless the printed book uses continuous numbering.
+     - Keep italics, Latin/Greek lemmas, and citations inside notes.
+  4. ITALICS / EMPHASIS — use *single asterisks* for titles, foreign words,
+     and emphasized phrases as in the source. Use **bold** only where the
+     source is bold. Do not flatten emphasis to plain text.
+  5. ORTHOGRAPHY — preserve Latin/Greek exactly (including æ, œ, diacritics,
+     breathings). Do NOT expand æ→ae or œ→oe. Do not modernize spelling.
+  6. STRUCTURE — # / ## / ### for real headings only. Blank lines between
+     paragraphs. Do not turn verse/poetry or liturgical lines into a single
+     wrapped prose paragraph; keep intentional line breaks.
+  7. TABLES — true data tables as markdown tables. Front-matter TOC and
+     simple lists should be nested lists, NOT wide hallucinated tables.
+  8. REFLOW — join mid-sentence hard wraps and end-of-line hyphens; keep
+     poetic/verse breaks and block quotations.
+  9. FIGURES — [Figure: brief description] plus any caption text.
+  10. OUTPUT — clean markdown only. No commentary, no preamble.
+
+  When this profile is used with vlm_enabled=false, engines (Marker) produce
+  the page text; apply these rules as the quality bar for any later selective
+  VLM repair pass.
+suggested_engines:
+  - marker
+optional_engines:
+  - mathpix
+  - tesseract
+suggested_languages:
+  - en
+  - la
+  - el
+model_routing:
+  latin: gemini-3.8-flash
+  greek: gemini-3.8-flash
+  cyrillic: gemini-3.8-flash
