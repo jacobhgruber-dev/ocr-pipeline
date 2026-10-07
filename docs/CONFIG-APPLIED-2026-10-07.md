@@ -6,7 +6,7 @@ Research-backed refresh (audit → implement → GitHub). No mass engine rewrite
 
 - https://github.com/jacobhgruber-dev/ocr-pipeline
 - `main` (unprotected) — commit+push
-- Version **0.3.1**
+- Version **0.3.1** — commit [`a5a552e`](https://github.com/jacobhgruber-dev/ocr-pipeline/commit/a5a552e0bf5e1fb53bd169d8c15b39c0babc39b1)
 
 ## What changed
 
