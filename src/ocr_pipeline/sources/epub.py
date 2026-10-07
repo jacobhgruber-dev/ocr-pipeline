@@ -21,12 +21,97 @@ from .base import DocumentSource
 logger = logging.getLogger(__name__)
 
 
+
+def _html_fragment_to_markdown(content: str) -> str:
+    """Convert an EPUB XHTML fragment to markdown, preserving structure.
+
+    Keeps headings, italics/emphasis, bold, lists, and paragraphs. Strips
+    scripts/styles/SVG covers. Falls back to plain text if parsing fails.
+    Never routes through Marker/OCR — EPUB is stylized HTML in a zip.
+    """
+    from lxml import html as lxml_html
+
+    try:
+        # lxml rejects unicode strings that include an XML encoding declaration
+        if isinstance(content, str) and content.lstrip().startswith("<?xml"):
+            root = lxml_html.fromstring(content.encode("utf-8"))
+        else:
+            root = lxml_html.fromstring(content)
+    except Exception:
+        return (content or "").strip()
+
+    for tag in root.xpath("//script|//style|//svg|//noscript"):
+        parent = tag.getparent()
+        if parent is not None:
+            parent.remove(tag)
+
+    bodies = root.xpath("//body")
+    node = bodies[0] if bodies else root
+    lines: list[str] = []
+
+    def _inline(el) -> str:
+        parts: list[str] = []
+        if el.text:
+            parts.append(el.text)
+        for child in el:
+            tag = (child.tag or "").lower() if isinstance(child.tag, str) else ""
+            inner = _inline(child)
+            if tag in {"em", "i", "cite", "dfn"}:
+                parts.append(f"*{inner}*" if inner else "")
+            elif tag in {"strong", "b"}:
+                parts.append(f"**{inner}**" if inner else "")
+            elif tag == "br":
+                parts.append("\n")
+            elif tag == "sup" and inner.strip():
+                parts.append(f"<sup>{inner}</sup>")
+            else:
+                parts.append(inner)
+            if child.tail:
+                parts.append(child.tail)
+        return "".join(parts)
+
+    def _walk(el) -> None:
+        tag = (el.tag or "").lower() if isinstance(el.tag, str) else ""
+        if tag in {"script", "style", "svg", "img", "meta", "link", "head"}:
+            return
+        if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            level = int(tag[1])
+            lines.append(f"{'#' * level} {_inline(el).strip()}")
+            lines.append("")
+            return
+        if tag == "p":
+            txt = _inline(el).strip()
+            if txt:
+                lines.append(txt)
+                lines.append("")
+            return
+        if tag == "li":
+            txt = _inline(el).strip()
+            if txt:
+                lines.append(f"- {txt}")
+            return
+        if tag in {"ul", "ol", "div", "section", "article", "main", "body", "blockquote", "html"}:
+            for child in el:
+                _walk(child)
+            return
+        for child in el:
+            _walk(child)
+
+    _walk(node)
+    md = "\n".join(lines)
+    while "\n\n\n" in md:
+        md = md.replace("\n\n\n", "\n\n")
+    if md.strip():
+        return md.strip()
+    return (node.text_content() or "").strip()
+
+
 class EpubSource(DocumentSource):
     """Document source for EPUB 2/3 ebooks.
 
-    Each "chapter" or spine item is treated as a logical page.  Text
-    extraction strips HTML tags and returns plain text.  DRM detection
-    checks for encryption.xml in the EPUB container.
+    Each spine item is a logical page. Native HTML→markdown extract preserves
+    headings, italics, bold, and lists — **never** Marker/OCR by default
+    (EPUB is stylized HTML in a zip). DRM detection checks encryption.xml.
     """
 
     has_native_metadata: bool = True
@@ -200,8 +285,11 @@ class EpubSource(DocumentSource):
     def extract_text(
         self, page_index: int, output_dir: Path, flags: int | None = None
     ) -> tuple[str, Path | None]:
-        from lxml import html as lxml_html
+        """Native EPUB chapter → markdown (never OCR / Marker).
 
+        EPUB is stylized HTML in a zip. Preserve headings, italics/emphasis,
+        bold, lists, and paragraphs. Research-grade default — not thin plain text.
+        """
         spine = self._load_spine()
         if page_index < 0 or page_index >= len(spine):
             raise RenderError(f"EPUB page index {page_index} out of range ({len(spine)} items)")
@@ -213,21 +301,14 @@ class EpubSource(DocumentSource):
             raise RenderError(f"EPUB item {item_id} not found in {self.path}")
 
         content = item.get_content()
-        # Decode content
         if isinstance(content, bytes):
             try:
                 content = content.decode("utf-8")
             except UnicodeDecodeError:
                 content = content.decode("latin-1")
 
-        # Strip HTML tags for plain text
-        try:
-            root = lxml_html.fromstring(content)
-            text = root.text_content() or ""
-        except Exception:
-            text = content or ""
+        text = _html_fragment_to_markdown(content)
 
-        # Save to output
         output_dir.mkdir(parents=True, exist_ok=True)
         out_path = output_dir / f"page_{page_index + 1:04d}_final.md"
         out_path.write_text(text, encoding="utf-8")

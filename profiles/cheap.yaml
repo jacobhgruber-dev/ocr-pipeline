@@ -1,0 +1,17 @@
+name: cheap
+description: >
+  Explicit hyper-cheap override — NOT the default. Marker or tesseract only,
+  VLM off, minimal engines. Use when a project opts into lower quality / cost.
+  Research-grade work should use academic / jstor_fotc / books instead.
+system_prompt: |
+  You are doing a fast, low-cost transcription. Prefer speed over perfection.
+  Still do not invent text. Mark illegible spans as [illegible].
+  Keep headings and basic paragraph breaks. Footnote fidelity is best-effort.
+suggested_engines:
+  - marker
+optional_engines:
+  - tesseract
+suggested_languages:
+  - en
+model_routing:
+  latin: gemini-3.8-flash

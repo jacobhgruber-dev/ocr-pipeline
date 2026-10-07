@@ -1,88 +1,93 @@
 # AI harness — OpenCode MCP / agent guide
 
-Machine-readable rules for agents (OpenCode, Grok Bot, Cloud Agents). Humans: start with [README](../README.md) and [API-KEYS](API-KEYS.md).
+Machine-readable rules for agents (OpenCode, Grok Bot, Cloud Agents). Humans: [README](../README.md), [API-KEYS](API-KEYS.md).
+
+## Default = research grade
+
+**Default quality bar is highest research grade** (footnotes/endnotes, italics, headings, lists, citation/frontmatter metadata, page maps, QA gates). Do not silently degrade quality to save money.
+
+Agents and MCP callers may **explicitly** opt into a hyper-cheap lower-quality run **per project** — never as an implied default.
+
+### Explicit cheap override
+
+| Mechanism | How |
+|---|---|
+| Profile | `profile_name="cheap"` (see `profiles/cheap.yaml`) |
+| MCP / CLI | `vlm_enabled=false` (already default for merge) + `engines="marker"` or `"tesseract"` + small `--budget` |
+| CLI | `--no-vlm --engines tesseract` or Marker-only on a slice |
+| Config | `config.jstor.yaml` style text-layer path for JSTOR |
+
+When using cheap mode, say so in logs/results (`quality_mode: cheap`). Research DB ingest still requires QA gates — cheap output usually stays PDF-archive only.
+
+## Cost-aware routing (suggestions, not locks)
+
+Profiles **suggest** engines/models; callers may always override. Do **not** hard-lock “model X is best.”
+
+| Situation | Preferred path | Typical $/time |
+|---|---|---|
+| EPUB / DOCX / HTML / TeX | **Native extract only** (rich markdown) | ~$0; seconds |
+| JSTOR / born-digital PDF with text layer | Marker `--disable_ocr` (or `jstor_fotc`) | ~$0 local; ~minutes/book |
+| Clean scan, need structure | Marker / Docling (CPU) before VLM | low local CPU time |
+| Dirty scan / handwriting / music OCR fail | Multi-engine + **selective** VLM | Gemini ~$0.001/page class; only failed pages |
+| Hyper-cheap project override | `cheap` profile / tesseract-only | lowest; expect quality loss |
+
+## Hard format rules
+
+1. **EPUB** = stylized HTML in a zip → **never** Marker/OCR by default. Use `EpubSource` HTML→markdown (headings, italics, bold, lists) + OPF metadata. Override only if the EPUB is image-only pages (rare; document why).
+2. **DOCX** → native run-level markdown (italics/bold/headings/lists) + metadata; not OCR unless render-only fallback is required.
+3. **Images / TIFF** → ImageSource OCR path; expect rotation/preprocess; VLM only if quality needs it.
 
 ## Success criteria
 
-1. Prefer **format-native extract** (EPUB/DOCX/HTML/TeX) over OCR.
-2. Prefer **Marker text-layer** (`--disable_ocr`) when `pdffonts` shows real fonts and `pdftotext` yields substantial text.
-3. Use **full multi-engine + VLM** only for image-only / dirty scans / QA-failed pages.
-4. Never invent missing secret `{file:…}` paths in OpenCode config.
-5. Wipe page PNGs / staging images after runs; keep MD + thin metrics only.
-6. Do not mark research-DB `qa_status: pass` without footnote/italics/reflow/page-map gates.
+1. Research-grade default; cheap only when explicitly requested.
+2. Format-native extract for EPUB/DOCX/HTML/TeX with **structure preserved** (not thin plain text).
+3. Marker text-layer when `pdffonts` shows real fonts.
+4. Never invent missing OpenCode `{file:…}` secret paths.
+5. Wipe page PNGs after runs.
+6. No `qa_status: pass` without gates.
 
 ## MCP tools (do not invent others)
 
-| Tool | Use |
-|---|---|
-| `ocr_detect` | Preview format / text-extractability before spending |
-| `ocr_formats` | Claimed extensions |
-| `ocr_profiles` | Built-in + user YAML profiles |
-| `ocr_document` / `ocr_pdf` | Batch/file convert |
-| `ocr_page` | Single-page / selective repair |
-| `ocr_handwriting` | Handwriting path |
-| `ocr_status` | Engines / config health |
-| `ocr_languages` | Language packs |
+`ocr_detect`, `ocr_formats`, `ocr_profiles`, `ocr_document`, `ocr_pdf`, `ocr_page`, `ocr_handwriting`, `ocr_status`, `ocr_languages`.
 
-## Profile selection (do not freestyle names)
+### Profiles
 
 Built-in: `general`, `academic`, `mathematical`, `legal`, `technical`, `books`, `grok-value`, `grok-quality`.  
-User YAML (repo `profiles/`): `jstor_fotc`, `doml54`, `latin_martyrology`, `spanish_devotional`.  
-**Planned (empty until bake-off):** `handbook_pe` — PE/electrical handbooks (tables, equations, callouts, procedures). Do not claim it exists until shipped.
+User YAML: `jstor_fotc`, `doml54`, `latin_martyrology`, `spanish_devotional`, **`cheap`** (explicit low-quality override).  
+**Planned:** `handbook_pe` (empty until PE sample).
 
-Routing cheat-sheet:
-
-| Input | First action | Profile / flags |
-|---|---|---|
-| JSTOR merged scholarly PDF, good text layer | Marker `--disable_ocr` | `jstor_fotc`, `vlm_enabled=false` |
-| Footnote-heavy academic scan | Multi-engine + selective VLM | `academic` |
-| STEM / equations | Marker + Mathpix if keyed | `mathematical` / `technical` |
-| Image TIFF/PNG of text | ImageSource → OCR engines; VLM if quality needs it | `general` or domain profile |
-| EPUB / DOCX | Native extract (pandoc / pipeline source) — **no OCR** | n/a |
-| PE handbook | Deferred — collect sample, then `handbook_pe` | TBD |
+`ocr_profiles` suggestions are **defaults you may override** — not dogma.
 
 ## Env (OpenCode)
 
-Working set **only**:
+Working set **only** (files must exist):
 
-- `MATHPIX_APP_ID` / `MATHPIX_APP_KEY` → `{file:~/.secrets/mathpix-app-id|key}` (files **exist**)
-- `GEMINI_API_KEY` → `{file:~/.secrets/gemini-api-key}` (exists)
-- `OCR_PIPELINE_MARKER_VENV` → absolute `.marker-venv` path
+- `MATHPIX_APP_ID` / `MATHPIX_APP_KEY` → `{file:~/.secrets/mathpix-app-id|key}`
+- `GEMINI_API_KEY` → `{file:~/.secrets/gemini-api-key}`
+- `OCR_PIPELINE_MARKER_VENV` → absolute `.marker-venv`
 
-**Do not add** `ANTHROPIC_API_KEY={file:~/.secrets/anthropic-api-key}` unless that file is present. See [API-KEYS.md](API-KEYS.md).
+**Do not add** `ANTHROPIC_API_KEY={file:~/.secrets/anthropic-api-key}` unless that file exists. See [API-KEYS.md](API-KEYS.md).
 
-## Bake-off corpus layout (P0+)
+## Bake-off layout
 
 ```text
-Academic Research/data/jstor_md/bakeoff/samples/   # binaries + .sha256 (canonical)
-ocr-pipeline/bakeoff/
-  samples/     # symlinks → AR (gitignored)
-  work/        # intermediates (gitignored; wipe images)
-  results/     # JSONL/CSV metrics (commit schemas + non-secret rows)
-  scripts/     # smoke_pdftotext.py, marker_slice.sh, …
+Academic Research/data/jstor_md/bakeoff/samples/   # binaries + sha256
+ocr-pipeline/bakeoff/{samples,work,results,scripts}/
 ```
-
-Agents: stage small files only; no mass Drive harvest; stay off shared box browser when Online Task Worker is harvesting.
 
 ## What NOT to invent
 
-- Fake profiles (`handbook_pe` until merged), fake engines, or “gold” QA without gates.
+- Fake profiles as shipped (`handbook_pe` until merged).
 - Whole-book VLM on clean JSTOR text layers.
-- OpenCode `{file:}` refs for absent secrets.
-- Leaving `renders/*.png` or Marker image dumps behind.
-- Speaking for the user / sending external messages without approval.
+- Missing secret `{file:}` refs.
+- Thin EPUB/DOCX dumps that drop italics/headings when rich native exists.
+- Claiming gold without QA gates.
 
 ## Config files
 
 | File | Role |
 |---|---|
 | `config.yaml` | Local default (gitignored) |
-| `config.jstor.yaml` | JSTOR / FOTC text-layer (VLM off) |
-| `config.hagiography.yaml` | Image-heavy Latin; VLM on — **not** MCP default |
-| `config.example.yaml` | Template |
-
-## Related docs
-
-- [JSTOR-ROUTING.md](JSTOR-ROUTING.md)
-- [API-KEYS.md](API-KEYS.md)
-- Bake-off plan: workspace handoff `ocr-pipeline-major-audit-plan.md`
+| `config.jstor.yaml` | JSTOR text-layer (VLM off) |
+| `config.hagiography.yaml` | Image-heavy; VLM on — not MCP default |
+| `profiles/cheap.yaml` | Explicit cheap override |

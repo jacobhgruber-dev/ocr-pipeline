@@ -20,3 +20,4 @@ config.hagiography.yaml.bak
 # Bake-off staging (binaries; keep scripts/results schemas)
 bakeoff/samples/
 bakeoff/work/
+bakeoff/.docling-venv/

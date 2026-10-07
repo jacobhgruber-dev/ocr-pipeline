@@ -1,0 +1,3 @@
+{"sample_id": "S12_burrus", "engine": "docling", "file": "S12_burrus_p0-4.pdf", "md_chars": 1569, "md_words": 248, "elapsed_s": 395.42, "pipe_tables": 0, "italics_stars": 0, "phase": "P1_docling"}
+{"sample_id": "S07_haile", "engine": "docling", "file": "S07_haile_p24-28.pdf", "md_chars": 12594, "md_words": 1797, "elapsed_s": 1.68, "pipe_tables": 4, "italics_stars": 0, "phase": "P1_docling"}
+{"sample_id": "S01_fotc96", "engine": "docling", "file": "S01_fotc96_p30-34.pdf", "md_chars": 8471, "md_words": 1538, "elapsed_s": 0.61, "pipe_tables": 0, "italics_stars": 0, "phase": "P1_docling"}

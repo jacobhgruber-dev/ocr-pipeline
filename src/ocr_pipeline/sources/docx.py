@@ -35,25 +35,42 @@ class DocxSource(DocumentSource):
         return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
     def _load_paragraphs(self) -> list[str]:
-        """Load all paragraphs from the DOCX file, caching the result."""
+        """Load paragraphs as markdown, preserving italics/bold + headings.
+
+        Research-grade native path: do not flatten emphasis. Lists keep their
+        text; true list numbering depends on Word numbering XML (best-effort).
+        """
         if self._paragraphs_loaded is not None:
             return self._paragraphs_loaded
 
         from docx import Document
-
         try:
             doc = Document(str(self.path))
         except Exception as exc:
             raise RenderError(f"Failed to open DOCX: {self.path}") from exc
         paragraphs: list[str] = []
 
+        def _run_md(run) -> str:
+            t = run.text or ""
+            if not t:
+                return ""
+            if run.bold and run.italic:
+                return f"***{t}***"
+            if run.bold:
+                return f"**{t}**"
+            if run.italic:
+                return f"*{t}*"
+            return t
+
         for para in doc.paragraphs:
-            text = para.text
-            if para.style is not None and para.style.name and para.style.name.startswith("Heading"):
-                level = para.style.name.replace("Heading ", "")
+            text = "".join(_run_md(r) for r in para.runs) if para.runs else (para.text or "")
+            style_name = para.style.name if para.style is not None and para.style.name else ""
+            if style_name.startswith("Heading"):
+                level = style_name.replace("Heading ", "")
                 if len(level) == 1 and level.isdigit():
-                    hashes = "#" * int(level)
-                    text = f"{hashes} {text}"
+                    text = f"{'#' * int(level)} {text.lstrip('# ').strip()}"
+            elif style_name.startswith("List"):
+                text = f"- {text.lstrip('- ').strip()}" if text.strip() else text
             paragraphs.append(text)
 
         self._paragraphs_loaded = paragraphs

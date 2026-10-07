@@ -81,6 +81,21 @@ Hagiography / image-only Latin: `--config config.hagiography.yaml` (VLM on).
 
 
 
+## Quality modes
+
+- **Default: research grade** — rich native EPUB/DOCX, Marker text-layer for good PDFs, selective VLM only when needed, QA gates before DB ingest.
+- **Explicit cheap override** — profile `cheap`, or MCP/CLI `engines=tesseract` / Marker-only with `vlm_enabled=false` and a tight budget. Log `quality_mode: cheap`. Not for publishable corpus ingest.
+- Profile engine/model lists are **suggestions you can override**, not hard locks.
+
+### Format routing (hard rules)
+
+| Format | Default path |
+|---|---|
+| **EPUB** | Native HTML→markdown (headings, italics, lists, OPF metadata). **Never** Marker/OCR by default. |
+| **DOCX** | Native runs→markdown (italics/bold/headings). Not OCR by default. |
+| Born-digital PDF | Marker `--disable_ocr` when text layer is good |
+| Image / TIFF | ImageSource OCR; preprocess rotation; VLM selective |
+
 ## API keys (required vs optional)
 
 | Key | Need it? | Purpose |
